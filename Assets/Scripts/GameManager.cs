@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    //aads
     public static GameManager Instance;
 
     [Header("对象预制体")]
