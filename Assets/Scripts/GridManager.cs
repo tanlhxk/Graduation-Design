@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 // 格子类型枚举
 public enum TileType
@@ -36,24 +37,47 @@ public class Tile
         return unitObj.GetComponent<T>();
     }
 }
+[CreateAssetMenu(fileName = "TileSet", menuName = "WFC/TileSet")]
+public class TileSet : ScriptableObject
+{
+    [System.Serializable]
+    public struct TileEntry
+    {
+        public TileType type;
+        public GameObject prefab;
+        public Color color;  // 可选，用于调试
+    }
 
+    public TileEntry[] entries;
+
+    public GameObject GetPrefab(TileType type)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry.type == type) return entry.prefab;
+        }
+        return null;
+    }
+}
 // 网格管理器
 public class GridManager : MonoBehaviour
 {
     [Header("网格设置")]
-    [SerializeField] private int width = 10;      // 网格宽度
-    [SerializeField] private int height = 10;     // 网格高度
-    [SerializeField] private float cellSize = 1f; // 格子大小
-    [SerializeField] private GameObject tilePrefab; // 格子预制体
+    [SerializeField] private float cellSize = 1f;          // 格子大小（保持不变）
+    [SerializeField] private GameObject tilePrefab;        // 默认格子预制体
+    [SerializeField] private TileSet tileSet;              // 图块集（包含各类型对应的预制体/颜色等）
 
-    private Tile[,] grid;                          // 二维网格数组
-    public static Dictionary<Vector2Int, Tile> tileDict; // 快速查找字典
+    private int width;
+    private int height;
+    private Tile[,] grid;
+    public static Dictionary<Vector2Int, Tile> tileDict;   // 快速查找字典
 
     void Awake()
     {
-        GenerateGrid();
+        //GenerateGrid();
     }
 
+    /*
     // 程序化生成网格（与你的PCG系统结合）
     void GenerateGrid()
     {
@@ -75,8 +99,41 @@ public class GridManager : MonoBehaviour
                 CreateTileVisual(x, y, type, tile);
             }
         }
-    }
+    }*/
 
+    /// <summary>
+    /// 从外部数据构建网格（由WFC生成器调用）
+    /// </summary>
+    public void BuildGridFromData(TileType[,] mapData)
+    {
+        width = mapData.GetLength(0);
+        height = mapData.GetLength(1);
+
+        grid = new Tile[width, height];
+        tileDict = new Dictionary<Vector2Int, Tile>();
+
+        // 清除旧的子物体（如果重新生成地图）
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                TileType type = mapData[x, y];
+                Tile tile = new Tile(x, y, type);
+                grid[x, y] = tile;
+                tileDict[new Vector2Int(x, y)] = tile;
+
+                // 根据类型创建可视化
+                CreateTileVisual(x, y, type, tile);
+            }
+        }
+
+        Debug.Log($"Grid built with size {width}x{height}");
+    }
     // 世界坐标转网格坐标
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
@@ -120,22 +177,43 @@ public class GridManager : MonoBehaviour
     }
 
     // 可视化格子
-    void CreateTileVisual(int x, int y, TileType type,Tile tile)
+    private void CreateTileVisual(int x, int y, TileType type, Tile tile)
     {
-        GameObject tileObj = Instantiate(tilePrefab, GridToWorld(new Vector2Int(x, y)), Quaternion.identity, transform);
-        tileObj.name = $"Tile_{x}_{y}";
-        tile.unitObj = tileObj;
+        Vector3 worldPos = GridToWorld(new Vector2Int(x, y));
+        GameObject tileObj;
 
-        // 根据类型设置颜色
-        SpriteRenderer renderer = tileObj.GetComponent<SpriteRenderer>();
-        switch (type)
+        // 如果TileSet中定义了特定类型的预制体，则使用它；否则使用默认预制体
+        if (tileSet != null && tileSet.GetPrefab(type) != null)
         {
-            case TileType.Walkable:
-                renderer.color = new Color(0.8f, 0.8f, 0.8f);
-                break;
-            case TileType.Obstacle:
-                renderer.color = new Color(0.3f, 0.3f, 0.3f);
-                break;
+            tileObj = Instantiate(tileSet.GetPrefab(type), worldPos, Quaternion.identity, transform);
+        }
+        else
+        {
+            tileObj = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
+        }
+
+        tileObj.name = $"Tile_{x}_{y}";
+        tile.unitObj = tileObj;          // 注意：unitObj字段命名可能不合适，可改为visualObj
+
+        // 可选：根据类型调整颜色（如果没有预制体就用颜色区分）
+        if (tileSet == null)
+        {
+            SpriteRenderer renderer = tileObj.GetComponent<SpriteRenderer>();
+            if (renderer != null)
+            {
+                switch (type)
+                {
+                    case TileType.Walkable:
+                        renderer.color = new Color(0.8f, 0.8f, 0.8f);
+                        break;
+                    case TileType.Obstacle:
+                        renderer.color = new Color(0.3f, 0.3f, 0.3f);
+                        break;
+                    case TileType.Exit:
+                        renderer.color = Color.green;
+                        break;
+                }
+            }
         }
     }
 }

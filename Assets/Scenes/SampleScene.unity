@@ -237,7 +237,7 @@ GameObject:
   m_Component:
   - component: {fileID: 733257381}
   - component: {fileID: 733257380}
-  - component: {fileID: 733257382}
+  - component: {fileID: 733257383}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -274,7 +274,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &733257382
+--- !u!114 &733257383
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -283,11 +283,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 733257379}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91e23c9809b05c44eb043d1af1092b07, type: 3}
+  m_Script: {fileID: 11500000, guid: 257a563f98e6d0c4e8aa9882e18202cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerStartPos: {x: 0, y: 0}
-  EnemyStartPos: {x: 0, y: 0}
+  width: 20
+  height: 20
+  tileTypes: 000000000100000003000000
+  weights: 140000000500000001000000
+  adjacencyRules:
+  - type: 0
+    allowedNeighbors: 0100000000000000
+  - type: 1
+    allowedNeighbors: 0000000001000000
+  - type: 3
+    allowedNeighbors: 00000000
+  gridManager: {fileID: 1112012784}
+  mapSize: {x: 0, y: 0}
 --- !u!1 &848775045
 GameObject:
   m_ObjectHideFlags: 0
@@ -485,10 +496,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d98ac52b5af534cb647f68e01980cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 10
-  height: 10
   cellSize: 1
   tilePrefab: {fileID: 4856321434933981893, guid: b2c5044d8d76fa14a9aa757ddd45d18c, type: 3}
+  tileSet: {fileID: 0}
 --- !u!1 &1128878745
 GameObject:
   m_ObjectHideFlags: 0
@@ -808,6 +818,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 22468896, guid: 67117722a812a2e46ab8cb8eafbf5f5e, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22485076, guid: 67117722a812a2e46ab8cb8eafbf5f5e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22485076, guid: 67117722a812a2e46ab8cb8eafbf5f5e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22485076, guid: 67117722a812a2e46ab8cb8eafbf5f5e, type: 3}
+      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 22488670, guid: 67117722a812a2e46ab8cb8eafbf5f5e, type: 3}

@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
 
     private GridManager gridManager;
     private TurnManager turnManager;
-    private DungeonGenerator dungeonGenerator;
+    private SimpleWFCGenerator simpleWFCGenerator;
     private Unit playerUnit;
     private Unit enemyUnit;
     private GameObject playerObj;
@@ -26,10 +26,10 @@ public class GameManager : MonoBehaviour
     {
         gridManager = FindObjectOfType<GridManager>();
         turnManager = FindObjectOfType<TurnManager>();
-        dungeonGenerator = FindObjectOfType<DungeonGenerator>();
-        dungeonGenerator.GenerateDungeon(GridManager.tileDict); // 先生成地牢
-        SpawnEnemyAt(dungeonGenerator.EnemyStartPos);
-        SpawnPlayerAt(dungeonGenerator.playerStartPos); // 再生成玩家
+        simpleWFCGenerator = FindObjectOfType<SimpleWFCGenerator>();
+        simpleWFCGenerator.GenerateAndBuildMap();
+        SpawnEnemyAt(new Vector2Int(5, 5));
+        SpawnPlayerAt(new Vector2Int(0, 0)); // 再生成玩家
     }
     private void Update()
     {
