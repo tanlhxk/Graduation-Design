@@ -6,47 +6,67 @@ using Unity.VisualScripting;
 
 public class TurnManager : MonoBehaviour
 {
+    public static TurnManager Instance;
     public enum TurnPhase
     {
         PlayerTurn,   // 玩家回合
         EnemyTurn,    // 敌人回合
-        TurnEnd       // 回合结束/切换中
+        TurnEnd,      // 回合结束/切换中
+        None
     }
 
-    [Header("回合状态")]
-    public TurnPhase currentPhase = TurnPhase.PlayerTurn;
-    public int currentTurnNumber = 1;
 
     [Header("单位列表")]
     public List<Unit> allUnits;
-    public List<Unit> playerUnits;
-    public List<Unit> enemyUnits;
+    public List<FriendlyUnit> playerUnits;
+    public List<EnemyUnit> enemyUnits;
 
     [Header("当前行动单位")]
     public Unit currentActiveUnit;
     private int currentUnitIndex = 0;
 
-    private GridManager gridManager;
-    private MovementSystem movementSystem;
+    public GridManager gridManager;
+    public MovementSystem movementSystem;
+    private bool isGameReady = false;
+    public TurnPhase currentPhase = TurnPhase.None;
+    public int currentTurnNumber = 1;
 
-    void Start()
+    public void OnGameInitialized()
     {
-        gridManager = GetComponent<GridManager>();
-        movementSystem = GetComponent<MovementSystem>();
+        Debug.Log("TurnManager 接收到初始化信号，开始收集单位...");
 
-        // 初始化单位列表
+        // 此时 GameManager 已经生成了玩家和敌人
         allUnits = new List<Unit>(FindObjectsOfType<Unit>());
-        playerUnits = allUnits.Where(u => u.unitType == UnitType.Player).ToList();
-        enemyUnits = allUnits.Where(u => u.unitType == UnitType.Enemy).ToList();
-        
-    }
+        playerUnits = new List<FriendlyUnit>(FindObjectsOfType<FriendlyUnit>());
+        enemyUnits = new List<EnemyUnit>(FindObjectsOfType<EnemyUnit>());
 
-    private void Update()
+        // 调试输出：看看找到了多少单位
+        Debug.Log($"找到 {playerUnits.Count} 个玩家单位, {enemyUnits.Count} 个敌人单位");
+
+        isGameReady = true;
+
+        // 尝试开始游戏
+        AttemptStartGame();
+    }
+    void AttemptStartGame()
     {
-        if (Input.GetKey(KeyCode.Space))
+        if (isGameReady && currentPhase == TurnPhase.None)
         {
-            // 开始玩家回合
+            Debug.Log("准备开始第一回合...");
+
+            // 再次防御性检查
+            if (playerUnits == null || playerUnits.Count == 0)
+            {
+                Debug.LogError("错误：没有找到玩家单位！");
+                return;
+            }
+
+            currentPhase = TurnPhase.PlayerTurn;
             StartPlayerTurn();
+        }
+        else
+        {
+            Debug.Log($"无法开始游戏。准备状态: {isGameReady}, 当前阶段: {currentPhase}");
         }
     }
     // 开始玩家回合
@@ -155,7 +175,7 @@ public class TurnManager : MonoBehaviour
     }
 
     // 执行敌人AI行动
-    IEnumerator ExecuteEnemyTurn(Unit enemy)
+    IEnumerator ExecuteEnemyTurn(EnemyUnit enemy)
     {
         // 如果敌人在此之前已经死亡，直接结束
         if (enemy == null || enemy.currentHP <= 0)
@@ -168,9 +188,9 @@ public class TurnManager : MonoBehaviour
 
         // 简单的AI逻辑
         // 1. 检查是否可以攻击玩家
-        Unit targetPlayer = FindNearestPlayer(enemy);
+        FriendlyUnit targetPlayer = FindNearestPlayer(enemy);
 
-        if (targetPlayer != null && enemy.CanAttack(targetPlayer))
+        if (targetPlayer != null && enemy.CanAttack((FriendlyUnit)targetPlayer, 1))
         {
             // 可以攻击，直接攻击
             Debug.Log($"{enemy.unitName} 攻击 {targetPlayer.unitName}");
@@ -222,9 +242,9 @@ public class TurnManager : MonoBehaviour
     }
 
     // 找到最近的玩家
-    Unit FindNearestPlayer(Unit enemy)
+    FriendlyUnit FindNearestPlayer(EnemyUnit enemy)
     {
-        Unit nearest = null;
+        FriendlyUnit nearest = null;
         int minDistance = int.MaxValue;
 
         foreach (var player in playerUnits)
@@ -269,12 +289,12 @@ public class TurnManager : MonoBehaviour
         if (unit.unitType == UnitType.Enemy)
         {
             if (enemyUnits.Contains(unit))
-                enemyUnits.Remove(unit);
+                enemyUnits.Remove((EnemyUnit)unit);
         }
         else if (unit.unitType == UnitType.Player)
         {
             if (playerUnits.Contains(unit))
-                playerUnits.Remove(unit);
+                playerUnits.Remove((FriendlyUnit)unit);
         }
 
         if (allUnits.Contains(unit))

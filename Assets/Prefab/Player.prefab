@@ -10,8 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2275068097398890379}
   - component: {fileID: 4127725354455022620}
-  - component: {fileID: 1180326325926915466}
-  - component: {fileID: 1485941070850550314}
+  - component: {fileID: -5337934334658197549}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -86,7 +85,7 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &1180326325926915466
+--- !u!114 &-5337934334658197549
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -95,33 +94,41 @@ MonoBehaviour:
   m_GameObject: {fileID: 6053568271378320040}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 53953f3c3ab969c418686d1365594432, type: 3}
+  m_Script: {fileID: 11500000, guid: d8c9ae070ea208243bf5fcaa70aced33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  unitName: 1
+  unitName: 
   unitType: 0
-  skillTypes: 
   currentState: 0
   maxHP: 10
   currentHP: 0
-  attackPower: 3
   moveRange: 3
-  attackRange: 1
   currentTile:
     gridPos: {x: 0, y: 0}
     type: 0
     occupyingUnit: {fileID: 0}
     worldPos: {x: 0, y: 0, z: 0}
     unitObj: {fileID: 0}
---- !u!114 &1485941070850550314
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6053568271378320040}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a02d75b8a94b5843b7c3a7350120894, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  baseAttack: 3
+  attackRange: 1
+  normalAttackData:
+    type: 0
+    skillName: 
+    damageMultiplier: 0
+    attackRange: 0
+    icon: {fileID: 0}
+    coolDown_Rounds: 0
+  battleSkillData:
+    type: 0
+    skillName: 
+    damageMultiplier: 0
+    attackRange: 0
+    icon: {fileID: 0}
+    coolDown_Rounds: 0
+  ultimateData:
+    type: 0
+    skillName: 
+    damageMultiplier: 0
+    attackRange: 0
+    icon: {fileID: 0}
+    coolDown_Rounds: 0

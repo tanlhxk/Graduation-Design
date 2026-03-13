@@ -5,18 +5,12 @@ using System.Collections;
 
 public class MovementSystem : MonoBehaviour
 {
-    private GridManager gridManager;
-    private TurnManager turnManager;
+    public GridManager gridManager;
+    public TurnManager turnManager;
 
     [Header("高亮材质")]
     public Color moveRangeColor = Color.blue;
     public Color attackRangeColor = Color.red;
-
-    void Start()
-    {
-        gridManager = FindObjectOfType<GridManager>().GetComponent<GridManager>();
-        turnManager = GetComponent<TurnManager>();
-    }
 
     // 计算可移动范围（广度优先搜索）
     public List<Tile> GetMoveableTiles(Unit unit , int moveRange)

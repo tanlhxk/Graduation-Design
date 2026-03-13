@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 
 // 单位类型枚举
 public enum UnitType
@@ -32,8 +34,9 @@ public class SkillData
 {
     public SkillType type;
     public string skillName;
-    public int baseDamage;
+    public int damageMultiplier;
     public int attackRange;
+    public Sprite icon;
     public int coolDown_Rounds; // 冷却需要的“回合数”或“步数”
 
     // 构造函数
@@ -41,7 +44,7 @@ public class SkillData
     {
         type = t;
         skillName = n;
-        baseDamage = dmg;
+        damageMultiplier = dmg;
         attackRange = ar;
         coolDown_Rounds = cd;
     }
@@ -53,49 +56,16 @@ public class Unit : MonoBehaviour
     public string unitName;
     public UnitType unitType;
     public UnitState currentState = UnitState.Idle;
-
     [Header("战斗属性")]
     public int maxHP = 10;
     public int currentHP;
-    public int attackPower = 3;
-    public int moveRange = 3;      // 移动范围（格）
-    public int attackRange = 1;     // 攻击范围（格，1为相邻）
-    private List<SkillData> skillData = new List<SkillData>();
+    public int moveRange = 3;
 
     [Header("引用")]
     public Tile currentTile;         // 当前所在格子
 
-    void Start()
-    {
-        currentHP = maxHP;
-    }
-
-    // 受伤
-    public void TakeDamage(int damage)
-    {
-        currentHP -= damage;
-        Debug.Log($"{unitName} 受到 {damage} 点伤害，剩余 HP: {currentHP}");
-
-        if (currentHP <= 0)
-        {
-            Die();
-        }
-    }
-
-    public void AddSkill(SkillType type, string name, int damage,int attackRange, int cd)
-    {
-        skillData.Add(new SkillData(type, name, damage, attackRange, cd));
-        //Debug.Log($"{unitName} 学会了新技能：{name}！");
-    }
-
-    // 外部读取技能
-    public List<SkillData> GetSkills()
-    {
-        return skillData;
-    }
-
     // 死亡
-    void Die()
+    public void Die()
     {
         currentState = UnitState.Dead;
         // 从网格中移除
@@ -112,40 +82,31 @@ public class Unit : MonoBehaviour
         Debug.Log($"{unitName} 死亡");
     }
 
-    // 检查是否可攻击目标
-    public bool CanAttack(Unit target)
+    // 修改 CanAttack 以支持范围
+    public List<Unit> GetAttackTargets(SkillData skill)
     {
-        if (target == null || target.currentHP <= 0) return false;
+        List<Unit> targets = new List<Unit>();
+        SkillData useSkill = skill;
 
-        // 计算距离（曼哈顿距离）
-        int distance = Mathf.Abs(currentTile.gridPos.x - target.currentTile.gridPos.x) +
-                      Mathf.Abs(currentTile.gridPos.y - target.currentTile.gridPos.y);
+        // 获取当前单位位置
+        Vector2Int myPos = currentTile.gridPos;
 
-        return distance <= attackRange;
-    }
-
-    // 攻击目标
-    public void Attack(Unit target)
-    {
-        if (currentHP <= 0 || currentState == UnitState.Dead)
+        // 遍历所有敌人（简化版：全图扫描，实际可用四叉树优化）
+        foreach (Unit enemy in FindObjectsOfType<Unit>())
         {
-            Debug.LogWarning($"{unitName} 已经死亡，无法攻击！");
-            return;
+            if (enemy.unitType == unitType) continue; // 跳过同阵营
+
+            // 计算距离
+            int distance = Mathf.Abs(myPos.x - enemy.currentTile.gridPos.x) +
+                           Mathf.Abs(myPos.y - enemy.currentTile.gridPos.y);
+
+            // 判定是否在技能范围内
+            if (distance <= useSkill.attackRange)
+            {
+                targets.Add(enemy);
+            }
         }
-
-        if (!CanAttack(target)) return;
-
-        currentState = UnitState.Attacking;
-        target.TakeDamage(attackPower);
-
-        // 播放攻击动画（省略）
-        // 攻击结束后恢复状态
-        Invoke(nameof(FinishAction), 0.5f);
-    }
-
-    void FinishAction()
-    {
-        currentState = UnitState.Idle;
+        return targets;
     }
 
     // 重置回合（每回合开始调用）

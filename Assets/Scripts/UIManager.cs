@@ -65,7 +65,7 @@ public class UIManager : MonoBehaviour
         gameManager = FindObjectOfType<GameManager>();
 
         endTurnButton.onClick.AddListener(OnEndTurnClicked);
-        InstantiateSkillPrefab(null, new Vector3(0, 0, 0));
+        //InstantiateSkillPrefab(null, new Vector3(0, 0, 0));
     }
 
     void Update()
@@ -86,12 +86,12 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowUnitInfo(Unit unit)
+    public void ShowUnitInfo(FriendlyUnit unit)
     {
         unitInfoPanel.SetActive(true);
         unitNameText.text = unit.unitName;
         unitHPText.text = $"HP: {unit.currentHP}/{unit.maxHP}";
-        unitAttackText.text = $"¹¥»÷Á¦: {unit.attackPower}";
+        unitAttackText.text = $"¹¥»÷Á¦: {unit.baseAttack}";
     }
 
     void OnEndTurnClicked()

@@ -11,11 +11,11 @@ public class GameManager : MonoBehaviour
     [Header("地图种子")]
     public int seed;
 
-    private GridManager gridManager;
-    private TurnManager turnManager;
-    private SimpleWFCGenerator simpleWFCGenerator;
-    private Unit playerUnit;
-    private Unit enemyUnit;
+    public GridManager gridManager;
+    public TurnManager turnManager;
+    public SimpleWFCGenerator simpleWFCGenerator;
+    private FriendlyUnit playerUnit;
+    private EnemyUnit enemyUnit;
     private GameObject playerObj;
     private GameObject enemyObj;
 
@@ -26,12 +26,11 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        gridManager = FindObjectOfType<GridManager>();
-        turnManager = FindObjectOfType<TurnManager>();
-        simpleWFCGenerator = FindObjectOfType<SimpleWFCGenerator>();
         simpleWFCGenerator.GenerateAndBuildMap(seed);
         SpawnEnemyAt(new Vector2Int(7, 7));
         SpawnPlayerAt(new Vector2Int(1, 1)); // 再生成玩家
+        turnManager.OnGameInitialized();
+        Debug.Log("GameManager 初始化完毕，触发 TurnManager");
     }
     private void Update()
     {
@@ -57,13 +56,13 @@ public class GameManager : MonoBehaviour
         enemyObj.name = "Enemy"; // 重命名
 
         // 获取Unit组件并初始化
-        enemyUnit = enemyObj.GetComponent<Unit>();
+        enemyUnit = enemyObj.GetComponent<EnemyUnit>();
         if (enemyUnit != null)
         {
             enemyUnit.unitName = "敌人";
             enemyUnit.maxHP = 20;
             enemyUnit.currentHP = 20;
-            enemyUnit.attackPower = 5;
+            enemyUnit.baseAttack = 5;
             enemyUnit.moveRange = 3;
             enemyUnit.attackRange = 1;
             enemyUnit.unitType = UnitType.Enemy;
@@ -97,13 +96,13 @@ public class GameManager : MonoBehaviour
         playerObj.name = "Player"; // 重命名
 
         // 获取Unit组件并初始化
-        playerUnit = playerObj.GetComponent<Unit>();
+        playerUnit = playerObj.GetComponent<FriendlyUnit>();
         if (playerUnit != null)
         {
             playerUnit.unitName = "勇者";
             playerUnit.maxHP = 20;
             playerUnit.currentHP = 20;
-            playerUnit.attackPower = 5;
+            playerUnit.baseAttack = 5;
             playerUnit.moveRange = 3;
             playerUnit.attackRange = 1;
             playerUnit.unitType = UnitType.Player;
