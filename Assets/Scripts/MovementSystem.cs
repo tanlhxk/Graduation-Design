@@ -19,7 +19,7 @@ public class MovementSystem : MonoBehaviour
     }
 
     // 计算可移动范围（广度优先搜索）
-    public List<Tile> GetMoveableTiles(Unit unit)
+    public List<Tile> GetMoveableTiles(Unit unit , int moveRange)
     {
         if (unit == null || unit.currentTile == null) return new List<Tile>();
 
@@ -39,7 +39,7 @@ public class MovementSystem : MonoBehaviour
             int currentDist = distanceMap[current];
 
             // 如果在移动范围内，加入结果
-            if (currentDist <= unit.moveRange)
+            if (currentDist <= moveRange)
             {
                 // 当前格子可以移动（除非被其他单位占据）
                 if (current == startTile || current.IsWalkable())
@@ -49,7 +49,7 @@ public class MovementSystem : MonoBehaviour
             }
 
             // 如果已经达到最大移动距离，不再扩展
-            if (currentDist >= unit.moveRange)
+            if (currentDist >= moveRange)
                 continue;
 
             // 检查四个方向的邻居

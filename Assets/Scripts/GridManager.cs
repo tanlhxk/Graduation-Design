@@ -7,6 +7,7 @@ public enum TileType
 {
     Walkable,    // 可行走
     Obstacle,    // 障碍物（墙、陷阱）
+    Wallside,
     Unit,        // 被单位占据
     Exit         // 出口/楼梯
 }
@@ -45,7 +46,7 @@ public class TileSet : ScriptableObject
     {
         public TileType type;
         public GameObject prefab;
-        public Color color;  // 可选，用于调试
+        //public Color color;  // 可选，用于调试
     }
 
     public TileEntry[] entries;

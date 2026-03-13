@@ -73,7 +73,7 @@ public class TurnManager : MonoBehaviour
         Debug.Log($"当前行动单位: {unit.unitName}");
 
         // 计算并高亮可移动范围
-        List<Tile> moveableTiles = movementSystem.GetMoveableTiles(unit);
+        List<Tile> moveableTiles = movementSystem.GetMoveableTiles(unit, unit.moveRange);
         //movementSystem.HighlightMoveRange(moveableTiles);
 
         // 通知UI更新
@@ -184,7 +184,7 @@ public class TurnManager : MonoBehaviour
             if (targetPlayer != null)
             {
                 // 计算可移动范围
-                List<Tile> moveableTiles = movementSystem.GetMoveableTiles(enemy);
+                List<Tile> moveableTiles = movementSystem.GetMoveableTiles(enemy, enemy.moveRange);
 
                 // 寻找离玩家最近的可行走格子
                 Tile bestTile = FindTileClosestToPlayer(moveableTiles, targetPlayer);

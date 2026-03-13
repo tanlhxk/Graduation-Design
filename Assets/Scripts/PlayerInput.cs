@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerInput : MonoBehaviour
@@ -76,6 +75,7 @@ public class PlayerInput : MonoBehaviour
                     movementSystem.ClearHighlights(GridManager.tileDict);
                 }
             }
+            /*
             // 情况3：点击了敌人（在攻击范围内）
             else if (selectedUnit != null &&
                      clickedTile.occupyingUnit != null &&
@@ -84,6 +84,7 @@ public class PlayerInput : MonoBehaviour
             {
                 AttackEnemy(clickedTile.occupyingUnit);
             }
+            */
         }
     }
 
@@ -96,7 +97,7 @@ public class PlayerInput : MonoBehaviour
         selectedUnit = unit;
 
         // 计算并显示可移动范围
-        currentMoveRange = movementSystem.GetMoveableTiles(unit);
+        currentMoveRange = movementSystem.GetMoveableTiles(unit, unit.moveRange);
         movementSystem.HighlightMoveRange(currentMoveRange);
 
         Debug.Log($"选中单位: {unit.unitName}");

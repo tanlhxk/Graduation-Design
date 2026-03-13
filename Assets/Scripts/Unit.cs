@@ -18,6 +18,35 @@ public enum UnitState
     Dead        // 死亡
 }
 
+// 技能类型枚举
+public enum SkillType
+{
+    NormalAttack,   // 普攻
+    BattleSkill,    // 战技
+    Ultimate        // 终结技
+}
+
+// 技能数据容器
+[System.Serializable]
+public class SkillData
+{
+    public SkillType type;
+    public string skillName;
+    public int baseDamage;
+    public int attackRange;
+    public int coolDown_Rounds; // 冷却需要的“回合数”或“步数”
+
+    // 构造函数
+    public SkillData(SkillType t, string n, int dmg,int ar, int cd)
+    {
+        type = t;
+        skillName = n;
+        baseDamage = dmg;
+        attackRange = ar;
+        coolDown_Rounds = cd;
+    }
+}
+
 public class Unit : MonoBehaviour
 {
     [Header("基础属性")]
@@ -31,6 +60,7 @@ public class Unit : MonoBehaviour
     public int attackPower = 3;
     public int moveRange = 3;      // 移动范围（格）
     public int attackRange = 1;     // 攻击范围（格，1为相邻）
+    private List<SkillData> skillData = new List<SkillData>();
 
     [Header("引用")]
     public Tile currentTile;         // 当前所在格子
@@ -50,6 +80,18 @@ public class Unit : MonoBehaviour
         {
             Die();
         }
+    }
+
+    public void AddSkill(SkillType type, string name, int damage,int attackRange, int cd)
+    {
+        skillData.Add(new SkillData(type, name, damage, attackRange, cd));
+        //Debug.Log($"{unitName} 学会了新技能：{name}！");
+    }
+
+    // 外部读取技能
+    public List<SkillData> GetSkills()
+    {
+        return skillData;
     }
 
     // 死亡

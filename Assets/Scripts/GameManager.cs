@@ -2,12 +2,14 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    //aads
     public static GameManager Instance;
 
     [Header("对象预制体")]
     public GameObject playerPrefab;
     public GameObject enemyPrefab;
+
+    [Header("地图种子")]
+    public int seed;
 
     private GridManager gridManager;
     private TurnManager turnManager;
@@ -27,9 +29,9 @@ public class GameManager : MonoBehaviour
         gridManager = FindObjectOfType<GridManager>();
         turnManager = FindObjectOfType<TurnManager>();
         simpleWFCGenerator = FindObjectOfType<SimpleWFCGenerator>();
-        simpleWFCGenerator.GenerateAndBuildMap();
-        SpawnEnemyAt(new Vector2Int(5, 5));
-        SpawnPlayerAt(new Vector2Int(0, 0)); // 再生成玩家
+        simpleWFCGenerator.GenerateAndBuildMap(seed);
+        SpawnEnemyAt(new Vector2Int(7, 7));
+        SpawnPlayerAt(new Vector2Int(1, 1)); // 再生成玩家
     }
     private void Update()
     {
@@ -105,6 +107,9 @@ public class GameManager : MonoBehaviour
             playerUnit.moveRange = 3;
             playerUnit.attackRange = 1;
             playerUnit.unitType = UnitType.Player;
+            playerUnit.AddSkill(SkillType.NormalAttack, "普攻", 1,1, 0);
+            playerUnit.AddSkill(SkillType.BattleSkill, "战技", 2,2, 2);
+            playerUnit.AddSkill(SkillType.Ultimate, "终结技", 5, 5, 5);
 
             // 通知GridManager该单位占据了格子
             gridManager.SetUnitOnTile(playerUnit, gridPos);
