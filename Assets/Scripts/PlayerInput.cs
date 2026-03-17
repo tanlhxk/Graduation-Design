@@ -422,7 +422,10 @@ public class PlayerInput : MonoBehaviour
         // 计算并显示可移动范围
         currentMoveRange = movementSystem.GetMoveableTiles(unit, unit.moveRange);
         movementSystem.HighlightMoveRange(currentMoveRange);
-
+        if (CameraController.Instance != null)
+        {
+            CameraController.Instance.SmoothMoveTo(unit.transform.position);
+        }
         Debug.Log($"选中单位: {unit.unitName}");
     }
 

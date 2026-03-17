@@ -57,6 +57,14 @@ public class EnemyUnit : Unit
         // 4. 计算伤害（敌人暂时不处理复杂技能系数，直接用 baseAttack）
         // 如果未来需要敌人技能，可以在这里扩展
         int damage = baseAttack;
+        if (CameraController.Instance != null)
+        {
+            // 方案 A：瞬间移动（干脆利落）
+            CameraController.Instance.ForcePosition(this.transform.position);
+
+            // 方案 B：如果你想让它稍微平滑一点，可以在这里调用 SmoothMoveTo，
+            // 但通常敌人行动需要强制焦点，所以瞬间移动更好。
+        }
 
         // 5. 执行打击
         target.TakeDamage(damage);

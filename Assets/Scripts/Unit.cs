@@ -60,6 +60,7 @@ public class Unit : MonoBehaviour
     public int maxHP = 10;
     public int currentHP;
     public int moveRange = 3;
+    public float moveSpeed = 2f;
 
     [Header("引用")]
     public Tile currentTile;         // 当前所在格子

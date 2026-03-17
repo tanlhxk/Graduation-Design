@@ -388,6 +388,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -469,6 +470,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6608bdc61f9214e877b5a60fec2858, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  smoothTime: 0.2
+  zDepth: -10
+  enableDrag: 1
+  dragSensitivity: 1
+  invertDrag: 1
+  inertiaDamping: 20
+  minInertiaSpeed: 0.1
+  clampToBounds: 1
 --- !u!1 &629753649
 GameObject:
   m_ObjectHideFlags: 0
@@ -811,8 +832,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 257a563f98e6d0c4e8aa9882e18202cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 20
-  height: 20
+  width: 40
+  height: 40
   tileTypes: 0000000001000000
   weights: 0800000003000000
   adjacencyRules:

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
+using DG.Tweening;
 
 public class MovementSystem : MonoBehaviour
 {
@@ -169,34 +170,59 @@ public class MovementSystem : MonoBehaviour
     // 移动执行
     public IEnumerator MoveUnitAlongPath(Unit unit, List<Tile> path)
     {
-        if (path == null || path.Count < 2) yield break;
+        if (path == null || path.Count < 2)
+        {
+            // 移动结束后通知回合系统
+            turnManager.UnitFinishedAction(unit);
+            yield break;
+        }
 
         unit.currentState = UnitState.Moving;
 
-        // 第一个格子是起点，从第二个开始移动
+        // 遍历路径中的每一个目标格子（跳过起点）
         for (int i = 1; i < path.Count; i++)
         {
             Tile nextTile = path[i];
+            Vector3 targetPos = gridManager.GridToWorld(nextTile.gridPos);
 
-            // 更新网格占据信息
+            // --- 关键点：使用 DOTween 移动，并等待完成 ---
+
+            // 1. 记录当前时间，用于计算移动耗时
+            float journeyLength = Vector3.Distance(unit.transform.position, targetPos);
+            float duration = journeyLength / unit.moveSpeed; // 建议在 Unit 类中添加 moveSpeed 属性，默认 5f
+                                                             // 如果没有 moveSpeed，就用固定时间，例如 0.2f
+
+            // 2. 执行 DOTween 移动
+            // DOKill() 确保没有残留的动画干扰
+            unit.transform.DOKill();
+
+            // DOMove 移动到目标点
+            // SetEase(Ease.OutSine) 让移动在结束时稍微减速，手感更自然
+            Tween moveTween = unit.transform.DOMove(targetPos, duration)
+                .SetEase(Ease.OutSine);
+
+            // 3. 等待 DOTween 动画完成
+            // 这里的 yield return 是等待 DOTween 结束，而不是等待帧
+            yield return moveTween.WaitForCompletion();
+
+            // --- DOTween 动画结束后，执行逻辑 ---
+
+            // 4. 强制修正位置（防止浮点数误差）
+            unit.transform.position = targetPos;
+
+            // 5. 更新网格管理器中的单位占据信息
+            // 注意：这里必须在每一格移动后都更新，否则寻路会认为单位还在原地
             gridManager.SetUnitOnTile(unit, nextTile.gridPos);
 
-            // 移动动画（平滑移动）
-            Vector3 targetPos = gridManager.GridToWorld(nextTile.gridPos);
-            float elapsedTime = 0;
-            float moveDuration = 0.2f;
-
-            while (elapsedTime < moveDuration)
-            {
-                unit.transform.position = Vector3.Lerp(unit.transform.position, targetPos, elapsedTime / moveDuration);
-                elapsedTime += Time.deltaTime;
-                yield return null;
-            }
-
-            unit.transform.position = targetPos;
+            // 6. 可选：添加脚步音效
+            // AudioManager.Play("Footstep");
         }
 
+        // --- 整个路径走完 ---
         unit.currentState = UnitState.Idle;
+
+        // 通知回合系统该单位行动结束
+        // 注意：在回合制中，通常移动结束后回合就结束了，或者进入待机状态
         turnManager.UnitFinishedAction(unit);
     }
 

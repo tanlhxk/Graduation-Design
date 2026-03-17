@@ -31,6 +31,19 @@ public class GameManager : MonoBehaviour
         SpawnPlayerAt(new Vector2Int(1, 1)); // 再生成玩家
         turnManager.OnGameInitialized();
         Debug.Log("GameManager 初始化完毕，触发 TurnManager");
+
+        if (gridManager != null && CameraController.Instance != null)
+        {
+            float worldWidth = gridManager.Width * gridManager.CellSize;
+            float worldHeight = gridManager.Height * gridManager.CellSize;
+            // 假设地图左下角为 (0,0)，右上角为 (worldWidth, worldHeight)
+            Bounds bounds = new Bounds(new Vector3(worldWidth * 0.5f, worldHeight * 0.5f, 0),
+                                       new Vector3(worldWidth, worldHeight, 0));
+            CameraController.Instance.SetWorldBounds(bounds);
+
+            // 将摄像机初始位置也限制在边界内
+            CameraController.Instance.ForcePosition(playerObj.transform.position);
+        }
     }
     private void Update()
     {
@@ -119,6 +132,10 @@ public class GameManager : MonoBehaviour
         {
             turnManager.playerUnits.Add(playerUnit);
             turnManager.allUnits.Add(playerUnit);
+        }
+        if (CameraController.Instance != null)
+        {
+            CameraController.Instance.ForcePosition(playerObj.transform.position);
         }
 
         Debug.Log($"玩家已生成在网格位置 {gridPos}");

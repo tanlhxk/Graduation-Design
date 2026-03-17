@@ -69,6 +69,9 @@ public class GridManager : MonoBehaviour
 
     private int width;
     private int height;
+    public int Width => width;
+    public int Height => height;
+    public float CellSize => cellSize;
     private Tile[,] grid;
     public static Dictionary<Vector2Int, Tile> tileDict;   // ¿ìËÙ²éÕÒ×Öµä
 
