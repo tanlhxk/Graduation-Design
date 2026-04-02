@@ -6,35 +6,37 @@ public class CameraController : MonoBehaviour
     public static CameraController Instance;
 
     [Header("平滑移动")]
-    public float smoothTime = 0.2f;
-    private Vector3 velocity = Vector3.zero;
+    public float smoothTime = 0.2f;               // 自动移动的平滑时间
+    private Vector3 autoMoveVelocity = Vector3.zero;
+
+    [Header("摄像机设置")]
     public float zDepth = -10f;
 
     [Header("拖拽设置")]
     public bool enableDrag = true;
-    public float dragSensitivity = 1f;
-    public bool invertDrag = true; // true: 地图跟随鼠标（推荐）, false: 同向
+    public float dragSensitivity = 5f;            // 鼠标移动对摄像机速度的影响
+    public bool invertDrag = true;                 // true: 地图跟随鼠标（推荐）
 
-    [Header("惯性滑动")]
-    [Tooltip("每秒速度衰减比例 (0~10之间)，5表示高速时很快停止，低速时平滑衰减")]
-    public float inertiaDamping = 5f;
-    public float minInertiaSpeed = 0.1f;
+    [Header("物理参数")]
+    public float dragLinearDamping = 8f;           // 拖拽时的线性阻尼（速度衰减）
+    public float inertiaDamping = 5f;              // 松开后的惯性阻尼
+    public float edgeSpringStiffness = 20f;        // 边界弹簧刚度
+    public float edgeSpringDamping = 8f;           // 边界弹簧阻尼
+    public float maxSpeed = 30f;                   // 最大速度限制
 
-    [Header("边界限制")]
+    [Header("边界")]
     public bool clampToBounds = true;
     private Bounds worldBounds;
 
     private Camera mainCamera;
-    private Vector3? targetPosition;
+    private Vector3 currentVelocity;                // 当前摄像机速度
 
-    // 拖拽相关
+    // 拖拽状态
     private bool isDragging = false;
-    private Vector2 dragOriginScreen;
-    private Vector3 cameraOriginPos;
-    private Vector2 dragVelocity;                // 当前拖拽速度（用于惯性）
+    private Vector2 lastMousePos;                   // 上一帧鼠标位置（屏幕坐标）
 
-    // 惯性相关
-    private bool isInertiaMoving = false;
+    // 自动移动目标
+    private Vector3? targetPosition;
 
     private void Awake()
     {
@@ -58,40 +60,34 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
-        // 处理右键拖拽（包括惯性）
-        if (enableDrag)
-            HandleDrag();
+        // 处理输入和物理
+        HandleInput();
+        ApplyPhysics();
 
-        // 惯性滑动处理（独立于拖拽状态）
-        if (isInertiaMoving)
+        // 自动移动（如果没有拖拽且没有物理速度时）
+        if (!isDragging && currentVelocity.magnitude < 0.01f && targetPosition.HasValue)
         {
-            ApplyInertia();
-        }
+            Vector3 desired = new Vector3(targetPosition.Value.x, targetPosition.Value.y, zDepth);
+            desired = ApplyBoundaryForce(desired, ref autoMoveVelocity, smoothTime); // 用弹簧平滑到达
+            transform.position = Vector3.SmoothDamp(transform.position, desired, ref autoMoveVelocity, smoothTime);
 
-        // 自动平滑移动（仅在未拖拽且无惯性时执行）
-        if (!isDragging && !isInertiaMoving && targetPosition.HasValue)
-        {
-            Vector3 desiredPosition = new Vector3(targetPosition.Value.x, targetPosition.Value.y, zDepth);
-            if (clampToBounds)
-                desiredPosition = ClampPositionToBounds(desiredPosition);
-
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothTime);
-
-            if (Vector3.Distance(transform.position, desiredPosition) < 0.01f)
+            if (Vector3.Distance(transform.position, desired) < 0.01f)
             {
-                transform.position = desiredPosition;
+                transform.position = desired;
                 targetPosition = null;
-                velocity = Vector3.zero;
+                autoMoveVelocity = Vector3.zero;
             }
         }
     }
 
-    private void HandleDrag()
+    private void HandleInput()
     {
+        if (!enableDrag) return;
+
+        // 鼠标在UI上时不处理
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            if (isDragging)
-                isDragging = false;
+            if (isDragging) isDragging = false;
             return;
         }
 
@@ -99,176 +95,135 @@ public class CameraController : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             isDragging = true;
-            isInertiaMoving = false;            // 停止任何惯性
-            dragVelocity = Vector2.zero;
-            dragOriginScreen = Input.mousePosition;
-            cameraOriginPos = transform.position;
-            targetPosition = null;
-            velocity = Vector3.zero;
+            lastMousePos = Input.mousePosition;
+            targetPosition = null;                  // 取消自动移动
+            autoMoveVelocity = Vector3.zero;
         }
-        // 右键按住：移动摄像机
+        // 右键按住：根据鼠标移动施加速度
         else if (isDragging && Input.GetMouseButton(1))
         {
-            Vector2 currentScreen = Input.mousePosition;
-            Vector2 screenDelta = currentScreen - dragOriginScreen;
+            Vector2 currentMousePos = Input.mousePosition;
+            Vector2 delta = currentMousePos - lastMousePos;
 
-            // 屏幕像素 → 世界单位
+            // 将屏幕像素位移转换为世界速度
             float worldUnitsPerPixel = (mainCamera.orthographicSize * 2f) / Screen.height;
-            Vector3 worldDelta = new Vector3(screenDelta.x, screenDelta.y, 0) * worldUnitsPerPixel * dragSensitivity;
+            Vector3 targetSpeed = new Vector3(delta.x, delta.y, 0) * worldUnitsPerPixel * dragSensitivity / Time.deltaTime;
+            if (invertDrag) targetSpeed = -targetSpeed;
 
-            // 计算新位置（根据 invertDrag 决定方向）
-            Vector3 newPos = cameraOriginPos + (invertDrag ? -worldDelta : worldDelta);
-            newPos.z = zDepth;
+            // 目标速度叠加到当前速度（瞬间响应，也可用平滑，但直接加手感更快）
+            currentVelocity += targetSpeed * Time.deltaTime * 10f; // 乘10快速响应，可调
+            currentVelocity = Vector3.ClampMagnitude(currentVelocity, maxSpeed);
 
-            if (clampToBounds)
-                newPos = ClampPositionToBounds(newPos);
-
-            // 更新速度（用于惯性）
-            dragVelocity = (newPos - transform.position) / Time.deltaTime;
-
-            transform.position = newPos;
+            lastMousePos = currentMousePos;
         }
-        // 右键松开：结束拖拽，启动惯性
+        // 右键松开：停止拖拽（惯性由物理自动处理）
         else if (isDragging && Input.GetMouseButtonUp(1))
         {
             isDragging = false;
-            if (dragVelocity.magnitude > minInertiaSpeed)
-            {
-                isInertiaMoving = true;
-            }
-            else
-            {
-                dragVelocity = Vector2.zero;
-            }
         }
     }
 
-    /// <summary>
-    /// 应用惯性滑动（每帧调用）
-    /// </summary>
-    private void ApplyInertia()
+    private void ApplyPhysics()
     {
-        // 阻尼衰减：速度 *= (1 - damping * deltaTime)
-        float dampingFactor = 1f - Mathf.Clamp01(inertiaDamping * Time.deltaTime);
-        dragVelocity *= dampingFactor;
-
-        // 如果速度太小，停止惯性
-        if (dragVelocity.magnitude < minInertiaSpeed)
+        if (!isDragging)
         {
-            dragVelocity = Vector2.zero;
-            isInertiaMoving = false;
-            return;
-        }
-
-        // 根据速度移动
-        Vector3 moveDelta = new Vector3(dragVelocity.x, dragVelocity.y, 0) * Time.deltaTime;
-        Vector3 newPos = transform.position + moveDelta;
-        newPos.z = zDepth;
-
-        if (clampToBounds)
-            newPos = ClampPositionToBounds(newPos);
-
-        // 防止卡边界微动
-        if (Vector3.Distance(newPos, transform.position) < 0.001f)
-        {
-            dragVelocity = Vector2.zero;
-            isInertiaMoving = false;
+            // 未拖拽时应用惯性阻尼
+            float damping = inertiaDamping;
+            currentVelocity *= (1f - Mathf.Clamp01(damping * Time.deltaTime));
         }
         else
         {
-            transform.position = newPos;
+            // 拖拽时也应用一点阻尼，防止无限加速
+            currentVelocity *= (1f - Mathf.Clamp01(dragLinearDamping * Time.deltaTime));
         }
+
+        // 边界弹簧力
+        if (clampToBounds && worldBounds.size != Vector3.zero)
+        {
+            Vector3 position = transform.position;
+            float vertExtent = mainCamera.orthographicSize;
+            float horzExtent = vertExtent * Screen.width / Screen.height;
+
+            float minX = worldBounds.min.x + horzExtent;
+            float maxX = worldBounds.max.x - horzExtent;
+            float minY = worldBounds.min.y + vertExtent;
+            float maxY = worldBounds.max.y - vertExtent;
+
+            Vector3 force = Vector3.zero;
+            if (position.x < minX) force.x = (minX - position.x) * edgeSpringStiffness;
+            else if (position.x > maxX) force.x = (maxX - position.x) * edgeSpringStiffness;
+
+            if (position.y < minY) force.y = (minY - position.y) * edgeSpringStiffness;
+            else if (position.y > maxY) force.y = (maxY - position.y) * edgeSpringStiffness;
+
+            // 弹簧力加阻尼
+            currentVelocity += force * Time.deltaTime;
+            currentVelocity -= currentVelocity * edgeSpringDamping * Time.deltaTime;
+        }
+
+        // 应用速度移动摄像机
+        transform.position += currentVelocity * Time.deltaTime;
+        transform.position = new Vector3(transform.position.x, transform.position.y, zDepth);
+
+        // 如果速度极小，直接置零防止微动
+        if (currentVelocity.magnitude < 0.01f)
+            currentVelocity = Vector3.zero;
     }
 
-    /// <summary>
-    /// 获取鼠标在世界坐标的位置（平面 Z=0）
-    /// </summary>
-    private Vector3 GetMouseWorldPosition()
-    {
-        Vector3 mouseScreen = Input.mousePosition;
-        mouseScreen.z = -transform.position.z;
-        return Camera.main.ScreenToWorldPoint(mouseScreen);
-    }
-
-    /// <summary>
-    /// 将位置限制在地图边界内
-    /// </summary>
-    private Vector3 ClampPositionToBounds(Vector3 position)
+    // 辅助方法：对目标位置应用弹簧力（用于自动移动）
+    private Vector3 ApplyBoundaryForce(Vector3 desiredPosition, ref Vector3 velocity, float smoothTime)
     {
         if (!clampToBounds || worldBounds.size == Vector3.zero)
-            return position;
+            return desiredPosition;
 
         float vertExtent = mainCamera.orthographicSize;
         float horzExtent = vertExtent * Screen.width / Screen.height;
-
         float minX = worldBounds.min.x + horzExtent;
         float maxX = worldBounds.max.x - horzExtent;
         float minY = worldBounds.min.y + vertExtent;
         float maxY = worldBounds.max.y - vertExtent;
 
-        if (minX > maxX)
-        {
-            position.x = (worldBounds.min.x + worldBounds.max.x) * 0.5f;
-        }
-        else
-        {
-            position.x = Mathf.Clamp(position.x, minX, maxX);
-        }
+        Vector3 clamped = desiredPosition;
+        if (clamped.x < minX) clamped.x = minX;
+        else if (clamped.x > maxX) clamped.x = maxX;
+        if (clamped.y < minY) clamped.y = minY;
+        else if (clamped.y > maxY) clamped.y = maxY;
 
-        if (minY > maxY)
-        {
-            position.y = (worldBounds.min.y + worldBounds.max.y) * 0.5f;
-        }
-        else
-        {
-            position.y = Mathf.Clamp(position.y, minY, maxY);
-        }
-
-        return position;
+        return clamped;
     }
 
     /// <summary>
-    /// 设置世界边界（由GridManager调用）
+    /// 设置世界边界
     /// </summary>
     public void SetWorldBounds(Bounds bounds)
     {
         worldBounds = bounds;
-        if (clampToBounds)
-        {
-            transform.position = ClampPositionToBounds(transform.position);
-        }
     }
 
     /// <summary>
-    /// 平滑移动到指定位置（用于玩家选中单位）
+    /// 平滑移动到目标位置（选中单位时调用）
     /// </summary>
     public void SmoothMoveTo(Vector3 targetWorldPosition)
     {
-        if (isDragging)
-            return;
-
-        // 停止惯性
-        isInertiaMoving = false;
-        dragVelocity = Vector2.zero;
-
+        if (isDragging) return;          // 拖拽时忽略
+        currentVelocity = Vector3.zero;   // 停止物理
         targetPosition = targetWorldPosition;
     }
 
     /// <summary>
-    /// 强制瞬间定位（用于敌人行动、游戏开始时）
+    /// 强制瞬间定位
     /// </summary>
     public void ForcePosition(Vector3 targetWorldPosition)
     {
         isDragging = false;
-        isInertiaMoving = false;
-        dragVelocity = Vector2.zero;
-        transform.position = new Vector3(targetWorldPosition.x, targetWorldPosition.y, zDepth);
+        currentVelocity = Vector3.zero;
+        autoMoveVelocity = Vector3.zero;
         targetPosition = null;
-        velocity = Vector3.zero;
+        transform.position = new Vector3(targetWorldPosition.x, targetWorldPosition.y, zDepth);
     }
 
     /// <summary>
-    /// 获取当前摄像机覆盖的范围
+    /// 获取摄像机视野矩形
     /// </summary>
     public Rect GetCameraBounds()
     {

@@ -43,57 +43,45 @@ public class FriendlyUnit : Unit
         return skillData[index];
     }
 
-    public void Attack(EnemyUnit target, int skillIndex)
+    public override void PerformAttack()
     {
-        // 1. 状态检查
-        if (target == null || currentHP <= 0 || currentState == UnitState.Dead)
-        {
-            Debug.LogWarning("攻击目标无效或单位无法行动");
-            return;
-        }
+        if (attackTarget == null) return;
 
-        // 2. 距离检查
-        if (!CanAttack(target, skillIndex))
-        {
-            Debug.LogWarning($"{unitName} 无法攻击：距离过远");
-            return;
-        }
+        // 目标一定是 EnemyUnit
+        EnemyUnit target = attackTarget as EnemyUnit;
+        if (target == null) return;
 
-        // 3. 设置状态
-        currentState = UnitState.Attacking;
-
-        // 4. 计算伤害与特效
         int finalDamage = 0;
         string skillName = "普通攻击";
 
-        // 逻辑：如果没技能或选中普攻，用基础攻击；否则用技能
-        if (skillData.Count == 0 || skillIndex == 0 || skillIndex >= skillData.Count)
+        // 根据技能索引计算伤害
+        if (skillData.Count == 0 || attackSkillIndex == 0 || attackSkillIndex >= skillData.Count)
         {
             finalDamage = baseAttack;
             skillName = "普通攻击";
         }
         else
         {
-            SkillData data = skillData[skillIndex];
+            SkillData data = skillData[attackSkillIndex];
             finalDamage = Mathf.RoundToInt(baseAttack * data.damageMultiplier);
             skillName = data.skillName;
-            // 这里可以添加技能特效播放 logic...
+            // 可在此添加技能特效
         }
 
         Debug.Log($"{unitName} 使用 {skillName} 造成 {finalDamage} 点伤害");
-
-        // 5. 执行打击
         target.TakeDamage(finalDamage);
 
-        // 6. 视觉特效（摄像机震动）
+        // 摄像机震动
         CameraShake camShake = Camera.main.GetComponent<CameraShake>();
         if (camShake != null)
-        {
             StartCoroutine(camShake.Shake(0.1f, 0.1f));
-        }
 
-        // 7. 攻击后复原
-        Invoke(nameof(FinishAction), 0.5f);
+        // 状态机中已经会调用 UnitFinishedAction，无需额外处理
+    }
+
+    public void Attack(EnemyUnit target, int skillIndex = 0)
+    {
+        base.Attack(target, skillIndex);
     }
 
     public bool CanAttack(EnemyUnit target, int skillIndex)
@@ -120,56 +108,5 @@ public class FriendlyUnit : Unit
         int ar = Mathf.Abs(currentTile.gridPos.x - tile.gridPos.x) +
                       Mathf.Abs(currentTile.gridPos.y - tile.gridPos.y);
         return ar <= attackRange;
-    }
-
-    public void Attack(EnemyUnit target)
-    {
-        // 1. 状态检查
-        if (currentHP <= 0 || currentState == UnitState.Dead)
-        {
-            Debug.LogWarning($"{unitName} 已经死亡，无法攻击！");
-            return;
-        }
-        if (!CanAttack(target, 1))
-        {
-            Debug.LogWarning($"{unitName} 无法攻击 {target.unitName}（距离过远或目标无效）");
-            return;
-        }
-
-        // 2. 设置状态
-        currentState = UnitState.Attacking;
-
-        // 3. 计算伤害 (这里是你未来加“克制”逻辑的地方)
-        // int damage = CalculateDamage(target); 
-        int damage = baseAttack; // 简化版
-
-        // 4. 触发受击
-        target.TakeDamage(damage);
-
-        // 5. 视觉与特效反馈 (关键修改点)
-        // A. 摄像机震动 (调用你上传的 CameraShake)
-        CameraShake camShake = Camera.main.GetComponent<CameraShake>();
-        if (camShake != null)
-        {
-            StartCoroutine(camShake.Shake(0.1f, 0.1f));
-        }
-
-        // B. 播放攻击特效 (伪代码)
-        // PlayAttackAnimation();
-        // PlayHitEffectOnTarget(target.transform.position);
-
-        // 6. 攻击后复原
-        // 使用协程或 Invoke 来延迟恢复 Idle 状态，以便播放动画
-        Invoke(nameof(FinishAction), 0.5f); // 0.5秒后恢复空闲
-    }
-
-    void FinishAction()
-    {
-        currentState = UnitState.Idle;
-        // 通知回合系统结束
-        if (TurnManager.Instance != null)
-        {
-            TurnManager.Instance.UnitFinishedAction(this);
-        }
     }
 }

@@ -433,24 +433,15 @@ public class PlayerInput : MonoBehaviour
     {
         if (selectedUnit == null || currentMoveRange == null) return;
 
-        // 寻路
-        List<Tile> path = movementSystem.FindPath(selectedUnit, selectedUnit.currentTile, targetTile);
+        // 调用 Unit 自带的 MoveTo 方法，这会触发 ChangeState(UnitState.Moving)
+        // 进而由 UnitMovingState 处理移动协程并在结束后通知 TurnManager
+        selectedUnit.MoveTo(targetTile);
 
-        // 限制移动范围不超过移动力
-        if (path.Count > selectedUnit.moveRange + 1)
-        {
-            path = path.Take(selectedUnit.moveRange + 1).ToList();
-        }
-
-        if (path.Count > 1)
-        {
-            StartCoroutine(movementSystem.MoveUnitAlongPath(selectedUnit, path));
-
-            // 移动后清除选择和高亮
-            movementSystem.ClearHighlights(GridManager.tileDict);
-            selectedUnit = null;
-            currentMoveRange = null;
-        }
+        // 移动开始后，可以暂时清除选中和高亮，或者等移动结束再清除（取决于你的UI需求）
+        // 注意：如果在 MoveTo 内部已经处理了状态锁定，这里不需要额外操作
+        movementSystem.ClearHighlights(GridManager.tileDict);
+        selectedUnit = null;
+        currentMoveRange = null;
     }
 
     void AttackEnemy(EnemyUnit enemy)
@@ -485,7 +476,7 @@ public class PlayerInput : MonoBehaviour
         // 通知回合管理器：当前单位行动结束
         // 注意：在 Unit.Attack() 内部如果是异步（有动画），这里最好也做成异步回调
         // 现阶段为了简单，直接调用
-        turnManager.UnitFinishedAction(selectedUnit);
+        //turnManager.UnitFinishedAction(selectedUnit);
 
         // 5. 清理本地状态
         selectedUnit = null;

@@ -389,6 +389,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420033}
+  - component: {fileID: 519420034}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -487,9 +488,24 @@ MonoBehaviour:
   enableDrag: 1
   dragSensitivity: 1
   invertDrag: 1
-  inertiaDamping: 20
-  minInertiaSpeed: 0.1
+  dragLinearDamping: 8
+  inertiaDamping: 5
+  edgeSpringStiffness: 20
+  edgeSpringDamping: 3
+  maxSpeed: 50
   clampToBounds: 1
+--- !u!114 &519420034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbea2678be237e3439976650437159cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &629753649
 GameObject:
   m_ObjectHideFlags: 0

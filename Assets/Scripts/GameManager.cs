@@ -12,7 +12,6 @@ public class GameManager : MonoBehaviour
     public int seed;
 
     public GridManager gridManager;
-    public TurnManager turnManager;
     public SimpleWFCGenerator simpleWFCGenerator;
     private FriendlyUnit playerUnit;
     private EnemyUnit enemyUnit;
@@ -22,6 +21,7 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     void Start()
@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour
         simpleWFCGenerator.GenerateAndBuildMap(seed);
         SpawnEnemyAt(new Vector2Int(7, 7));
         SpawnPlayerAt(new Vector2Int(1, 1)); // 再生成玩家
-        turnManager.OnGameInitialized();
+        TurnManager.Instance.OnGameInitialized();
         Debug.Log("GameManager 初始化完毕，触发 TurnManager");
 
         if (gridManager != null && CameraController.Instance != null)
@@ -47,9 +47,9 @@ public class GameManager : MonoBehaviour
     }
     private void Update()
     {
-        if (playerObj != null)
+        if(Input.GetKeyDown(KeyCode.E))
         {
-            //mainCamera.GetComponent<Transform>().position=playerObj.GetComponent<Transform>().position;
+            SpawnEnemyAt(new Vector2Int(7, 7));
         }
     }
     void SpawnEnemyAt(Vector2Int gridPos)
@@ -84,10 +84,10 @@ public class GameManager : MonoBehaviour
             gridManager.SetUnitOnTile(enemyUnit, gridPos);
         }
 
-        if (turnManager != null)
+        if (TurnManager.Instance != null)
         {
-            turnManager.enemyUnits.Add(enemyUnit);
-            turnManager.allUnits.Add(enemyUnit);
+            TurnManager.Instance.enemyUnits.Add(enemyUnit);
+            TurnManager.Instance.allUnits.Add(enemyUnit);
         }
 
         Debug.Log($"敌方已生成在网格位置 {gridPos}");
@@ -116,10 +116,10 @@ public class GameManager : MonoBehaviour
             playerUnit.maxHP = 20;
             playerUnit.currentHP = 20;
             playerUnit.baseAttack = 5;
-            playerUnit.moveRange = 3;
+            playerUnit.moveRange = 10;
             playerUnit.attackRange = 1;
             playerUnit.unitType = UnitType.Player;
-            playerUnit.AddSkill(SkillType.NormalAttack, "普攻", 1,1, 0);
+            playerUnit.AddSkill(SkillType.NormalAttack, "普攻", 1, 1, 0);
             playerUnit.AddSkill(SkillType.BattleSkill, "战技", 2,2, 2);
             playerUnit.AddSkill(SkillType.Ultimate, "终结技", 5, 5, 5);
 
@@ -128,10 +128,10 @@ public class GameManager : MonoBehaviour
         }
 
         // 将玩家添加到TurnManager
-        if (turnManager != null)
+        if (TurnManager.Instance != null)
         {
-            turnManager.playerUnits.Add(playerUnit);
-            turnManager.allUnits.Add(playerUnit);
+            TurnManager.Instance.playerUnits.Add(playerUnit);
+            TurnManager.Instance.allUnits.Add(playerUnit);
         }
         if (CameraController.Instance != null)
         {

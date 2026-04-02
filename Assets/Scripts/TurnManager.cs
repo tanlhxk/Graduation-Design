@@ -26,19 +26,33 @@ public class TurnManager : MonoBehaviour
     private int currentUnitIndex = 0;
 
     public GridManager gridManager;
-    public MovementSystem movementSystem;
     private bool isGameReady = false;
     public TurnPhase currentPhase = TurnPhase.None;
     public int currentTurnNumber = 1;
+
+    void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
 
     public void OnGameInitialized()
     {
         Debug.Log("TurnManager 接收到初始化信号，开始收集单位...");
 
-        // 此时 GameManager 已经生成了玩家和敌人
-        allUnits = new List<Unit>(FindObjectsOfType<Unit>());
-        playerUnits = new List<FriendlyUnit>(FindObjectsOfType<FriendlyUnit>());
-        enemyUnits = new List<EnemyUnit>(FindObjectsOfType<EnemyUnit>());
+        // 直接使用 Unit.AllUnits，无需再次查找
+        allUnits = Unit.AllUnits;
+        playerUnits = new List<FriendlyUnit>();
+        enemyUnits = new List<EnemyUnit>();
+        foreach (Unit unit in Unit.AllUnits)
+        {
+            if (unit is FriendlyUnit friendly)
+                playerUnits.Add(friendly);
+            else if (unit is EnemyUnit enemy)
+                enemyUnits.Add(enemy);
+        }
 
         // 调试输出：看看找到了多少单位
         Debug.Log($"找到 {playerUnits.Count} 个玩家单位, {enemyUnits.Count} 个敌人单位");
@@ -93,7 +107,7 @@ public class TurnManager : MonoBehaviour
         Debug.Log($"当前行动单位: {unit.unitName}");
 
         // 计算并高亮可移动范围
-        List<Tile> moveableTiles = movementSystem.GetMoveableTiles(unit, unit.moveRange);
+        List<Tile> moveableTiles = MovementSystem.Instance.GetMoveableTiles(unit, unit.moveRange);
         //movementSystem.HighlightMoveRange(moveableTiles);
 
         // 通知UI更新
@@ -103,10 +117,16 @@ public class TurnManager : MonoBehaviour
     // 单位完成行动
     public void UnitFinishedAction(Unit unit)
     {
-        if (unit != currentActiveUnit) return;
+
+        Debug.Log($"UnitFinishedAction 被调用，单位：{unit?.unitName}，当前激活单位：{currentActiveUnit?.unitName}，阶段：{currentPhase}，当前索引：{currentUnitIndex}，玩家单位数量：{playerUnits.Count}");
+        if (unit != currentActiveUnit)
+        {
+            Debug.Log("单位不匹配，返回");
+            return;
+        }
 
         // 清除高亮
-        movementSystem.ClearHighlights(GridManager.tileDict);
+        MovementSystem.Instance.ClearHighlights(GridManager.tileDict);
 
         // 移动到下一个单位
         if (currentPhase == TurnPhase.PlayerTurn)
@@ -120,6 +140,7 @@ public class TurnManager : MonoBehaviour
             }
             else
             {
+                currentActiveUnit = null;
                 // 所有玩家单位行动完毕，进入敌人回合
                 Invoke(nameof(StartEnemyTurn), 0.5f);
             }
@@ -177,68 +198,44 @@ public class TurnManager : MonoBehaviour
     // 执行敌人AI行动
     IEnumerator ExecuteEnemyTurn(EnemyUnit enemy)
     {
-        // 如果敌人在此之前已经死亡，直接结束
+        // 死亡检查
         if (enemy == null || enemy.currentHP <= 0)
         {
             UnitFinishedAction(enemy);
             yield break;
         }
 
-        yield return new WaitForSeconds(0.5f); // 等待一下，让玩家看清
+        yield return new WaitForSeconds(0.5f); // 行动前等待，让玩家看清
 
-        // 简单的AI逻辑
-        // 1. 检查是否可以攻击玩家
+        // 寻找最近的玩家
         FriendlyUnit targetPlayer = FindNearestPlayer(enemy);
 
-        if (targetPlayer != null && enemy.CanAttack((FriendlyUnit)targetPlayer, 1))
+        // 情况1：可以攻击
+        if (targetPlayer != null && enemy.CanAttack(targetPlayer, 1))
         {
-            // 可以攻击，直接攻击
             Debug.Log($"{enemy.unitName} 攻击 {targetPlayer.unitName}");
+            // 调用 Attack 方法，内部会触发状态机，攻击完成后自动调用 UnitFinishedAction
             enemy.Attack(targetPlayer);
-            yield return new WaitForSeconds(0.5f);
-            UnitFinishedAction(enemy);
+            // 立即退出协程，状态机会在攻击结束后通知 TurnManager
+            yield break;
         }
-        else
+
+        // 情况2：无法攻击，尝试移动
+        if (targetPlayer != null)
         {
-            // 不能攻击，尝试向玩家移动
-            if (targetPlayer != null)
+            List<Tile> moveableTiles = MovementSystem.Instance.GetMoveableTiles(enemy, enemy.moveRange);
+            Tile bestTile = FindTileClosestToPlayer(moveableTiles, targetPlayer);
+
+            if (bestTile != null && bestTile != enemy.currentTile)
             {
-                // 计算可移动范围
-                List<Tile> moveableTiles = movementSystem.GetMoveableTiles(enemy, enemy.moveRange);
-
-                // 寻找离玩家最近的可行走格子
-                Tile bestTile = FindTileClosestToPlayer(moveableTiles, targetPlayer);
-
-                if (bestTile != null && bestTile != enemy.currentTile)
-                {
-                    // 寻路移动到该格子
-                    List<Tile> path = movementSystem.FindPath(enemy, enemy.currentTile, bestTile);
-
-                    // 限制路径长度不超过移动范围
-                    if (path.Count > enemy.moveRange + 1)
-                    {
-                        path = path.Take(enemy.moveRange + 1).ToList();
-                    }
-
-                    if (path.Count > 1)
-                    {
-                        yield return StartCoroutine(movementSystem.MoveUnitAlongPath(enemy, path));
-                    }
-                    else
-                    {
-                        UnitFinishedAction(enemy);
-                    }
-                }
-                else
-                {
-                    UnitFinishedAction(enemy);
-                }
-            }
-            else
-            {
-                UnitFinishedAction(enemy);
+                // 通过状态机移动，移动完成后状态机会自动调用 UnitFinishedAction
+                enemy.MoveTo(bestTile);
+                yield break; // 等待状态机完成回调
             }
         }
+
+        // 情况3：既不能攻击也无法移动，直接结束该敌人回合
+        UnitFinishedAction(enemy);
     }
 
     // 找到最近的玩家
