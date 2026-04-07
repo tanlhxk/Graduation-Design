@@ -1,12 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Tilemaps;
 
 // 格子类型枚举
 public enum TileType
 {
     Walkable,    // 可行走
     Obstacle,    // 障碍物（墙、陷阱）
-    Wallside,
     Unit,        // 被单位占据
     Exit         // 出口/楼梯
 }
@@ -44,17 +44,16 @@ public class TileSet : ScriptableObject
     public struct TileEntry
     {
         public TileType type;
-        public GameObject prefab;
-        //public Color color;  // 可选，用于调试
+        public TileBase tile;   // 改为 TileBase
     }
 
     public TileEntry[] entries;
 
-    public GameObject GetPrefab(TileType type)
+    public TileBase GetTile(TileType type)
     {
         foreach (var entry in entries)
         {
-            if (entry.type == type) return entry.prefab;
+            if (entry.type == type) return entry.tile;
         }
         return null;
     }
@@ -62,10 +61,13 @@ public class TileSet : ScriptableObject
 // 网格管理器
 public class GridManager : MonoBehaviour
 {
+    public static GridManager Instance;
     [Header("网格设置")]
     [SerializeField] private float cellSize = 1f;          // 格子大小（保持不变）
     [SerializeField] private GameObject tilePrefab;        // 默认格子预制体
-    [SerializeField] private TileSet tileSet;              // 图块集（包含各类型对应的预制体/颜色等）
+    [Header("Tilemap设置")]
+    [SerializeField] private Tilemap tilemap;          // 引用场景中的 Tilemap
+    [SerializeField] private TileSet tileSet;          // 仍然使用 TileSet，但里面改为存储 Tile 而不是 Prefab
 
     private int width;
     private int height;
@@ -77,6 +79,8 @@ public class GridManager : MonoBehaviour
 
     void Awake()
     {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
         //GenerateGrid();
     }
 
@@ -112,14 +116,12 @@ public class GridManager : MonoBehaviour
         width = mapData.GetLength(0);
         height = mapData.GetLength(1);
 
+        // 清除所有现有瓦片（如果重新生成地图）
+        tilemap.ClearAllTiles();
+
+        // 依然保留字典用于逻辑查询（单位占据、路径寻找等）
         grid = new Tile[width, height];
         tileDict = new Dictionary<Vector2Int, Tile>();
-
-        // 清除旧的子物体（如果重新生成地图）
-        foreach (Transform child in transform)
-        {
-            Destroy(child.gameObject);
-        }
 
         for (int x = 0; x < width; x++)
         {
@@ -130,26 +132,45 @@ public class GridManager : MonoBehaviour
                 grid[x, y] = tile;
                 tileDict[new Vector2Int(x, y)] = tile;
 
-                // 根据类型创建可视化
-                CreateTileVisual(x, y, type, tile);
+                // 设置 Tilemap 瓦片
+                Vector3Int cellPos = new Vector3Int(x, y, 0);
+                TileBase tileBase = tileSet != null ? tileSet.GetTile(type) : null;
+                if (tileBase != null)
+                {
+                    tilemap.SetTile(cellPos, tileBase);
+                }
+                else
+                {
+                    // 如果没有配置，可以设置一个默认 Tile（可选）
+                    Debug.LogWarning($"未找到类型 {type} 对应的 TileBase");
+                }
             }
         }
 
-        Debug.Log($"Grid built with size {width}x{height}");
+        // 调整 Tilemap 的尺寸和位置（可选）
+        tilemap.CompressBounds();
+
+        Debug.Log($"Grid built with Tilemap, size {width}x{height}");
     }
     // 世界坐标转网格坐标
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
-        int x = Mathf.FloorToInt(worldPos.x / cellSize);
-        int y = Mathf.FloorToInt(worldPos.y / cellSize);
-        return new Vector2Int(x, y);
+        Vector3Int cellPos = tilemap.WorldToCell(worldPos);
+        return new Vector2Int(cellPos.x, cellPos.y);
     }
-
     // 网格坐标转世界坐标
     public Vector3 GridToWorld(Vector2Int gridPos)
     {
-        return new Vector3(gridPos.x * cellSize + cellSize / 2,
-                          gridPos.y * cellSize + cellSize / 2, 0);
+        return tilemap.CellToWorld(new Vector3Int(gridPos.x, gridPos.y, 0));
+    }
+
+    public static int GetDistance(Tile tileA, Tile tileB)
+    {
+        // 这里使用曼哈顿距离作为例子，如果是斜向移动，可以用 Mathf.Max
+        int dx = Mathf.Abs(tileA.gridPos.x - tileB.gridPos.x);
+        int dy = Mathf.Abs(tileA.gridPos.y - tileB.gridPos.y);
+        return dx + dy; // 曼哈顿距离
+                        // 如果是八方向移动，通常用：return Mathf.Max(dx, dy);
     }
 
     // 获取指定位置的格子
@@ -179,7 +200,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // 可视化格子
+    /*// 可视化格子
     private void CreateTileVisual(int x, int y, TileType type, Tile tile)
     {
         Vector3 worldPos = GridToWorld(new Vector2Int(x, y));
@@ -218,5 +239,5 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
 }

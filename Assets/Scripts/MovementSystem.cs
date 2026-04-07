@@ -7,7 +7,6 @@ using DG.Tweening;
 public class MovementSystem : MonoBehaviour
 {
     public static MovementSystem Instance { get; private set; }
-    public GridManager gridManager;
     public TurnManager turnManager;
 
     [Header("高亮材质")]
@@ -67,11 +66,7 @@ public class MovementSystem : MonoBehaviour
             foreach (var dir in directions)
             {
                 Vector2Int neighborPos = current.gridPos + dir;
-                if(gridManager==null)
-                {
-                    Debug.Log("未找到");
-                }
-                Tile neighbor = gridManager.GetTile(neighborPos);
+                Tile neighbor = GridManager.Instance.GetTile(neighborPos);
 
                 if (neighbor == null) continue;
 
@@ -130,7 +125,7 @@ public class MovementSystem : MonoBehaviour
             foreach (var dir in directions)
             {
                 Vector2Int neighborPos = current.gridPos + dir;
-                Tile neighbor = gridManager.GetTile(neighborPos);
+                Tile neighbor = GridManager.Instance.GetTile(neighborPos);
 
                 if (neighbor == null) continue;
 
@@ -188,7 +183,7 @@ public class MovementSystem : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
         {
             Tile nextTile = path[i];
-            Vector3 targetPos = gridManager.GridToWorld(nextTile.gridPos);
+            Vector3 targetPos = GridManager.Instance.GridToWorld(nextTile.gridPos);
 
             // 计算移动耗时
             float duration = Vector3.Distance(unit.transform.position, targetPos) / unit.moveSpeed;
@@ -202,7 +197,7 @@ public class MovementSystem : MonoBehaviour
             unit.transform.position = targetPos;
 
             // 更新网格管理器中的单位占据信息
-            gridManager.SetUnitOnTile(unit, nextTile.gridPos);
+            GridManager.Instance.SetUnitOnTile(unit, nextTile.gridPos);
         }
 
         // 移动完成，协程自然结束。状态机会在 UnitMovingState 中处理后续的切换状态和回合通知

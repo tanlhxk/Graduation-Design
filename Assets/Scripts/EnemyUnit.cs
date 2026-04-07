@@ -5,7 +5,6 @@ using UnityEngine;
 public class EnemyUnit : Unit
 {
     [Header("战斗属性")]
-    public int baseAttack = 3;
     public int attackRange = 1;     // 攻击范围（格，1为相邻）
     //private List<SkillData> skillData = new List<SkillData>();
 
@@ -16,7 +15,7 @@ public class EnemyUnit : Unit
     }
 
     // 受伤
-    public void TakeDamage(int damage)
+    public override void TakeDamage(int damage)
     {
         currentHP -= damage;
         Debug.Log($"{unitName} 受到 {damage} 点伤害，剩余 HP: {currentHP}");

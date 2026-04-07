@@ -11,8 +11,8 @@ public class GameManager : MonoBehaviour
     [Header("地图种子")]
     public int seed;
 
-    public GridManager gridManager;
     public SimpleWFCGenerator simpleWFCGenerator;
+    public FacingCamera facingCamera;
     private FriendlyUnit playerUnit;
     private EnemyUnit enemyUnit;
     private GameObject playerObj;
@@ -32,10 +32,10 @@ public class GameManager : MonoBehaviour
         TurnManager.Instance.OnGameInitialized();
         Debug.Log("GameManager 初始化完毕，触发 TurnManager");
 
-        if (gridManager != null && CameraController.Instance != null)
+        if (GridManager.Instance != null && CameraController.Instance != null)
         {
-            float worldWidth = gridManager.Width * gridManager.CellSize;
-            float worldHeight = gridManager.Height * gridManager.CellSize;
+            float worldWidth = GridManager.Instance.Width * GridManager.Instance.CellSize;
+            float worldHeight = GridManager.Instance.Height * GridManager.Instance.CellSize;
             // 假设地图左下角为 (0,0)，右上角为 (worldWidth, worldHeight)
             Bounds bounds = new Bounds(new Vector3(worldWidth * 0.5f, worldHeight * 0.5f, 0),
                                        new Vector3(worldWidth, worldHeight, 0));
@@ -61,10 +61,10 @@ public class GameManager : MonoBehaviour
         }
 
         // 计算世界坐标
-        Vector3 worldPos = gridManager.GridToWorld(gridPos);
+        Vector3 worldPos = GridManager.Instance.GridToWorld(gridPos);
 
         // 实例化
-        enemyObj = Instantiate(enemyPrefab, worldPos, Quaternion.identity);
+        enemyObj = Instantiate(enemyPrefab, worldPos, Quaternion.identity,facingCamera.transform);
         enemyObj.tag = "Enemy";  // 设置标签（可选）
         enemyObj.name = "Enemy"; // 重命名
 
@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviour
             enemyUnit.unitType = UnitType.Enemy;
 
             // 通知GridManager该单位占据了格子
-            gridManager.SetUnitOnTile(enemyUnit, gridPos);
+            GridManager.Instance.SetUnitOnTile(enemyUnit, gridPos);
         }
 
         if (TurnManager.Instance != null)
@@ -89,7 +89,7 @@ public class GameManager : MonoBehaviour
             TurnManager.Instance.enemyUnits.Add(enemyUnit);
             TurnManager.Instance.allUnits.Add(enemyUnit);
         }
-
+        facingCamera.RefreshFacing();
         Debug.Log($"敌方已生成在网格位置 {gridPos}");
     }
     void SpawnPlayerAt(Vector2Int gridPos)
@@ -101,10 +101,10 @@ public class GameManager : MonoBehaviour
         }
 
         // 计算世界坐标
-        Vector3 worldPos = gridManager.GridToWorld(gridPos);
+        Vector3 worldPos = GridManager.Instance.GridToWorld(gridPos);
 
         // 实例化玩家
-        playerObj = Instantiate(playerPrefab, worldPos, Quaternion.identity);
+        playerObj = Instantiate(playerPrefab, worldPos, Quaternion.identity,facingCamera.transform);
         playerObj.tag = "Player";  // 设置标签（可选）
         playerObj.name = "Player"; // 重命名
 
@@ -119,12 +119,13 @@ public class GameManager : MonoBehaviour
             playerUnit.moveRange = 10;
             playerUnit.attackRange = 1;
             playerUnit.unitType = UnitType.Player;
-            playerUnit.AddSkill(SkillType.NormalAttack, "普攻", 1, 1, 0);
-            playerUnit.AddSkill(SkillType.BattleSkill, "战技", 2,2, 2);
-            playerUnit.AddSkill(SkillType.Ultimate, "终结技", 5, 5, 5);
-
+            //playerUnit.AddSkill(SkillType.NormalAttack, "普攻", 1, 1, 0);
+            //playerUnit.AddSkill(SkillType.BattleSkill, "战技", 2,2, 2);
+            //playerUnit.AddSkill(SkillType.Ultimate, "终结技", 5, 5, 5);
+            SkillDataSO normalAttack = Resources.Load<SkillDataSO>("Skills/NormalAttack");
+            playerUnit.AddSkill(normalAttack);
             // 通知GridManager该单位占据了格子
-            gridManager.SetUnitOnTile(playerUnit, gridPos);
+            GridManager.Instance.SetUnitOnTile(playerUnit, gridPos);
         }
 
         // 将玩家添加到TurnManager
@@ -137,7 +138,7 @@ public class GameManager : MonoBehaviour
         {
             CameraController.Instance.ForcePosition(playerObj.transform.position);
         }
-
+        facingCamera.RefreshFacing();
         Debug.Log($"玩家已生成在网格位置 {gridPos}");
     }
 }

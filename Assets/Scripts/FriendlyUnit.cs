@@ -5,9 +5,8 @@ using UnityEngine;
 public class FriendlyUnit : Unit
 {
     [Header("战斗属性")]
-    public int baseAttack = 3;
     public int attackRange = 1;     // 攻击范围（格，1为相邻）
-    private List<SkillData> skillData = new List<SkillData>();
+    private List<SkillDataSO> skillData = new List<SkillDataSO>();
 
     void Start()
     {
@@ -15,7 +14,7 @@ public class FriendlyUnit : Unit
     }
 
     // 受伤
-    public void TakeDamage(int damage)
+    public override void TakeDamage(int damage)
     {
         currentHP -= damage;
         Debug.Log($"{unitName} 受到 {damage} 点伤害，剩余 HP: {currentHP}");
@@ -26,57 +25,54 @@ public class FriendlyUnit : Unit
         }
     }
 
-    public void AddSkill(SkillType type, string name, int damage, int attackRange, int cd)
+    public void AddSkill(SkillDataSO skill)
     {
-        skillData.Add(new SkillData(type, name, damage, attackRange, cd));
+        if (skill != null && !skillData.Contains(skill))
+            skillData.Add(skill);
     }
 
     // 外部读取技能
-    public List<SkillData> GetSkills()
+    public List<SkillDataSO> GetUnitSkills()
     {
         return skillData;
     }
 
     // 1. 提供一个公共方法，根据索引返回技能数据
-    public SkillData GetSkillData(int index)
+    public SkillDataSO GetSkillData(int index)
     {
         return skillData[index];
+    }
+
+    public bool CanUseSkill(EnemyUnit target, SkillDataSO skillData)
+    {
+        if (skillData == null) return false;
+
+        // 这里可以写通用的距离判断逻辑
+        // 例如：计算格子距离是否 <= 技能射程
+        int distance = GridManager.GetDistance(this.currentTile, target.currentTile);
+        return distance <= skillData.skillRange;
     }
 
     public override void PerformAttack()
     {
         if (attackTarget == null) return;
 
-        // 目标一定是 EnemyUnit
-        EnemyUnit target = attackTarget as EnemyUnit;
-        if (target == null) return;
+        // 假设基类里有 attackSkillIndex 字段记录当前使用的技能ID
+        SkillDataSO skillData = GetSkillData(attackSkillIndex);
+        if (skillData == null) return;
 
-        int finalDamage = 0;
-        string skillName = "普通攻击";
+        // 执行技能 (核心：通过接口调用)
+        // 这里可以使用一个 SkillFactory 来根据 skillData.type 获取对应的 ISkillEffect 实例
+        ISkillEffect effect = SkillFactory.GetSkillEffect(skillData.skillType);
+        effect.Execute(this, attackTarget, skillData);
 
-        // 根据技能索引计算伤害
-        if (skillData.Count == 0 || attackSkillIndex == 0 || attackSkillIndex >= skillData.Count)
-        {
-            finalDamage = baseAttack;
-            skillName = "普通攻击";
-        }
-        else
-        {
-            SkillData data = skillData[attackSkillIndex];
-            finalDamage = Mathf.RoundToInt(baseAttack * data.damageMultiplier);
-            skillName = data.skillName;
-            // 可在此添加技能特效
-        }
-
-        Debug.Log($"{unitName} 使用 {skillName} 造成 {finalDamage} 点伤害");
-        target.TakeDamage(finalDamage);
-
-        // 摄像机震动
+        // 通用的战斗反馈 (这部分可以保留在 Unit 中)
         CameraShake camShake = Camera.main.GetComponent<CameraShake>();
         if (camShake != null)
             StartCoroutine(camShake.Shake(0.1f, 0.1f));
 
-        // 状态机中已经会调用 UnitFinishedAction，无需额外处理
+        // 基类逻辑：通知回合结束等
+        base.PerformAttack();
     }
 
     public void Attack(EnemyUnit target, int skillIndex = 0)
@@ -97,7 +93,7 @@ public class FriendlyUnit : Unit
         int effectiveRange = attackRange;
         if (skillData.Count > skillIndex && skillIndex > 0)
         {
-            effectiveRange = skillData[skillIndex].attackRange;
+            effectiveRange = skillData[skillIndex].skillRange;
         }
 
         return distance <= effectiveRange;
@@ -108,5 +104,17 @@ public class FriendlyUnit : Unit
         int ar = Mathf.Abs(currentTile.gridPos.x - tile.gridPos.x) +
                       Mathf.Abs(currentTile.gridPos.y - tile.gridPos.y);
         return ar <= attackRange;
+    }
+
+    public void ExecuteSkill(EnemyUnit target, SkillDataSO skillData)
+    {
+        // 1. 获取技能效果工厂
+        ISkillEffect effect = SkillFactory.GetSkillEffect(skillData.skillType);
+
+        // 2. 执行效果
+        effect.Execute(this, target, skillData);
+
+        // 3. 播放特效/动画
+        // ...
     }
 }

@@ -20,36 +20,6 @@ public enum UnitState
     Dead        // 死亡
 }
 
-// 技能类型枚举
-public enum SkillType
-{
-    NormalAttack,   // 普攻
-    BattleSkill,    // 战技
-    Ultimate        // 终结技
-}
-
-// 技能数据容器
-[System.Serializable]
-public class SkillData
-{
-    public SkillType type;
-    public string skillName;
-    public int damageMultiplier;
-    public int attackRange;
-    public Sprite icon;
-    public int coolDown_Rounds; // 冷却需要的“回合数”或“步数”
-
-    // 构造函数
-    public SkillData(SkillType t, string n, int dmg, int ar, int cd)
-    {
-        type = t;
-        skillName = n;
-        damageMultiplier = dmg;
-        attackRange = ar;
-        coolDown_Rounds = cd;
-    }
-}
-
 // 状态接口
 public interface IUnitState
 {
@@ -104,7 +74,8 @@ public class UnitAttackingState : IUnitState
     private IEnumerator AttackCoroutine(Unit unit)
     {
         // 执行攻击逻辑（例如调用攻击方法，等待动画等）
-        unit.PerformAttack(); // 需要在 Unit 中实现 PerformAttack
+        //unit.PerformAttack(); // 需要在 Unit 中实现 PerformAttack
+        unit.PerformAttackWithSkill();
         yield return new WaitForSeconds(0.5f); // 模拟攻击动画时间
         unit.ChangeState(UnitState.Idle);
         if (TurnManager.Instance != null && unit.currentHP > 0)
@@ -140,6 +111,7 @@ public class Unit : MonoBehaviour
     public int maxHP = 10;
     public int currentHP;
     public int moveRange = 3;
+    public int baseAttack = 3;
     public float moveSpeed = 2f;
 
     [Header("引用")]
@@ -150,6 +122,7 @@ public class Unit : MonoBehaviour
 
     public UnitState CurrentStateEnum { get; private set; }
     private IUnitState currentState;
+    private SkillDataSO currentSelectedSkillData;
 
     // 状态对象字典，便于复用
     private Dictionary<UnitState, IUnitState> states = new Dictionary<UnitState, IUnitState>();
@@ -220,11 +193,32 @@ public class Unit : MonoBehaviour
         ChangeState(UnitState.Attacking);
     }
 
+    public void Attack(Unit target, SkillDataSO skillData)
+    {
+        if (CurrentStateEnum != UnitState.Idle) return;
+        attackTarget = target;
+        currentSelectedSkillData = skillData;   // 新增字段：SkillDataSO currentSelectedSkillData
+        ChangeState(UnitState.Attacking);
+    }
+
+    public virtual void PerformAttackWithSkill()
+    {
+        if (attackTarget == null || currentSelectedSkillData == null) return;
+        ISkillEffect effect = SkillFactory.GetSkillEffect(currentSelectedSkillData.skillType);
+        effect.Execute(this, attackTarget, currentSelectedSkillData);
+    }
+
     // 实际执行攻击（由攻击状态调用）
     public virtual void PerformAttack()
     {
         // 此处暂时留空，具体由子类重写
         Debug.Log($"{unitName} 执行攻击");
+    }
+
+    public virtual void TakeDamage(int damage)
+    {
+        // 此处暂时留空，具体由子类重写
+        Debug.Log($"{unitName} 收到攻击");
     }
 
     // 立即死亡（由死亡状态调用）
@@ -260,7 +254,7 @@ public class Unit : MonoBehaviour
     }
 
     // 获取可攻击目标列表（使用缓存的 AllUnits）
-    public List<Unit> GetAttackTargets(SkillData skill)
+    public List<Unit> GetAttackTargets(SkillDataSO skill)
     {
         List<Unit> targets = new List<Unit>();
         Vector2Int myPos = currentTile.gridPos;
@@ -270,7 +264,7 @@ public class Unit : MonoBehaviour
             if (unit.currentHP <= 0) continue;       // 跳过已死亡
             int distance = Mathf.Abs(myPos.x - unit.currentTile.gridPos.x) +
                            Mathf.Abs(myPos.y - unit.currentTile.gridPos.y);
-            if (distance <= skill.attackRange)
+            if (distance <= skill.skillRange)
             {
                 targets.Add(unit);
             }

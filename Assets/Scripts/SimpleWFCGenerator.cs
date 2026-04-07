@@ -25,15 +25,12 @@ public class SimpleWFCGenerator : MonoBehaviour
     public bool enableConnectivityPostProcess = true;
     public List<Vector2Int> criticalPoints;      // 必须连通的关键点（如起点、出口）
     public List<TileType> walkableTypes;          // 哪些类型被视为可行走（用于连通性判断）
-
-
-    public GridManager gridManager;
     public Vector2Int mapSize;
 
     public void GenerateAndBuildMap(int seed)
     {
         TileType[,] mapData = RunWFC(seed);   // WFC算法返回二维数组
-        gridManager.BuildGridFromData(mapData);
+        GridManager.Instance.BuildGridFromData(mapData);
     }
 
     // 内部数据结构：类型兼容性查找表（双向）
@@ -74,36 +71,30 @@ public class SimpleWFCGenerator : MonoBehaviour
 
         propagationQueue = new Queue<Vector2Int>();
 
+        // 强制边界为障碍物
         for (int x = 0; x < width; x++)
         {
-            ForceCollapseCell(x, 0, TileType.Obstacle); // 底边
-            ForceCollapseCell(x, height - 1, TileType.Obstacle); // 顶边
+            ForceCollapseCell(x, 0, TileType.Obstacle);
+            ForceCollapseCell(x, height - 1, TileType.Obstacle);
         }
         for (int y = 0; y < height; y++)
         {
-            ForceCollapseCell(0, y, TileType.Obstacle); // 左边
-            ForceCollapseCell(width - 1, y, TileType.Obstacle); // 右边
+            ForceCollapseCell(0, y, TileType.Obstacle);
+            ForceCollapseCell(width - 1, y, TileType.Obstacle);
         }
 
-        // 强制中心区域是可走的，确保有空间生成
+        // 强制中心区域可走
         ForceCollapseCell(width / 2, height / 2, TileType.Walkable);
-        ForceCollapseCell(1, 1, TileType.Walkable); // 确保起点附近可走
-
-        // 强制出口（保持不变）
-        //ForceCollapseCell(width - 2, height - 2, TileType.Exit);
+        ForceCollapseCell(1, 1, TileType.Walkable);
 
         // 主循环
         while (true)
         {
-            // 1. 观察：找到熵最小（可能类型最少）的未坍缩格子
             Vector2Int? target = FindMinEntropyCell();
             if (target == null)
-                break; // 所有格子已坍缩
+                break;
 
-            // 2. 坍缩该格子
             CollapseCell(target.Value.x, target.Value.y);
-
-            // 3. 传播约束（队列中已包含刚坍缩的格子）
             if (!Propagate())
             {
                 Debug.LogError("WFC 矛盾发生，生成失败");
@@ -117,51 +108,12 @@ public class SimpleWFCGenerator : MonoBehaviour
             for (int y = 0; y < height; y++)
                 result[x, y] = wave[x, y].finalType;
 
-        // 后处理：确保关键点连通
+        // 后处理：确保关键点连通（基于原始 Walkable/Obstacle/Exit）
         if (enableConnectivityPostProcess && criticalPoints.Count >= 2)
         {
             EnsureConnectivity(ref result);
         }
-        // 遍历地图，移除孤立的障碍物
-        for (int x = 1; x < width - 1; x++)
-        {
-            for (int y = 1; y < height - 1; y++)
-            {
-                TileType currentType = result[x, y];
-
-                // 如果当前格子是障碍物
-                if (currentType == TileType.Obstacle)
-                {
-                    bool isIsolated = true;
-
-                    // 检查上下左右四个邻居
-                    Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
-                    foreach (var dir in directions)
-                    {
-                        Vector2Int neighborPos = new Vector2Int(x + dir.x, y + dir.y);
-                        TileType neighborType = result[neighborPos.x, neighborPos.y];
-
-                        // 如果有一个邻居也是障碍物，那它就不是孤立的
-                        if (neighborType == TileType.Obstacle)
-                        {
-                            isIsolated = false;
-                            break;
-                        }
-                    }
-
-                    // 如果它是孤立的，把它变成可行走（或者根据权重随机选择）
-                    if (isIsolated)
-                    {
-                        if (isIsolated && Random.value > 0.2f)
-                        {
-                            result[x, y] = TileType.Walkable;
-                        }
-                        // 根据周围环境选择类型（比如周围都是草地，这里也变草地）
-                        // result[x, y] = ChooseTypeByNeighbors(new Vector2Int(x, y), result, walkableTypes); 
-                    }
-                }
-            }
-        }
+        RemoveSmallObstacleClusters(ref result);
         return result;
     }
 
@@ -170,26 +122,18 @@ public class SimpleWFCGenerator : MonoBehaviour
     {
         compatibleNeighbors = new Dictionary<TileType, HashSet<TileType>>();
 
-        // 先初始化所有类型，允许为空集合
         foreach (var type in tileTypes)
         {
             if (!compatibleNeighbors.ContainsKey(type))
-            {
                 compatibleNeighbors[type] = new HashSet<TileType>();
-            }
         }
 
-        // 只添加你显式定义的规则
         foreach (var rule in adjacencyRules)
         {
             if (!compatibleNeighbors.ContainsKey(rule.type)) continue;
-
-            // 清空旧规则，只添加新的
             compatibleNeighbors[rule.type].Clear();
             foreach (var neighbor in rule.allowedNeighbors)
-            {
                 compatibleNeighbors[rule.type].Add(neighbor);
-            }
         }
     }
 
@@ -197,7 +141,7 @@ public class SimpleWFCGenerator : MonoBehaviour
     private Vector2Int? FindMinEntropyCell()
     {
         int minEntropy = int.MaxValue;
-        List<Vector2Int> candidates = new List<Vector2Int>(); // 储存所有最低熵的格子
+        List<Vector2Int> candidates = new List<Vector2Int>();
 
         for (int x = 0; x < width; x++)
         {
@@ -214,21 +158,17 @@ public class SimpleWFCGenerator : MonoBehaviour
                         candidates.Add(new Vector2Int(x, y));
                     }
                     else if (entropy == minEntropy)
-                    {
                         candidates.Add(new Vector2Int(x, y));
-                    }
                 }
             }
         }
 
         if (candidates.Count == 0) return null;
-
-        // 从所有“最低熵”的格子中随机选一个，而不是总选第一个
         int randomIndex = Random.Range(0, candidates.Count);
         return candidates[randomIndex];
     }
 
-    // 坍缩指定格子（随机选择一种类型）
+    // 坍缩指定格子
     private void CollapseCell(int x, int y)
     {
         var cell = wave[x, y];
@@ -236,15 +176,12 @@ public class SimpleWFCGenerator : MonoBehaviour
         cell.finalType = chosen;
         cell.possibleTypes = new List<TileType> { chosen };
         cell.collapsed = true;
-
-        // 将当前格子加入传播队列
         propagationQueue.Enqueue(new Vector2Int(x, y));
     }
 
     // 根据权重随机选择一个类型
     private TileType ChooseRandomType(List<TileType> candidates)
     {
-        // 计算权重总和
         int totalWeight = 0;
         foreach (var type in candidates)
         {
@@ -261,22 +198,19 @@ public class SimpleWFCGenerator : MonoBehaviour
             if (random < cumulative)
                 return type;
         }
-        return candidates[0]; // 后备
+        return candidates[0];
     }
 
-    // 传播约束（基于队列）
+    // 传播约束
     private bool Propagate()
     {
         while (propagationQueue.Count > 0)
         {
             Vector2Int pos = propagationQueue.Dequeue();
-            var cell = wave[pos.x, pos.y];
-
-            // 检查四个方向
-            CheckNeighbor(pos, pos.x + 1, pos.y); // 右
-            CheckNeighbor(pos, pos.x - 1, pos.y); // 左
-            CheckNeighbor(pos, pos.x, pos.y + 1); // 上
-            CheckNeighbor(pos, pos.x, pos.y - 1); // 下
+            CheckNeighbor(pos, pos.x + 1, pos.y);
+            CheckNeighbor(pos, pos.x - 1, pos.y);
+            CheckNeighbor(pos, pos.x, pos.y + 1);
+            CheckNeighbor(pos, pos.x, pos.y - 1);
         }
         return true;
     }
@@ -284,36 +218,30 @@ public class SimpleWFCGenerator : MonoBehaviour
     // 检查单个邻居并更新其可能类型
     private void CheckNeighbor(Vector2Int sourcePos, int nx, int ny)
     {
-        // 边界检查
         if (nx < 0 || nx >= width || ny < 0 || ny >= height)
             return;
 
         var sourceCell = wave[sourcePos.x, sourcePos.y];
         var neighborCell = wave[nx, ny];
 
-        // 如果邻居已坍缩，无需更新
         if (neighborCell.collapsed)
             return;
 
-        // 获取源格子的所有可能类型（如果已坍缩则只有一种）
         List<TileType> sourcePossibilities = sourceCell.possibleTypes;
-
-        // 计算邻居的新可能类型：必须与源格子的至少一种类型兼容
         List<TileType> newPossibilities = new List<TileType>();
+
         foreach (var neighborType in neighborCell.possibleTypes)
         {
             foreach (var sourceType in sourcePossibilities)
             {
-                // 检查兼容性
                 if (compatibleNeighbors[sourceType].Contains(neighborType))
                 {
                     newPossibilities.Add(neighborType);
-                    break; // 找到一个兼容即可
+                    break;
                 }
             }
         }
 
-        // 如果没有剩余类型，说明产生矛盾
         if (newPossibilities.Count == 0)
         {
             Debug.LogError($"矛盾: 格子({nx},{ny}) 无合法类型");
@@ -321,7 +249,6 @@ public class SimpleWFCGenerator : MonoBehaviour
             return;
         }
 
-        // 如果可能类型减少，更新并重新加入队列
         if (newPossibilities.Count < neighborCell.possibleTypes.Count)
         {
             neighborCell.possibleTypes = newPossibilities;
@@ -340,6 +267,7 @@ public class SimpleWFCGenerator : MonoBehaviour
         propagationQueue.Enqueue(new Vector2Int(x, y));
     }
 
+    // -------------------- 连通性后处理 --------------------
     private void EnsureConnectivity(ref TileType[,] map)
     {
         // 将关键点坐标限制在地图范围内
@@ -351,16 +279,17 @@ public class SimpleWFCGenerator : MonoBehaviour
         }
         if (points.Count < 2) return;
 
-        // 建立可行走类型的哈希集合，便于快速判断
+        // 可行走类型集合（包括 Exit）
         HashSet<TileType> walkableSet = new HashSet<TileType>(walkableTypes);
+        if (!walkableSet.Contains(TileType.Exit))
+            walkableSet.Add(TileType.Exit); // 出口也视为可行走
 
-        int maxAttempts = 10; // 防止无限循环
+        int maxAttempts = 10;
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            // 从第一个关键点开始进行 BFS，标记所有可达的可行走格子
+            // BFS 从第一个关键点开始
             bool[,] visited = new bool[width, height];
             Queue<Vector2Int> queue = new Queue<Vector2Int>();
-
             Vector2Int start = points[0];
             if (IsWalkable(map[start.x, start.y], walkableSet))
             {
@@ -368,9 +297,7 @@ public class SimpleWFCGenerator : MonoBehaviour
                 queue.Enqueue(start);
             }
 
-            // 四个方向
             Vector2Int[] dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
-
             while (queue.Count > 0)
             {
                 Vector2Int current = queue.Dequeue();
@@ -387,7 +314,7 @@ public class SimpleWFCGenerator : MonoBehaviour
                 }
             }
 
-            // 检查所有关键点是否都被访问到
+            // 检查所有关键点是否连通
             bool allConnected = true;
             List<Vector2Int> unconnected = new List<Vector2Int>();
             foreach (var pt in points)
@@ -398,25 +325,24 @@ public class SimpleWFCGenerator : MonoBehaviour
                     unconnected.Add(pt);
                 }
             }
+            if (allConnected) break;
 
-            if (allConnected)
-                break; // 全部连通，退出循环
-
-            // 修复：将每个未连通的关键点与已连通区域打通
+            // 打通未连通的关键点
             foreach (var pt in unconnected)
             {
-                // 寻找从 pt 到任意已访问格子的最短路径（这里使用简单的曼哈顿路径）
                 Vector2Int target = FindNearestVisited(pt, visited);
                 if (target != new Vector2Int(-1, -1))
                 {
-                    // 打通从 pt 到 target 的直线路径（可用 Bresenham 画线算法）
                     List<Vector2Int> path = FindPathAStar(pt, target, map, walkableSet);
-                    foreach (var cell in path)
+                    if (path != null)
                     {
-                        if (!IsWalkable(map[cell.x, cell.y], walkableSet))
+                        foreach (var cell in path)
                         {
-                            TileType newType = ChooseTypeByNeighbors(cell, map, walkableSet);
-                            map[cell.x, cell.y] = newType;
+                            if (!IsWalkable(map[cell.x, cell.y], walkableSet))
+                            {
+                                TileType newType = ChooseTypeByNeighbors(cell, map, walkableSet);
+                                map[cell.x, cell.y] = newType;
+                            }
                         }
                     }
                 }
@@ -424,13 +350,8 @@ public class SimpleWFCGenerator : MonoBehaviour
         }
     }
 
-    // 判断格子是否可行走（根据类型）
-    private bool IsWalkable(TileType type, HashSet<TileType> walkableSet)
-    {
-        return walkableSet.Contains(type);
-    }
+    private bool IsWalkable(TileType type, HashSet<TileType> walkableSet) => walkableSet.Contains(type);
 
-    // 寻找离给定点最近的已访问格子（曼哈顿距离最小）
     private Vector2Int FindNearestVisited(Vector2Int from, bool[,] visited)
     {
         int minDist = int.MaxValue;
@@ -455,7 +376,6 @@ public class SimpleWFCGenerator : MonoBehaviour
 
     private List<Vector2Int> FindPathAStar(Vector2Int start, Vector2Int goal, TileType[,] map, HashSet<TileType> walkableSet)
     {
-        // 节点优先级队列（按 f = g + h 排序）
         var openSet = new SimplePriorityQueue();
         Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
         Dictionary<Vector2Int, float> gScore = new Dictionary<Vector2Int, float>();
@@ -479,14 +399,11 @@ public class SimpleWFCGenerator : MonoBehaviour
                 if (neighbor.x < 0 || neighbor.x >= width || neighbor.y < 0 || neighbor.y >= height)
                     continue;
 
-                // 计算移动到 neighbor 的代价
-                float moveCost = 1f; // 基础移动代价
-                                     // 如果 neighbor 原本不可行走，增加额外代价
+                float moveCost = 1f;
                 if (!IsWalkable(map[neighbor.x, neighbor.y], walkableSet))
-                    moveCost += 10f; // 高代价，鼓励绕行
+                    moveCost += 10f;
 
                 float tentativeG = gScore[current] + moveCost;
-
                 if (!gScore.ContainsKey(neighbor) || tentativeG < gScore[neighbor])
                 {
                     cameFrom[neighbor] = current;
@@ -498,15 +415,14 @@ public class SimpleWFCGenerator : MonoBehaviour
                 }
             }
         }
-        return null; // 无路径
+        return null;
     }
 
-    // 统计邻居类型并选择最常见的可行走类型
     private TileType ChooseTypeByNeighbors(Vector2Int pos, TileType[,] map, HashSet<TileType> walkableSet)
     {
         Dictionary<TileType, int> counts = new Dictionary<TileType, int>();
         Vector2Int[] dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down,
-                           new Vector2Int(1,1), new Vector2Int(1,-1), new Vector2Int(-1,1), new Vector2Int(-1,-1) };
+                               new Vector2Int(1,1), new Vector2Int(1,-1), new Vector2Int(-1,1), new Vector2Int(-1,-1) };
 
         foreach (var dir in dirs)
         {
@@ -516,14 +432,12 @@ public class SimpleWFCGenerator : MonoBehaviour
                 TileType type = map[n.x, n.y];
                 if (walkableSet.Contains(type))
                 {
-                    if (!counts.ContainsKey(type))
-                        counts[type] = 0;
+                    if (!counts.ContainsKey(type)) counts[type] = 0;
                     counts[type]++;
                 }
             }
         }
 
-        // 如果有计数，返回计数最高的类型；否则返回默认可行走类型
         if (counts.Count > 0)
         {
             int maxCount = 0;
@@ -541,10 +455,7 @@ public class SimpleWFCGenerator : MonoBehaviour
         return walkableTypes[0];
     }
 
-    private float Heuristic(Vector2Int a, Vector2Int b)
-    {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
-    }
+    private float Heuristic(Vector2Int a, Vector2Int b) => Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
 
     private List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> cameFrom, Vector2Int current)
     {
@@ -558,29 +469,73 @@ public class SimpleWFCGenerator : MonoBehaviour
         return path;
     }
 
-    /*
-    // 生成从 start 到 end 的曼哈顿路径（先走 x 方向，再走 y 方向）
-    private List<Vector2Int> GetManhattanPath(Vector2Int start, Vector2Int end)
+    /// <summary>
+    /// 移除所有大小小于 2x2 (即格子数 < 4) 的障碍物连通块，将其变为 Walkable。
+    /// </summary>
+    private void RemoveSmallObstacleClusters(ref TileType[,] map)
     {
-        List<Vector2Int> path = new List<Vector2Int>();
-        int x = start.x;
-        int y = start.y;
-        path.Add(new Vector2Int(x, y));
+        int w = map.GetLength(0);
+        int h = map.GetLength(1);
+        bool[,] visited = new bool[w, h];
 
-        // 水平移动
-        while (x != end.x)
+        // 四个方向（上下左右）用于连通性判断（四连通即可，障碍物块不需要对角连通）
+        Vector2Int[] dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
+
+        for (int x = 0; x < w; x++)
         {
-            x += (x < end.x) ? 1 : -1;
-            path.Add(new Vector2Int(x, y));
+            for (int y = 0; y < h; y++)
+            {
+                // 只处理未访问的障碍物
+                if (map[x, y] == TileType.Obstacle && !visited[x, y])
+                {
+                    // BFS 收集当前连通块
+                    List<Vector2Int> cluster = new List<Vector2Int>();
+                    Queue<Vector2Int> queue = new Queue<Vector2Int>();
+                    queue.Enqueue(new Vector2Int(x, y));
+                    visited[x, y] = true;
+
+                    while (queue.Count > 0)
+                    {
+                        Vector2Int cur = queue.Dequeue();
+                        cluster.Add(cur);
+
+                        foreach (var dir in dirs)
+                        {
+                            int nx = cur.x + dir.x;
+                            int ny = cur.y + dir.y;
+                            if (nx >= 0 && nx < w && ny >= 0 && ny < h &&
+                                !visited[nx, ny] && map[nx, ny] == TileType.Obstacle)
+                            {
+                                visited[nx, ny] = true;
+                                queue.Enqueue(new Vector2Int(nx, ny));
+                            }
+                        }
+                    }
+
+                    // 如果连通块大小 < 4（不足 2x2），则全部改为 Walkable
+                    if (cluster.Count < 4)
+                    {
+                        foreach (var pos in cluster)
+                        {
+                            map[pos.x, pos.y] = TileType.Walkable;
+                        }
+                    }
+                }
+            }
         }
-        // 垂直移动
-        while (y != end.y)
+
+        // 可选：重新强制边界为 Obstacle，避免因移除小集群导致边界出现缺口
+        for (int i = 0; i < w; i++)
         {
-            y += (y < end.y) ? 1 : -1;
-            path.Add(new Vector2Int(x, y));
+            map[i, 0] = TileType.Obstacle;
+            map[i, h - 1] = TileType.Obstacle;
         }
-        return path;
-    }*/
+        for (int j = 0; j < h; j++)
+        {
+            map[0, j] = TileType.Obstacle;
+            map[w - 1, j] = TileType.Obstacle;
+        }
+    }
 }
 
 /// <summary>
@@ -589,6 +544,6 @@ public class SimpleWFCGenerator : MonoBehaviour
 [System.Serializable]
 public class TileAdjacencyRule
 {
-    public TileType type;                     // 当前类型
-    public List<TileType> allowedNeighbors;   // 允许相邻的类型列表
+    public TileType type;
+    public List<TileType> allowedNeighbors;
 }

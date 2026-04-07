@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,7 +11,7 @@ public class CameraController : MonoBehaviour
     private Vector3 autoMoveVelocity = Vector3.zero;
 
     [Header("摄像机设置")]
-    public float zDepth = -10f;
+    public Vector3 cameraOffset = new Vector3(0f, -10f, -10f);   // 根据实际俯仰角调整
 
     [Header("拖拽设置")]
     public bool enableDrag = true;
@@ -49,13 +50,12 @@ public class CameraController : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
         mainCamera = GetComponent<Camera>();
         if (mainCamera == null)
             mainCamera = Camera.main;
 
-        if (mainCamera != null)
-            mainCamera.orthographic = true;
+        //if (mainCamera != null)
+            //mainCamera.orthographic = true;
     }
 
     private void Update()
@@ -67,13 +67,23 @@ public class CameraController : MonoBehaviour
         // 自动移动（如果没有拖拽且没有物理速度时）
         if (!isDragging && currentVelocity.magnitude < 0.01f && targetPosition.HasValue)
         {
-            Vector3 desired = new Vector3(targetPosition.Value.x, targetPosition.Value.y, zDepth);
-            desired = ApplyBoundaryForce(desired, ref autoMoveVelocity, smoothTime); // 用弹簧平滑到达
-            transform.position = Vector3.SmoothDamp(transform.position, desired, ref autoMoveVelocity, smoothTime);
+            Vector3 desiredPosition = targetPosition.Value + cameraOffset;
+            desiredPosition.z = cameraOffset.z;
 
-            if (Vector3.Distance(transform.position, desired) < 0.01f)
+            // 边界 Clamp（直接限制目标位置）
+            if (clampToBounds && worldBounds.size != Vector3.zero)
             {
-                transform.position = desired;
+                GetCameraMoveBounds(out float minX, out float maxX, out float minY, out float maxY);
+                desiredPosition.x = Mathf.Clamp(desiredPosition.x, minX, maxX);
+                desiredPosition.y = Mathf.Clamp(desiredPosition.y, minY, maxY);
+            }
+
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref autoMoveVelocity, smoothTime);
+
+            // 到达判断
+            if (Vector3.Distance(transform.position, desiredPosition) < 0.01f)
+            {
+                transform.position = desiredPosition;
                 targetPosition = null;
                 autoMoveVelocity = Vector3.zero;
             }
@@ -136,13 +146,33 @@ public class CameraController : MonoBehaviour
             // 拖拽时也应用一点阻尼，防止无限加速
             currentVelocity *= (1f - Mathf.Clamp01(dragLinearDamping * Time.deltaTime));
         }
-
         // 边界弹簧力
         if (clampToBounds && worldBounds.size != Vector3.zero)
         {
             Vector3 position = transform.position;
-            float vertExtent = mainCamera.orthographicSize;
-            float horzExtent = vertExtent * Screen.width / Screen.height;
+            float vertExtent, horzExtent;
+            if (mainCamera.orthographic)
+            {
+                vertExtent = mainCamera.orthographicSize;
+                horzExtent = vertExtent * Screen.width / Screen.height;
+            }
+            else
+            {
+                // 透视模式：地面 Z=0，摄像机到地面的距离 = |transform.position.z|
+                float distanceToGround = Mathf.Abs(transform.position.z);
+                float pitchRad = transform.eulerAngles.x * Mathf.Deg2Rad;
+                float halfFovRad = mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
+
+                // 摄像机在 Z=0 平面上的可视半高（未考虑俯仰角）
+                float rawHalfHeight = Mathf.Tan(halfFovRad) * distanceToGround;
+                // 因为俯仰角导致地面被拉长，实际半高需要除以 cos(pitch)
+                float actualHalfHeight = rawHalfHeight / Mathf.Cos(pitchRad);
+                // 半宽只需根据屏幕宽高比计算，X 轴不受俯仰角影响（若摄像机无 roll）
+                float actualHalfWidth = actualHalfHeight * Screen.width / Screen.height;
+
+                vertExtent = actualHalfHeight;
+                horzExtent = actualHalfWidth;
+            }
 
             float minX = worldBounds.min.x + horzExtent;
             float maxX = worldBounds.max.x - horzExtent;
@@ -163,7 +193,7 @@ public class CameraController : MonoBehaviour
 
         // 应用速度移动摄像机
         transform.position += currentVelocity * Time.deltaTime;
-        transform.position = new Vector3(transform.position.x, transform.position.y, zDepth);
+        transform.position = new Vector3(transform.position.x, transform.position.y, cameraOffset.z);
 
         // 如果速度极小，直接置零防止微动
         if (currentVelocity.magnitude < 0.01f)
@@ -176,8 +206,32 @@ public class CameraController : MonoBehaviour
         if (!clampToBounds || worldBounds.size == Vector3.zero)
             return desiredPosition;
 
-        float vertExtent = mainCamera.orthographicSize;
-        float horzExtent = vertExtent * Screen.width / Screen.height;
+        float vertExtent, horzExtent;
+        if (mainCamera.orthographic)
+        {
+            vertExtent = mainCamera.orthographicSize;
+            horzExtent = vertExtent * Screen.width / Screen.height;
+        }
+        else
+        {
+            // 透视模式：地面 Z=0，摄像机到地面的距离 = |transform.position.z|
+            float distanceToGround = Mathf.Abs(transform.position.z);
+            float pitchRad = transform.eulerAngles.x * Mathf.Deg2Rad;
+            float halfFovRad = mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
+
+            // 摄像机在 Z=0 平面上的可视半高（未考虑俯仰角）
+            float rawHalfHeight = Mathf.Tan(halfFovRad) * distanceToGround;
+            // 因为俯仰角导致地面被拉长，实际半高需要除以 cos(pitch)
+            float actualHalfHeight = rawHalfHeight / Mathf.Cos(pitchRad);
+            // 半宽只需根据屏幕宽高比计算，X 轴不受俯仰角影响（若摄像机无 roll）
+            float actualHalfWidth = actualHalfHeight * Screen.width / Screen.height;
+
+            vertExtent = actualHalfHeight;
+            horzExtent = actualHalfWidth;
+        }
+        Vector3 cameraForwardOnGround = transform.forward;
+        cameraForwardOnGround.y = 0; // 忽略Y分量，只看水平投影
+        Vector3 groundCenter = desiredPosition;
         float minX = worldBounds.min.x + horzExtent;
         float maxX = worldBounds.max.x - horzExtent;
         float minY = worldBounds.min.y + vertExtent;
@@ -205,9 +259,9 @@ public class CameraController : MonoBehaviour
     /// </summary>
     public void SmoothMoveTo(Vector3 targetWorldPosition)
     {
-        if (isDragging) return;          // 拖拽时忽略
-        currentVelocity = Vector3.zero;   // 停止物理
-        targetPosition = targetWorldPosition;
+        if (isDragging) return;
+        currentVelocity = Vector3.zero;
+        targetPosition = targetWorldPosition;   // 存储目标点的地面坐标 (x, y, 0)
     }
 
     /// <summary>
@@ -219,21 +273,35 @@ public class CameraController : MonoBehaviour
         currentVelocity = Vector3.zero;
         autoMoveVelocity = Vector3.zero;
         targetPosition = null;
-        transform.position = new Vector3(targetWorldPosition.x, targetWorldPosition.y, zDepth);
+        transform.position = targetWorldPosition + cameraOffset;
+        transform.position = new Vector3(transform.position.x, transform.position.y, cameraOffset.z);
+    }
+    // 获取地面可视半宽半高
+    private void GetGroundViewExtents(out float halfWidth, out float halfHeight)
+    {
+        float distance = Mathf.Abs(transform.position.z);
+        Vector3 bottomLeft = mainCamera.ViewportToWorldPoint(new Vector3(0, 0, distance));
+        Vector3 topRight = mainCamera.ViewportToWorldPoint(new Vector3(1, 1, distance));
+        bottomLeft.z = 0; topRight.z = 0;
+        halfWidth = (topRight.x - bottomLeft.x) * 0.5f;
+        halfHeight = (topRight.y - bottomLeft.y) * 0.5f;
     }
 
-    /// <summary>
-    /// 获取摄像机视野矩形
-    /// </summary>
-    public Rect GetCameraBounds()
+    // 获取摄像机可移动的边界范围
+    private void GetCameraMoveBounds(out float minX, out float maxX, out float minY, out float maxY)
     {
-        float screenAspect = (float)Screen.width / Screen.height;
-        float camHeight = mainCamera.orthographicSize;
-        float camWidth = camHeight * screenAspect;
-
-        Vector3 bottomLeft = transform.position - new Vector3(camWidth, camHeight, 0);
-        Vector3 topRight = transform.position + new Vector3(camWidth, camHeight, 0);
-
-        return new Rect(bottomLeft.x, bottomLeft.y, topRight.x - bottomLeft.x, topRight.y - bottomLeft.y);
+        if (!clampToBounds || worldBounds.size == Vector3.zero)
+        {
+            minX = float.NegativeInfinity; maxX = float.PositiveInfinity;
+            minY = float.NegativeInfinity; maxY = float.PositiveInfinity;
+            return;
+        }
+        GetGroundViewExtents(out float halfW, out float halfH);
+        minX = worldBounds.min.x + halfW;
+        maxX = worldBounds.max.x - halfW;
+        minY = worldBounds.min.y + halfH;
+        maxY = worldBounds.max.y - halfH;
+        if (minX > maxX) { float mid = (minX + maxX) * 0.5f; minX = maxX = mid; }
+        if (minY > maxY) { float mid = (minY + maxY) * 0.5f; minY = maxY = mid; }
     }
 }
