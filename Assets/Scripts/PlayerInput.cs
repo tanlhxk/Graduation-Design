@@ -19,13 +19,8 @@ public class PlayerInput : MonoBehaviour
     public Color cannotAttackColor = Color.red;  // 不能攻击时的颜色
     public Material lineMat;
 
-    [Header("选择状态")]
     private FriendlyUnit selectedUnit;
     private Tile selectedTile;
-
-    [Header("技能按钮组")]
-    public List<Button> skillButtons = new List<Button>();
-    public List<Image> skillIcons = new List<Image>();     // 对应的图标
     private SkillDataSO currentSelectedSkillData = null; // null 代表移动/空手状态
     private FriendlyUnit currentSelectedUnit; // 当前被选中的我方单位
     private List<Tile> currentMoveRange;
@@ -93,15 +88,12 @@ public class PlayerInput : MonoBehaviour
     Vector3? GetMouseWorldPosition()
     {
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-
-        // 地图在 XY 平面，Z=0
-        Plane groundPlane = new Plane(Vector3.forward, Vector3.zero);
-
+        // 地面平面为 Y=0
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
         if (groundPlane.Raycast(ray, out float enter))
         {
             return ray.GetPoint(enter);
         }
-
         return null;
     }
 
@@ -202,14 +194,13 @@ public class PlayerInput : MonoBehaviour
     /// <param name="lineColor">线的颜色</param>
     void ShowAttackLine(Vector3 startPos, Vector3 endPos, Color lineColor)
     {
-        Debug.Log($"连线尝试绘制: Start={startPos}, End={endPos}");
         if (attackLine == null)
         {
             Debug.LogError("AttackLine 未初始化！请检查 CreateAttackLine 是否被调用。");
             return;
         }
-        Vector3 fixedStart = new Vector3(startPos.x, startPos.y, 0);
-        Vector3 fixedEnd = new Vector3(endPos.x, endPos.y, 0);
+        Vector3 fixedStart = new Vector3(startPos.x, startPos.y + 0.5f, startPos.z);
+        Vector3 fixedEnd = new Vector3(endPos.x, endPos.y + 0.5f, endPos.z);
 
         attackLine.SetPosition(0, fixedStart);
         attackLine.SetPosition(1, fixedEnd);
@@ -240,25 +231,18 @@ public class PlayerInput : MonoBehaviour
     /// </summary>
     void CreateAttackLine()
     {
-        // 1. 检查是否已存在，防止重复创建
         if (attackLine != null) return;
 
-        // 2. 创建 GameObject
         GameObject lineObj = new GameObject("AttackLine");
         lineObj.transform.SetParent(this.transform);
 
-        // 关键：为了确保 2D 渲染正确，手动添加 SpriteRenderer 并移除默认的 MeshRenderer
-        // LineRenderer 在 2D 中有时会因为没有 SpriteRenderer 而不显示
         var spriteRenderer = lineObj.AddComponent<SpriteRenderer>();
-        // 注意：这里添加 SpriteRenderer 主要是为了占位 Sorting Layer，LineRenderer 会自己处理绘制
 
         attackLine = lineObj.AddComponent<LineRenderer>();
         attackLine.useWorldSpace = true;
 
         attackLine.material = lineMat;
 
-        // 4. 设置颜色模式 (新版 LineRenderer API)
-        // 注意：新版 Unity 使用 colorGradient 而不是 startColor/endColor
         Gradient gradient = new Gradient();
         gradient.SetKeys(
             new GradientColorKey[] { new GradientColorKey(Color.white, 0.0f), new GradientColorKey(Color.white, 1.0f) },
@@ -266,20 +250,11 @@ public class PlayerInput : MonoBehaviour
         );
         attackLine.colorGradient = gradient;
 
-        // 5. 设置宽度
         attackLine.startWidth = 0.1f; // 2.5D 场景稍微粗一点好看
         attackLine.endWidth = 0.1f;
-
-        // 6. 【关键修复】层级设置 (Sorting Layer)
-        // 方案 1：尝试设置为 "UI" 或 "Foreground"
-        // 注意：必须确保 "UI" 层级在你的摄像机设置中是存在的
-        attackLine.sortingLayerName = "UI";
-
-        // 方案 2：如果 SortingLayerName 不生效，直接强制 Order in Layer (推荐)
-        // 确保这个数值比你场景里所有单位的 SortingOrder 都大
+        attackLine.sortingLayerName = "Effects";
         attackLine.sortingOrder = 100;
 
-        // 7. 初始化设置
         attackLine.positionCount = 2;
         attackLine.useWorldSpace = true; // 必须是世界坐标，否则移动单位时线不动
         attackLine.enabled = false;
@@ -295,7 +270,7 @@ public class PlayerInput : MonoBehaviour
             Camera cam = mainCamera ?? Camera.main;
 
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-            Plane groundPlane = new Plane(Vector3.forward, Vector3.zero);
+            Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
 
             float enter = 0;
 
@@ -309,8 +284,8 @@ public class PlayerInput : MonoBehaviour
                 // 根据你的 GridManager 中的 cellSize 进行取整对齐
                 float cellSize = gridManager.CellSize;
                 hitPoint.x = Mathf.Floor(hitPoint.x / cellSize) * cellSize + cellSize / 2;
-                hitPoint.y = Mathf.Floor(hitPoint.y / cellSize) * cellSize + cellSize / 2;
-                // hitPoint.z 根据平面保持不变
+                hitPoint.z = Mathf.Floor(hitPoint.z / cellSize) * cellSize + cellSize / 2;
+                hitPoint.y = 0;
 
                 // 转换为网格坐标
                 Vector2Int gridPos = gridManager.WorldToGrid(hitPoint);
@@ -348,6 +323,8 @@ public class PlayerInput : MonoBehaviour
                         {
                             Debug.Log("目标超出范围或无法攻击");
                         }
+                        currentSelectedSkillData = null;
+                        UIManager.Instance?.UpdateSkillSelectionVisual(null);
                     }
                 }
                 else
@@ -358,6 +335,8 @@ public class PlayerInput : MonoBehaviour
                         if (currentMoveRange != null && currentMoveRange.Contains(clickedTile))
                         {
                             MoveSelectedUnitTo(clickedTile);
+                            currentSelectedSkillData = null;
+                            UIManager.Instance?.UpdateSkillSelectionVisual(null);
                         }
                         else
                         {
@@ -383,7 +362,7 @@ public class PlayerInput : MonoBehaviour
             movementSystem.ClearHighlights(GridManager.tileDict);
             selectedUnit = null;
             currentMoveRange = null;
-
+            currentSelectedSkillData = null;
             // 通知 UI 清除技能高亮
             UIManager.Instance?.ClearSkillSelection();
         }

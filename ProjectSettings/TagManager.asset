@@ -42,3 +42,15 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Background
+    uniqueID: 1923880619
+    locked: 0
+  - name: Objects
+    uniqueID: 3950730495
+    locked: 0
+  - name: Characters
+    uniqueID: 1376431699
+    locked: 0
+  - name: Effects
+    uniqueID: 253765259
+    locked: 0

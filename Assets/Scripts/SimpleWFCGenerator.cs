@@ -27,6 +27,7 @@ public class SimpleWFCGenerator : MonoBehaviour
     public List<TileType> walkableTypes;          // 哪些类型被视为可行走（用于连通性判断）
     public Vector2Int mapSize;
 
+    public List<BillboardObstacleConfig> billboardObstacles;
     public void GenerateAndBuildMap(int seed)
     {
         TileType[,] mapData = RunWFC(seed);   // WFC算法返回二维数组
@@ -512,8 +513,7 @@ public class SimpleWFCGenerator : MonoBehaviour
                         }
                     }
 
-                    // 如果连通块大小 < 4（不足 2x2），则全部改为 Walkable
-                    if (cluster.Count < 4)
+                    if (cluster.Count < 5)
                     {
                         foreach (var pos in cluster)
                         {
@@ -524,7 +524,7 @@ public class SimpleWFCGenerator : MonoBehaviour
             }
         }
 
-        // 可选：重新强制边界为 Obstacle，避免因移除小集群导致边界出现缺口
+        // 重新强制边界为 Obstacle，避免因移除小集群导致边界出现缺口
         for (int i = 0; i < w; i++)
         {
             map[i, 0] = TileType.Obstacle;
@@ -546,4 +546,11 @@ public class TileAdjacencyRule
 {
     public TileType type;
     public List<TileType> allowedNeighbors;
+}
+[System.Serializable]
+public struct BillboardObstacleConfig
+{
+    public TileType type;           // 原始瓦片类型
+    public GameObject[] prefab;       // 对应的预制体
+    public float yOffset;           // 垂直偏移
 }

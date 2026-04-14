@@ -19,7 +19,6 @@ public class Tile
     public TileType type;            // 格子类型
     public Unit occupyingUnit;       // 占据的单位（如果有）
     public Vector3 worldPos;         // 世界坐标位置
-    public GameObject unitObj;
 
     public Tile(int x, int y, TileType tileType)
     {
@@ -31,10 +30,6 @@ public class Tile
     public bool IsWalkable()
     {
         return type == TileType.Walkable && occupyingUnit == null;
-    }
-    internal T GetComponent<T>()
-    {
-        return unitObj.GetComponent<T>();
     }
 }
 [CreateAssetMenu(fileName = "TileSet", menuName = "WFC/TileSet")]
@@ -68,6 +63,8 @@ public class GridManager : MonoBehaviour
     [Header("Tilemap设置")]
     [SerializeField] private Tilemap tilemap;          // 引用场景中的 Tilemap
     [SerializeField] private TileSet tileSet;          // 仍然使用 TileSet，但里面改为存储 Tile 而不是 Prefab
+    [Header("Billboard障碍物配置")]
+    public List<BillboardObstacleConfig> billboardObstacles;
 
     private int width;
     private int height;
@@ -76,12 +73,20 @@ public class GridManager : MonoBehaviour
     public float CellSize => cellSize;
     private Tile[,] grid;
     public static Dictionary<Vector2Int, Tile> tileDict;   // 快速查找字典
+    private List<GameObject> instancedObstacles = new List<GameObject>();
 
     void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
         //GenerateGrid();
+    }
+
+    void ClearInstancedObstacles()
+    {
+        foreach (var obj in instancedObstacles)
+            if (obj != null) DestroyImmediate(obj);
+        instancedObstacles.Clear();
     }
 
     /*
@@ -115,13 +120,12 @@ public class GridManager : MonoBehaviour
     {
         width = mapData.GetLength(0);
         height = mapData.GetLength(1);
-
-        // 清除所有现有瓦片（如果重新生成地图）
         tilemap.ClearAllTiles();
-
-        // 依然保留字典用于逻辑查询（单位占据、路径寻找等）
         grid = new Tile[width, height];
         tileDict = new Dictionary<Vector2Int, Tile>();
+
+        // 清除已存在的实例化障碍物（如果重新生成地图）
+        ClearInstancedObstacles();
 
         for (int x = 0; x < width; x++)
         {
@@ -132,36 +136,44 @@ public class GridManager : MonoBehaviour
                 grid[x, y] = tile;
                 tileDict[new Vector2Int(x, y)] = tile;
 
-                // 设置 Tilemap 瓦片
-                Vector3Int cellPos = new Vector3Int(x, y, 0);
-                TileBase tileBase = tileSet != null ? tileSet.GetTile(type) : null;
-                if (tileBase != null)
+                Vector3 worldPos = tilemap.GetCellCenterWorld(new Vector3Int(x, y, 0));
+                tile.worldPos = worldPos;
+
+                // 检查是否需要实例化 Billboard 障碍物
+                BillboardObstacleConfig? config = GetBillboardConfig(type);
+                if (config.HasValue)
                 {
-                    tilemap.SetTile(cellPos, tileBase);
+                    // 实例化预制体
+                    GameObject obj = Instantiate(config.Value.prefab[Random.Range(0, config.Value.prefab.Length)], worldPos + Vector3.up * config.Value.yOffset, Quaternion.identity, transform);
+                    // 添加 Billboard 脚本（如果预制体本身没有）
+                    if (obj.GetComponent<FacingCamera>() == null)
+                        obj.AddComponent<FacingCamera>();
+                    // 记录实例，以便重新生成时清除
+                    instancedObstacles.Add(obj);
+                    TileBase groundTile = tileSet.GetTile(TileType.Walkable); // 使用地面瓦片
+                    if (groundTile != null)
+                        tilemap.SetTile(new Vector3Int(x, y, 0), groundTile);
                 }
                 else
                 {
-                    // 如果没有配置，可以设置一个默认 Tile（可选）
-                    Debug.LogWarning($"未找到类型 {type} 对应的 TileBase");
+                    // 正常设置 Tilemap 瓦片
+                    TileBase tileBase = tileSet.GetTile(type);
+                    if (tileBase != null)
+                        tilemap.SetTile(new Vector3Int(x, y, 0), tileBase);
                 }
             }
         }
-
-        // 调整 Tilemap 的尺寸和位置（可选）
         tilemap.CompressBounds();
-
-        Debug.Log($"Grid built with Tilemap, size {width}x{height}");
     }
-    // 世界坐标转网格坐标
+    public Vector3 GridToWorld(Vector2Int gridPos)
+    {
+        return tilemap.GetCellCenterWorld(new Vector3Int(gridPos.x, gridPos.y, 0));
+    }
+
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
         Vector3Int cellPos = tilemap.WorldToCell(worldPos);
         return new Vector2Int(cellPos.x, cellPos.y);
-    }
-    // 网格坐标转世界坐标
-    public Vector3 GridToWorld(Vector2Int gridPos)
-    {
-        return tilemap.CellToWorld(new Vector3Int(gridPos.x, gridPos.y, 0));
     }
 
     public static int GetDistance(Tile tileA, Tile tileB)
@@ -200,6 +212,27 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    public void SetTileColor(Vector2Int gridPos, Color color)
+    {
+        Vector3Int cellPos = new Vector3Int(gridPos.x, gridPos.y, 0);
+        tilemap.SetTileFlags(cellPos, TileFlags.None);
+        tilemap.SetColor(cellPos, color);
+    }
+
+    public void ResetTileColor(Vector2Int gridPos)
+    {
+        Vector3Int cellPos = new Vector3Int(gridPos.x, gridPos.y, 0);
+        tilemap.SetColor(cellPos, Color.white);
+    }
+    private BillboardObstacleConfig? GetBillboardConfig(TileType type)
+    {
+        foreach (var config in billboardObstacles)
+        {
+            if (config.type == type)
+                return config;
+        }
+        return null;
+    }
     /*// 可视化格子
     private void CreateTileVisual(int x, int y, TileType type, Tile tile)
     {

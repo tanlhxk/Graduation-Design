@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,7 +12,7 @@ public class CameraController : MonoBehaviour
     private Vector3 autoMoveVelocity = Vector3.zero;
 
     [Header("摄像机设置")]
-    public Vector3 cameraOffset = new Vector3(0f, -10f, -10f);   // 根据实际俯仰角调整
+    public Vector3 cameraOffset = new Vector3(-10f, 12f, -10f);
 
     [Header("拖拽设置")]
     public bool enableDrag = true;
@@ -68,14 +69,14 @@ public class CameraController : MonoBehaviour
         if (!isDragging && currentVelocity.magnitude < 0.01f && targetPosition.HasValue)
         {
             Vector3 desiredPosition = targetPosition.Value + cameraOffset;
-            desiredPosition.z = cameraOffset.z;
+            desiredPosition.y = cameraOffset.y;
 
             // 边界 Clamp（直接限制目标位置）
             if (clampToBounds && worldBounds.size != Vector3.zero)
             {
-                GetCameraMoveBounds(out float minX, out float maxX, out float minY, out float maxY);
+                GetCameraMoveBounds(out float minX, out float maxX, out float minZ, out float maxZ);
                 desiredPosition.x = Mathf.Clamp(desiredPosition.x, minX, maxX);
-                desiredPosition.y = Mathf.Clamp(desiredPosition.y, minY, maxY);
+                desiredPosition.z = Mathf.Clamp(desiredPosition.z, minZ, maxZ);
             }
 
             transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref autoMoveVelocity, smoothTime);
@@ -117,7 +118,8 @@ public class CameraController : MonoBehaviour
 
             // 将屏幕像素位移转换为世界速度
             float worldUnitsPerPixel = (mainCamera.orthographicSize * 2f) / Screen.height;
-            Vector3 targetSpeed = new Vector3(delta.x, delta.y, 0) * worldUnitsPerPixel * dragSensitivity / Time.deltaTime;
+            Vector3 targetSpeed = (mainCamera.transform.right * delta.x + mainCamera.transform.forward * delta.y)
+                      * worldUnitsPerPixel * dragSensitivity / Time.deltaTime;
             if (invertDrag) targetSpeed = -targetSpeed;
 
             // 目标速度叠加到当前速度（瞬间响应，也可用平滑，但直接加手感更快）
@@ -176,15 +178,15 @@ public class CameraController : MonoBehaviour
 
             float minX = worldBounds.min.x + horzExtent;
             float maxX = worldBounds.max.x - horzExtent;
-            float minY = worldBounds.min.y + vertExtent;
-            float maxY = worldBounds.max.y - vertExtent;
+            float minZ = worldBounds.min.z + vertExtent;
+            float maxZ = worldBounds.max.z - vertExtent;
 
             Vector3 force = Vector3.zero;
             if (position.x < minX) force.x = (minX - position.x) * edgeSpringStiffness;
             else if (position.x > maxX) force.x = (maxX - position.x) * edgeSpringStiffness;
 
-            if (position.y < minY) force.y = (minY - position.y) * edgeSpringStiffness;
-            else if (position.y > maxY) force.y = (maxY - position.y) * edgeSpringStiffness;
+            if (position.z < minZ) force.z = (minZ - position.z) * edgeSpringStiffness;
+            else if (position.z > maxZ) force.z = (maxZ - position.z) * edgeSpringStiffness;
 
             // 弹簧力加阻尼
             currentVelocity += force * Time.deltaTime;
@@ -192,8 +194,8 @@ public class CameraController : MonoBehaviour
         }
 
         // 应用速度移动摄像机
-        transform.position += currentVelocity * Time.deltaTime;
-        transform.position = new Vector3(transform.position.x, transform.position.y, cameraOffset.z);
+        transform.position += new Vector3(currentVelocity.x, 0, currentVelocity.z) * Time.deltaTime;
+        transform.position = new Vector3(transform.position.x, cameraOffset.y, transform.position.z);
 
         // 如果速度极小，直接置零防止微动
         if (currentVelocity.magnitude < 0.01f)
@@ -274,34 +276,91 @@ public class CameraController : MonoBehaviour
         autoMoveVelocity = Vector3.zero;
         targetPosition = null;
         transform.position = targetWorldPosition + cameraOffset;
-        transform.position = new Vector3(transform.position.x, transform.position.y, cameraOffset.z);
+        transform.position = new Vector3(transform.position.x, cameraOffset.y, transform.position.z);
     }
     // 获取地面可视半宽半高
     private void GetGroundViewExtents(out float halfWidth, out float halfHeight)
     {
-        float distance = Mathf.Abs(transform.position.z);
-        Vector3 bottomLeft = mainCamera.ViewportToWorldPoint(new Vector3(0, 0, distance));
-        Vector3 topRight = mainCamera.ViewportToWorldPoint(new Vector3(1, 1, distance));
-        bottomLeft.z = 0; topRight.z = 0;
-        halfWidth = (topRight.x - bottomLeft.x) * 0.5f;
-        halfHeight = (topRight.y - bottomLeft.y) * 0.5f;
+        Camera cam = mainCamera;
+        Transform camTrans = transform;
+        Plane groundPlane = new Plane(Vector3.up, 0f); // 地面 Y=0
+
+        // 正交相机的视锥体尺寸
+        float orthoSize = cam.orthographicSize;
+        float aspect = cam.aspect;
+        float halfHeightWorld = orthoSize;
+        float halfWidthWorld = orthoSize * aspect;
+
+        // 相机的局部坐标系：前、右、上
+        Vector3 forward = camTrans.forward;
+        Vector3 right = camTrans.right;
+        Vector3 up = camTrans.up;
+
+        // 相机在世界空间中的位置
+        Vector3 camPos = camTrans.position;
+
+        // 计算视锥体近平面中心点沿 forward 方向偏移近平面距离
+        // 对于正交相机，视锥体的四个角点方向与相机局部坐标轴平行
+        Vector3 nearCenter = camPos + forward * cam.nearClipPlane;
+        Vector3[] cornersLocal = new Vector3[]
+        {
+        new Vector3(-halfWidthWorld, -halfHeightWorld, 0), // 左下
+        new Vector3( halfWidthWorld, -halfHeightWorld, 0), // 右下
+        new Vector3(-halfWidthWorld,  halfHeightWorld, 0), // 左上
+        new Vector3( halfWidthWorld,  halfHeightWorld, 0)  // 右上
+        };
+
+        List<Vector3> groundPoints = new List<Vector3>(4);
+        foreach (var localOffset in cornersLocal)
+        {
+            // 将局部偏移转换到世界坐标：相机局部坐标系下的偏移 (right, up) 方向
+            Vector3 worldOffset = right * localOffset.x + up * localOffset.y;
+            Vector3 pointOnNearPlane = nearCenter + worldOffset;
+
+            // 从相机位置发射经过该点的射线（正交相机中，所有投影线平行于 forward）
+            Ray ray = new Ray(camPos, (pointOnNearPlane - camPos).normalized);
+            if (groundPlane.Raycast(ray, out float enter))
+            {
+                Vector3 hitPoint = ray.GetPoint(enter);
+                groundPoints.Add(hitPoint);
+            }
+            else
+            {
+                // 理论上不会发生（相机在地面之上且向下看）
+                groundPoints.Add(camPos + forward * 1000f);
+            }
+        }
+
+        // 计算这些点的 X 范围与 Z 范围
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minZ = float.MaxValue, maxZ = float.MinValue;
+        foreach (var p in groundPoints)
+        {
+            minX = Mathf.Min(minX, p.x);
+            maxX = Mathf.Max(maxX, p.x);
+            minZ = Mathf.Min(minZ, p.z);
+            maxZ = Mathf.Max(maxZ, p.z);
+        }
+
+        halfWidth = (maxX - minX) * 0.5f;
+        halfHeight = (maxZ - minZ) * 0.5f;
     }
 
     // 获取摄像机可移动的边界范围
-    private void GetCameraMoveBounds(out float minX, out float maxX, out float minY, out float maxY)
+    private void GetCameraMoveBounds(out float minX, out float maxX, out float minZ, out float maxZ)
     {
         if (!clampToBounds || worldBounds.size == Vector3.zero)
         {
             minX = float.NegativeInfinity; maxX = float.PositiveInfinity;
-            minY = float.NegativeInfinity; maxY = float.PositiveInfinity;
+            minZ = float.NegativeInfinity; maxZ = float.PositiveInfinity;
             return;
         }
         GetGroundViewExtents(out float halfW, out float halfH);
         minX = worldBounds.min.x + halfW;
         maxX = worldBounds.max.x - halfW;
-        minY = worldBounds.min.y + halfH;
-        maxY = worldBounds.max.y - halfH;
+        minZ = worldBounds.min.z + halfH;
+        maxZ = worldBounds.max.z - halfH;
         if (minX > maxX) { float mid = (minX + maxX) * 0.5f; minX = maxX = mid; }
-        if (minY > maxY) { float mid = (minY + maxY) * 0.5f; minY = maxY = mid; }
+        if (minZ > maxZ) { float mid = (minZ + maxZ) * 0.5f; minZ = maxZ = mid; }
     }
 }

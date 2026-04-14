@@ -208,27 +208,16 @@ public class MovementSystem : MonoBehaviour
     {
         foreach (var tile in tiles)
         {
-            // 设置高亮材质（简化：直接改变颜色）
-            SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
-            if (renderer != null)
-            {
-                renderer.color = moveRangeColor;
-            }
+            GridManager.Instance.SetTileColor(tile.gridPos, moveRangeColor);
         }
     }
 
     // 清除高亮
     public void ClearHighlights(Dictionary<Vector2Int, Tile> tileDict)
     {
-        // 恢复所有格子颜色
-        // 需要遍历所有格子恢复原始颜色
-        foreach (var tile in tileDict.Values)
+        foreach (var kv in tileDict)
         {
-            SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
-            if (renderer != null && tile.type == TileType.Walkable)
-            {
-                renderer.color = Color.white;
-            }
+            GridManager.Instance.ResetTileColor(kv.Key);
         }
     }
 }

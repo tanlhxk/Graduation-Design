@@ -25,8 +25,12 @@ public class SkillDataSO : ScriptableObject
     public SkillType skillType;
     public Sprite icon;
     [TextArea] public string description;
+    [Header("视觉特效")]
+    public GameObject castEffectPrefab;   // 施法者身上的特效
+    public GameObject hitEffectPrefab;    // 命中目标时的特效
+    public AudioClip hitSound;            // 命中音效
 
-    // 数值配置
+    [Header("数值配置")]
     public float damageMultiplier = 1f; // 伤害倍率
     public int skillRange = 1;          // 技能射程
     public int cooldown = 0;            // 冷却
@@ -43,6 +47,18 @@ public class SkillDataSO : ScriptableObject
     // 效果引用 (这里可以挂载具体的 MonoBehaviour 脚本或 ScriptableObject)
     // 为了简单演示，我们暂时用代码逻辑代替引用
 }
+public class SkillEventArgs
+{
+    public Unit caster;
+    public Unit target;
+    public SkillDataSO skillData;
+    public Vector3 hitPoint;
+}
+
+public static class SkillEventBus
+{
+    public static System.Action<SkillEventArgs> OnSkillHit;
+}
 
 // DamageEffect.cs
 public class DamageEffect : ISkillEffect
@@ -58,6 +74,13 @@ public class DamageEffect : ISkillEffect
 
         // 3. 视觉/音效反馈 (这里可以扩展)
         Debug.Log($"{caster.unitName} 使用 {skillData.skillName} 造成 {finalDamage} 伤害!");
+        SkillEventBus.OnSkillHit?.Invoke(new SkillEventArgs
+        {
+            caster = caster,
+            target = target,
+            skillData = skillData,
+            hitPoint = target.transform.position
+        });
     }
 }
 

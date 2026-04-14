@@ -49,7 +49,6 @@ public class EnemyUnit : Unit
         // 计算伤害（可以根据技能索引扩展）
         int damage = baseAttack;
 
-        // 可选：摄像机聚焦（改为事件触发，避免直接耦合）
         // 可以发送事件，让 CameraController 监听
         // 或者如果保持原样，判空即可
         if (CameraController.Instance != null)

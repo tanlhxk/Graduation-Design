@@ -5,7 +5,7 @@ using UnityEngine;
 public class FriendlyUnit : Unit
 {
     [Header("战斗属性")]
-    public int attackRange = 1;     // 攻击范围（格，1为相邻）
+    public int attackRange = 1;
     private List<SkillDataSO> skillData = new List<SkillDataSO>();
 
     void Start()

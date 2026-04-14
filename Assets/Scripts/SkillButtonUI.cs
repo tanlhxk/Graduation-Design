@@ -6,56 +6,60 @@ using TMPro;
 public class SkillButtonUI : MonoBehaviour
 {
     [Header("UI References")]
-    public Image iconImage;      // 拖拽UI中的Image组件
-    public TMP_Text skillNameText;   // 拖拽UI中的Text组件
-    public Button buttonComponent; // 拖拽Button组件
+    public Image iconImage;           // 技能图标
+    private string skillNameText;    // 技能名称
+    public Button buttonComponent;    // 按钮组件
+    public Image borderImage;         // 边框图片（用于高亮显示）
+
+    [Header("Border Sprites")]
+    public Sprite normalBorder;       // 未选中时的边框图片
+    public Sprite selectedBorder;     // 选中时的边框图片
 
     private SkillDataSO currentData;
     private FriendlyUnit ownerUnit;
 
-    // 1. 初始化按钮的方法
+    // 初始化按钮
     public void SetupButton(SkillDataSO skillData, FriendlyUnit owner)
     {
         currentData = skillData;
         ownerUnit = owner;
         iconImage.sprite = skillData.icon;
-        skillNameText.text = skillData.skillName;
+        skillNameText = skillData.skillName;
         buttonComponent.onClick.RemoveAllListeners();
         buttonComponent.onClick.AddListener(() => {
             PlayerInput.Instance?.OnSkillSelected(currentData);
         });
+
+        // 确保初始状态为未选中边框
+        SetSelected(false);
     }
 
-    // 2. 按钮点击时触发
-    void OnButtonClicked()
-    {
-        // 3. 修改：调用 PlayerInput 的新方法
-        PlayerInput.Instance?.OnSkillSelected(currentData);
-    }
+    // 设置选中状态（切换边框图片）
     public void SetSelected(bool isSelected)
     {
-        ColorBlock colors = buttonComponent.colors;
-        if (isSelected)
+        if (borderImage != null && normalBorder != null && selectedBorder != null)
         {
-            colors.normalColor = Color.yellow;
-            colors.highlightedColor = Color.yellow;
+            borderImage.sprite = isSelected ? selectedBorder : normalBorder;
         }
-        else
-        {
-            colors.normalColor = Color.white;
-            colors.highlightedColor = Color.white;
-        }
-        buttonComponent.colors = colors;
     }
+
+    // 获取关联的技能数据
     public SkillDataSO GetSkillData()
     {
         return currentData;
     }
 
+    // 设置冷却状态（按钮变灰，图标变灰，不可交互）
     public void SetCooldown(bool isCooling)
     {
-        Color color = isCooling ? Color.gray : Color.white;
-        if (iconImage != null) iconImage.color = color;
+        if (iconImage != null)
+            iconImage.color = isCooling ? Color.gray : Color.white;
         buttonComponent.interactable = !isCooling;
+
+        // 冷却时不清除边框选中状态，但通常冷却时不应该被选中，所以可额外处理：
+        if (isCooling)
+        {
+            SetSelected(false);
+        }
     }
 }

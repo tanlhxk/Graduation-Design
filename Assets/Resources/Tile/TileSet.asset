@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TileSet
   entries:
   - type: 0
-    tile: {fileID: 11400000, guid: 07ae6998cb284ef4297f5a59ca526a39, type: 2}
+    tile: {fileID: 11400000, guid: 2476368397e204e48bf73088431c4f13, type: 2}
   - type: 1
-    tile: {fileID: 11400000, guid: 2df3b2773432f04409cdbc82d7fcc51f, type: 2}
+    tile: {fileID: 11400000, guid: aade02d157c89804a945152bff2f6a7d, type: 2}
   - type: 3
     tile: {fileID: 0}

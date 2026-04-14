@@ -35,10 +35,10 @@ public class GameManager : MonoBehaviour
         if (GridManager.Instance != null && CameraController.Instance != null)
         {
             float worldWidth = GridManager.Instance.Width * GridManager.Instance.CellSize;
-            float worldHeight = GridManager.Instance.Height * GridManager.Instance.CellSize;
-            // 假设地图左下角为 (0,0)，右上角为 (worldWidth, worldHeight)
-            Bounds bounds = new Bounds(new Vector3(worldWidth * 0.5f, worldHeight * 0.5f, 0),
-                                       new Vector3(worldWidth, worldHeight, 0));
+            float worldHeight = GridManager.Instance.Height * GridManager.Instance.CellSize; // 实际是 Z 轴长度
+            Bounds bounds = new Bounds(new Vector3(worldWidth * 0.5f, 0, worldHeight * 0.5f),
+                                       new Vector3(worldWidth, 0, worldHeight));
+            CameraController.Instance.SetWorldBounds(bounds);
             CameraController.Instance.SetWorldBounds(bounds);
 
             // 将摄像机初始位置也限制在边界内
@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
         Vector3 worldPos = GridManager.Instance.GridToWorld(gridPos);
 
         // 实例化
-        enemyObj = Instantiate(enemyPrefab, worldPos, Quaternion.identity,facingCamera.transform);
+        enemyObj = Instantiate(enemyPrefab, worldPos, Quaternion.identity);
         enemyObj.tag = "Enemy";  // 设置标签（可选）
         enemyObj.name = "Enemy"; // 重命名
 
@@ -89,7 +89,7 @@ public class GameManager : MonoBehaviour
             TurnManager.Instance.enemyUnits.Add(enemyUnit);
             TurnManager.Instance.allUnits.Add(enemyUnit);
         }
-        facingCamera.RefreshFacing();
+        //facingCamera.RefreshFacing();
         Debug.Log($"敌方已生成在网格位置 {gridPos}");
     }
     void SpawnPlayerAt(Vector2Int gridPos)
@@ -104,7 +104,7 @@ public class GameManager : MonoBehaviour
         Vector3 worldPos = GridManager.Instance.GridToWorld(gridPos);
 
         // 实例化玩家
-        playerObj = Instantiate(playerPrefab, worldPos, Quaternion.identity,facingCamera.transform);
+        playerObj = Instantiate(playerPrefab, worldPos, Quaternion.identity);
         playerObj.tag = "Player";  // 设置标签（可选）
         playerObj.name = "Player"; // 重命名
 
@@ -119,11 +119,10 @@ public class GameManager : MonoBehaviour
             playerUnit.moveRange = 10;
             playerUnit.attackRange = 1;
             playerUnit.unitType = UnitType.Player;
-            //playerUnit.AddSkill(SkillType.NormalAttack, "普攻", 1, 1, 0);
-            //playerUnit.AddSkill(SkillType.BattleSkill, "战技", 2,2, 2);
-            //playerUnit.AddSkill(SkillType.Ultimate, "终结技", 5, 5, 5);
             SkillDataSO normalAttack = Resources.Load<SkillDataSO>("Skills/NormalAttack");
+            SkillDataSO battleAttack = Resources.Load<SkillDataSO>("Skills/BattleAttack");
             playerUnit.AddSkill(normalAttack);
+            playerUnit.AddSkill(battleAttack);
             // 通知GridManager该单位占据了格子
             GridManager.Instance.SetUnitOnTile(playerUnit, gridPos);
         }
@@ -138,7 +137,7 @@ public class GameManager : MonoBehaviour
         {
             CameraController.Instance.ForcePosition(playerObj.transform.position);
         }
-        facingCamera.RefreshFacing();
+        //facingCamera.RefreshFacing();
         Debug.Log($"玩家已生成在网格位置 {gridPos}");
     }
 }
