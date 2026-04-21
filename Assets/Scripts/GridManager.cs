@@ -65,6 +65,9 @@ public class GridManager : MonoBehaviour
     [SerializeField] private TileSet tileSet;          // 仍然使用 TileSet，但里面改为存储 Tile 而不是 Prefab
     [Header("Billboard障碍物配置")]
     public List<BillboardObstacleConfig> billboardObstacles;
+    [Header("高亮设置")]
+    [SerializeField] private GameObject highlightPrefab;      // 高亮预制体
+    [SerializeField] private float highlightYOffset = 0.05f;  // 高出地面的偏移量
 
     private int width;
     private int height;
@@ -74,6 +77,8 @@ public class GridManager : MonoBehaviour
     private Tile[,] grid;
     public static Dictionary<Vector2Int, Tile> tileDict;   // 快速查找字典
     private List<GameObject> instancedObstacles = new List<GameObject>();
+    private List<GameObject> activeHighlights = new List<GameObject>();
+    private Queue<GameObject> highlightPool = new Queue<GameObject>();
 
     void Awake()
     {
@@ -88,30 +93,6 @@ public class GridManager : MonoBehaviour
             if (obj != null) DestroyImmediate(obj);
         instancedObstacles.Clear();
     }
-
-    /*
-    // 程序化生成网格（与你的PCG系统结合）
-    void GenerateGrid()
-    {
-        grid = new Tile[width, height];
-        tileDict = new Dictionary<Vector2Int, Tile>();
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                // 随机生成格子类型（简化版）
-                TileType type = Random.Range(0, 10) < 8 ? TileType.Walkable : TileType.Obstacle;
-
-                Tile tile = new Tile(x, y, type);
-                grid[x, y] = tile;
-                tileDict[new Vector2Int(x, y)] = tile;
-
-                // 创建可视化格子
-                CreateTileVisual(x, y, type, tile);
-            }
-        }
-    }*/
 
     /// <summary>
     /// 从外部数据构建网格（由WFC生成器调用）
@@ -178,11 +159,9 @@ public class GridManager : MonoBehaviour
 
     public static int GetDistance(Tile tileA, Tile tileB)
     {
-        // 这里使用曼哈顿距离作为例子，如果是斜向移动，可以用 Mathf.Max
         int dx = Mathf.Abs(tileA.gridPos.x - tileB.gridPos.x);
         int dy = Mathf.Abs(tileA.gridPos.y - tileB.gridPos.y);
         return dx + dy; // 曼哈顿距离
-                        // 如果是八方向移动，通常用：return Mathf.Max(dx, dy);
     }
 
     // 获取指定位置的格子
@@ -233,44 +212,66 @@ public class GridManager : MonoBehaviour
         }
         return null;
     }
-    /*// 可视化格子
-    private void CreateTileVisual(int x, int y, TileType type, Tile tile)
+    /// <summary>
+    /// 清除所有高亮物体
+    /// </summary>
+    public void ClearAllHighlights()
     {
-        Vector3 worldPos = GridToWorld(new Vector2Int(x, y));
-        GameObject tileObj;
-
-        // 如果TileSet中定义了特定类型的预制体，则使用它；否则使用默认预制体
-        if (tileSet != null && tileSet.GetPrefab(type) != null)
+        foreach (var obj in activeHighlights)
         {
-            tileObj = Instantiate(tileSet.GetPrefab(type), worldPos, Quaternion.identity, transform);
+            ReturnHighlightObject(obj);
+        }
+        activeHighlights.Clear();
+    }
+
+    /// <summary>
+    /// 为指定格子列表创建高亮物体
+    /// </summary>
+    public void CreateHighlights(List<Tile> tiles, Color highlightColor)
+    {
+        ClearAllHighlights();
+        foreach (var tile in tiles)
+        {
+            GameObject highlight = GetHighlightObject();
+            highlight.transform.position = tile.worldPos + Vector3.up * highlightYOffset;
+            var sr = highlight.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.color = highlightColor;
+            activeHighlights.Add(highlight);
+        }
+    }
+    public void CreateHighlights(List<Tile> tiles, GameObject customPrefab = null, Color? color = null)
+    {
+        ClearAllHighlights();
+        GameObject prefabToUse = customPrefab != null ? customPrefab : highlightPrefab;
+        foreach (var tile in tiles)
+        {
+            GameObject obj = Instantiate(prefabToUse, transform);
+            obj.transform.position = tile.worldPos + Vector3.up * highlightYOffset;
+            if (color.HasValue)
+            {
+                var sr = obj.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = color.Value;
+            }
+            activeHighlights.Add(obj);
+        }
+    }
+    private GameObject GetHighlightObject()
+    {
+        if (highlightPool.Count > 0)
+        {
+            GameObject obj = highlightPool.Dequeue();
+            obj.SetActive(true);
+            return obj;
         }
         else
         {
-            tileObj = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
+            return Instantiate(highlightPrefab, transform);
         }
+    }
 
-        tileObj.name = $"Tile_{x}_{y}";
-        tile.unitObj = tileObj;          // 注意：unitObj字段命名可能不合适，可改为visualObj
-
-        // 可选：根据类型调整颜色（如果没有预制体就用颜色区分）
-        if (tileSet == null)
-        {
-            SpriteRenderer renderer = tileObj.GetComponent<SpriteRenderer>();
-            if (renderer != null)
-            {
-                switch (type)
-                {
-                    case TileType.Walkable:
-                        renderer.color = new Color(0.8f, 0.8f, 0.8f);
-                        break;
-                    case TileType.Obstacle:
-                        renderer.color = new Color(0.3f, 0.3f, 0.3f);
-                        break;
-                    case TileType.Exit:
-                        renderer.color = Color.green;
-                        break;
-                }
-            }
-        }
-    }*/
+    private void ReturnHighlightObject(GameObject obj)
+    {
+        obj.SetActive(false);
+        highlightPool.Enqueue(obj);
+    }
 }

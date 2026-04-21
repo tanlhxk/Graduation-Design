@@ -25,7 +25,6 @@ public class TurnManager : MonoBehaviour
     public Unit currentActiveUnit;
     private int currentUnitIndex = 0;
 
-    public GridManager gridManager;
     private bool isGameReady = false;
     public TurnPhase currentPhase = TurnPhase.None;
     public int currentTurnNumber = 1;
@@ -126,7 +125,7 @@ public class TurnManager : MonoBehaviour
         }
 
         // 清除高亮
-        MovementSystem.Instance.ClearHighlights(GridManager.tileDict);
+        MovementSystem.Instance.ClearHighlights();
 
         // 移动到下一个单位
         if (currentPhase == TurnPhase.PlayerTurn)

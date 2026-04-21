@@ -359,7 +359,7 @@ public class PlayerInput : MonoBehaviour
     {
         if (selectedUnit != null)
         {
-            movementSystem.ClearHighlights(GridManager.tileDict);
+            movementSystem.ClearHighlights();
             selectedUnit = null;
             currentMoveRange = null;
             currentSelectedSkillData = null;
@@ -394,7 +394,7 @@ public class PlayerInput : MonoBehaviour
 
         // 移动开始后，可以暂时清除选中和高亮，或者等移动结束再清除（取决于你的UI需求）
         // 注意：如果在 MoveTo 内部已经处理了状态锁定，这里不需要额外操作
-        movementSystem.ClearHighlights(GridManager.tileDict);
+        movementSystem.ClearHighlights();
         selectedUnit = null;
         currentMoveRange = null;
     }

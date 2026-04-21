@@ -11,7 +11,7 @@ public class SimpleWFCGenerator : MonoBehaviour
     public int width = 10;
     public int height = 10;
 
-    [Header("图块类型（必须与GridManager的TileType一致）")]
+    [Header("图块类型")]
     public List<TileType> tileTypes = new List<TileType>()
         { TileType.Walkable, TileType.Obstacle, TileType.Exit };
 
@@ -268,7 +268,6 @@ public class SimpleWFCGenerator : MonoBehaviour
         propagationQueue.Enqueue(new Vector2Int(x, y));
     }
 
-    // -------------------- 连通性后处理 --------------------
     private void EnsureConnectivity(ref TileType[,] map)
     {
         // 将关键点坐标限制在地图范围内
@@ -471,7 +470,7 @@ public class SimpleWFCGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// 移除所有大小小于 2x2 (即格子数 < 4) 的障碍物连通块，将其变为 Walkable。
+    /// 移除所有大小小于5的障碍物连通块，将其变为 Walkable。
     /// </summary>
     private void RemoveSmallObstacleClusters(ref TileType[,] map)
     {
@@ -479,7 +478,7 @@ public class SimpleWFCGenerator : MonoBehaviour
         int h = map.GetLength(1);
         bool[,] visited = new bool[w, h];
 
-        // 四个方向（上下左右）用于连通性判断（四连通即可，障碍物块不需要对角连通）
+        // 四个方向（上下左右）用于连通性判断
         Vector2Int[] dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
 
         for (int x = 0; x < w; x++)

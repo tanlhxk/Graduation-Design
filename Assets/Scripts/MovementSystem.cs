@@ -10,8 +10,9 @@ public class MovementSystem : MonoBehaviour
     public TurnManager turnManager;
 
     [Header("高亮材质")]
-    public Color moveRangeColor = Color.blue;
-    public Color attackRangeColor = Color.red;
+    [Header("Highlight Colors")]
+    public Color moveRangeColor = new Color(0, 0, 1, 0.5f);
+    public Color attackRangeColor = new Color(1, 0, 0, 0.5f);
 
     void Awake()
     {
@@ -132,6 +133,8 @@ public class MovementSystem : MonoBehaviour
                 // 跳过障碍物
                 if (neighbor.type == TileType.Obstacle && neighbor != startTile)
                     continue;
+                if (neighbor.occupyingUnit != null && neighbor != startTile)
+                    continue;
 
                 // 计算到邻居的距离
                 int tentativeGScore = gScore[current] + 1;
@@ -206,18 +209,12 @@ public class MovementSystem : MonoBehaviour
     // 高亮可移动范围
     public void HighlightMoveRange(List<Tile> tiles)
     {
-        foreach (var tile in tiles)
-        {
-            GridManager.Instance.SetTileColor(tile.gridPos, moveRangeColor);
-        }
+        GridManager.Instance.CreateHighlights(tiles, moveRangeColor);
     }
 
     // 清除高亮
-    public void ClearHighlights(Dictionary<Vector2Int, Tile> tileDict)
+    public void ClearHighlights()
     {
-        foreach (var kv in tileDict)
-        {
-            GridManager.Instance.ResetTileColor(kv.Key);
-        }
+        GridManager.Instance.ClearAllHighlights();
     }
 }
