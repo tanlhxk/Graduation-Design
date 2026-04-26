@@ -43,9 +43,6 @@ public class SkillDataSO : ScriptableObject
         skillRange = range;
         cooldown = cd;
     }
-
-    // 效果引用 (这里可以挂载具体的 MonoBehaviour 脚本或 ScriptableObject)
-    // 为了简单演示，我们暂时用代码逻辑代替引用
 }
 public class SkillEventArgs
 {

@@ -21,11 +21,8 @@ public class MainMenu : MonoBehaviour
     // 开始新游戏
     public void StartNewGame()
     {
-        // 清除旧存档（可选）
         SaveSystem.ClearSaveData();
-
-        // 加载游戏主场景（需要先在 Build Settings 中添加）
-        SceneManager.LoadScene("GameScene");
+        SceneManager.LoadScene("LoadingScene");
     }
 
     // 继续游戏

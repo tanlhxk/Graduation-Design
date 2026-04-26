@@ -32,27 +32,6 @@ public class Tile
         return type == TileType.Walkable && occupyingUnit == null;
     }
 }
-[CreateAssetMenu(fileName = "TileSet", menuName = "WFC/TileSet")]
-public class TileSet : ScriptableObject
-{
-    [System.Serializable]
-    public struct TileEntry
-    {
-        public TileType type;
-        public TileBase tile;   // 改为 TileBase
-    }
-
-    public TileEntry[] entries;
-
-    public TileBase GetTile(TileType type)
-    {
-        foreach (var entry in entries)
-        {
-            if (entry.type == type) return entry.tile;
-        }
-        return null;
-    }
-}
 // 网格管理器
 public class GridManager : MonoBehaviour
 {
@@ -62,7 +41,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject tilePrefab;        // 默认格子预制体
     [Header("Tilemap设置")]
     [SerializeField] private Tilemap tilemap;          // 引用场景中的 Tilemap
-    [SerializeField] private TileSet tileSet;          // 仍然使用 TileSet，但里面改为存储 Tile 而不是 Prefab
+    [SerializeField] private TileSet tileSet;
     [Header("Billboard障碍物配置")]
     public List<BillboardObstacleConfig> billboardObstacles;
     [Header("高亮设置")]

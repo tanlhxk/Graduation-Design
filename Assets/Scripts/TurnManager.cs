@@ -302,7 +302,16 @@ public class TurnManager : MonoBehaviour
             // 可以立即结束该单位行动，并转到下一个
             currentActiveUnit = null;
             // 如果当前是敌人回合，可能需要继续下一个敌人
-            // 这里根据你的逻辑决定，可以在 UnitFinishedAction 中处理
+        }
+    }
+    public void OnEnemyDied(EnemyUnit enemy)
+    {
+        enemyUnits.Remove(enemy);
+        if (enemyUnits.Count == 0 && currentPhase != TurnPhase.EnemyTurn)
+        {
+            // 所有敌人死亡，战斗胜利
+            Debug.Log("战斗胜利！");
+            RouteManager.Instance.OnCombatVictory();
         }
     }
 }

@@ -74,7 +74,6 @@ public class UnitAttackingState : IUnitState
     private IEnumerator AttackCoroutine(Unit unit)
     {
         // 执行攻击逻辑（例如调用攻击方法，等待动画等）
-        //unit.PerformAttack(); // 需要在 Unit 中实现 PerformAttack
         unit.PerformAttackWithSkill();
         yield return new WaitForSeconds(0.5f); // 模拟攻击动画时间
         unit.ChangeState(UnitState.Idle);
@@ -244,6 +243,10 @@ public class Unit : MonoBehaviour
         AllUnits.Remove(this);
         gameObject.SetActive(false);
         Debug.Log($"{unitName} 死亡");
+        if (TurnManager.Instance != null && unitType == UnitType.Enemy)
+        {
+            TurnManager.Instance.OnEnemyDied(this as EnemyUnit);
+        }
     }
 
     // 死亡（外部调用）

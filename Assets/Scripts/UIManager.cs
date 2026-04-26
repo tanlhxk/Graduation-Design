@@ -9,7 +9,7 @@ public class UIManager : MonoBehaviour
 
     public static UIManager Instance;
 
-    [Header("Button Prefabs")]
+    [Header("按钮预制体")]
     public SkillButtonUI skillButtonPrefab; // 预制体
 
     [Header("Container")]
@@ -25,9 +25,13 @@ public class UIManager : MonoBehaviour
     public TMP_Text unitHPText;
     public TMP_Text unitAttackText;
 
+    [Header("UI Panels")]
+    public GameObject battleUIPanel;   // 战斗时显示的UI
+    public GameObject routeUIPanel;    // 路线选择UI面板
+
     [Header("按钮")]
     [SerializeField] private Button endTurnButton;
-
+    public RouteMapUI routeMapUI;
     private List<SkillButtonUI> activeButtons = new List<SkillButtonUI>();
     void Start()
     {
@@ -124,5 +128,21 @@ public class UIManager : MonoBehaviour
             // 强制结束玩家回合
             // 需要通知TurnManager跳过剩余玩家单位
         }
+    }
+    public void ShowRouteSelection(RouteNode currentNode, List<RouteNode> nextNodes)
+    {
+        routeMapUI.ShowNodes(nextNodes, currentNode);
+        routeMapUI.gameObject.SetActive(true);
+    }
+    public void ShowBattleUI()
+    {
+        if (battleUIPanel != null) battleUIPanel.SetActive(true);
+        if (routeUIPanel != null) routeUIPanel.SetActive(false);
+    }
+
+    public void ShowRouteUI()
+    {
+        if (battleUIPanel != null) battleUIPanel.SetActive(false);
+        if (routeUIPanel != null) routeUIPanel.SetActive(true);
     }
 }

@@ -59,8 +59,6 @@ public class SimpleWFCGenerator : MonoBehaviour
     /// </summary>
     public TileType[,] RunWFC(int seed)
     {
-        // 锁定随机种子
-        Random.InitState(seed);
         // 初始化兼容性字典
         InitializeCompatibility();
 
@@ -109,7 +107,7 @@ public class SimpleWFCGenerator : MonoBehaviour
             for (int y = 0; y < height; y++)
                 result[x, y] = wave[x, y].finalType;
 
-        // 后处理：确保关键点连通（基于原始 Walkable/Obstacle/Exit）
+        // 后处理：确保关键点连通
         if (enableConnectivityPostProcess && criticalPoints.Count >= 2)
         {
             EnsureConnectivity(ref result);
@@ -550,6 +548,6 @@ public class TileAdjacencyRule
 public struct BillboardObstacleConfig
 {
     public TileType type;           // 原始瓦片类型
-    public GameObject[] prefab;       // 对应的预制体
+    public GameObject[] prefab;     // 对应的预制体
     public float yOffset;           // 垂直偏移
 }
