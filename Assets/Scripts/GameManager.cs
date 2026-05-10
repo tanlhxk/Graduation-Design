@@ -36,7 +36,8 @@ public class GameManager : MonoBehaviour
             {
                 combatStarted = true;
                 Debug.Log("GameManager 检测到肉鸽路线，开始当前节点战斗...");
-                RouteManager.Instance.StartCurrentNode();
+                if (RouteManager.Instance.CurrentNode != null)
+                    RouteManager.Instance.StartCurrentNode();
             }
         }
         else
@@ -169,11 +170,13 @@ public class GameManager : MonoBehaviour
     /// <param name="nodeType">节点类型（普通/精英/BOSS）</param>
     public void StartCombat(NodeType nodeType)
     {
+        TurnManager.Instance.ResetBattle();
         ClearAllUnits();
         currentCombatType = nodeType;
 
         // 生成地图
-        seed = Random.Range(RouteManager.Instance.seed, RouteManager.Instance.currentLayer);
+        int layerHint = RouteManager.Instance.CurrentNode.gridPos.y;
+        seed = Random.Range(RouteManager.Instance.Seed, layerHint + 1);
         simpleWFCGenerator.GenerateAndBuildMap(seed);
 
         // 生成玩家（固定位置）

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5689572962615150299}
   - component: {fileID: 8082651727150331581}
-  - component: {fileID: 7677922550379321205}
+  - component: {fileID: 8391639770479752212}
   m_Layer: 0
   m_Name: RouteSystem
   m_TagString: Untagged
@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0485166b88e831f4ab9d430989f3abf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapGenerator: {fileID: 7677922550379321205}
---- !u!114 &7677922550379321205
+  mapGenerator: {fileID: 8391639770479752212}
+--- !u!114 &8391639770479752212
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -55,16 +55,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 4564937737047521950}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e28807190c344d64d82c7a6ad6ee1832, type: 3}
+  m_Script: {fileID: 11500000, guid: 633971db71a0ef74e862d7f1a62b7461, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalLayers: 5
-  minNodesPerLayer: 2
-  maxNodesPerLayer: 4
-  branchProbability: 0.6
-  combatWeight: 46000000
-  eliteWeight: 14000000
-  eventWeight: 1e000000
-  shopWeight: 0f000000
-  restWeight: 0a000000
-  treasureWeight: 05000000
+  width: 10
+  height: 10
+  minRooms: 15
+  maxRooms: 20
+  combatWeight: 40
+  eliteWeight: 10
+  eventWeight: 15
+  shopWeight: 10
+  restWeight: 10
+  treasureWeight: 5
+  extraEdgeProbability: 0.5
+  forceStartAtCorner: 1
+  forceBossAtOppositeCorner: 1

@@ -24,11 +24,18 @@ public class LoadingManager : MonoBehaviour
         {
             GameObject routeObj = new GameObject("RouteManager");
             routeManager = routeObj.AddComponent<RouteManager>();
-            RouteMapGenerator generator = routeObj.AddComponent<RouteMapGenerator>();
-            generator.totalLayers = 5;
-            generator.minNodesPerLayer = 2;
-            generator.maxNodesPerLayer = 4;
-            generator.branchProbability = 0.6f;
+            GridMapGenerator generator = routeObj.AddComponent<GridMapGenerator>();
+            // 设置网格地图参数
+            generator.width = 6;
+            generator.height = 5;
+            generator.combatWeight = 40;
+            generator.eliteWeight = 10;
+            generator.eventWeight = 15;
+            generator.shopWeight = 10;
+            generator.restWeight = 10;
+            generator.treasureWeight = 5;
+            generator.forceStartAtCorner = true;
+            generator.forceBossAtOppositeCorner = true;
             routeManager.mapGenerator = generator;
             DontDestroyOnLoad(routeObj);
         }

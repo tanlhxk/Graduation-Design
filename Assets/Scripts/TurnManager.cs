@@ -26,6 +26,7 @@ public class TurnManager : MonoBehaviour
     private int currentUnitIndex = 0;
 
     private bool isGameReady = false;
+    private bool isBattleOver = false;
     public TurnPhase currentPhase = TurnPhase.None;
     public int currentTurnNumber = 1;
 
@@ -85,6 +86,8 @@ public class TurnManager : MonoBehaviour
     // 开始玩家回合
     void StartPlayerTurn()
     {
+        CheckVictory();
+        if (isBattleOver) return;
         currentPhase = TurnPhase.PlayerTurn;
         Debug.Log($"===== 第 {currentTurnNumber} 回合 - 玩家回合 =====");
 
@@ -116,57 +119,59 @@ public class TurnManager : MonoBehaviour
     // 单位完成行动
     public void UnitFinishedAction(Unit unit)
     {
+        if (isBattleOver) return;  // 战斗已结束，忽略后续
+        if (unit != currentActiveUnit) return;
 
-        Debug.Log($"UnitFinishedAction 被调用，单位：{unit?.unitName}，当前激活单位：{currentActiveUnit?.unitName}，阶段：{currentPhase}，当前索引：{currentUnitIndex}，玩家单位数量：{playerUnits.Count}");
-        if (unit != currentActiveUnit)
-        {
-            Debug.Log("单位不匹配，返回");
-            return;
-        }
-
-        // 清除高亮
         MovementSystem.Instance.ClearHighlights();
 
-        // 移动到下一个单位
         if (currentPhase == TurnPhase.PlayerTurn)
         {
             currentUnitIndex++;
-
             if (currentUnitIndex < playerUnits.Count)
             {
-                // 还有玩家单位未行动
                 ActivateUnit(playerUnits[currentUnitIndex]);
             }
             else
             {
                 currentActiveUnit = null;
-                // 所有玩家单位行动完毕，进入敌人回合
-                Invoke(nameof(StartEnemyTurn), 0.5f);
+                // 所有玩家行动完成，检查胜利
+                CheckVictory();
+                if (!isBattleOver && enemyUnits.Count > 0)
+                    Invoke(nameof(StartEnemyTurn), 0.5f);
             }
         }
         else if (currentPhase == TurnPhase.EnemyTurn)
         {
             currentUnitIndex++;
-
             if (currentUnitIndex < enemyUnits.Count)
             {
-                // 还有敌人单位未行动
                 ActivateUnit(enemyUnits[currentUnitIndex]);
-                // 敌人AI自动行动
                 StartCoroutine(ExecuteEnemyTurn(enemyUnits[currentUnitIndex]));
             }
             else
             {
-                // 所有敌人行动完毕，开始新的一回合
-                currentTurnNumber++;
-                Invoke(nameof(StartPlayerTurn), 0.5f);
+                CheckVictory();
+                if (!isBattleOver)
+                {
+                    currentTurnNumber++;
+                    Invoke(nameof(StartPlayerTurn), 0.5f);
+                }
             }
         }
+        CheckVictory();
     }
 
     // 开始敌人回合
     void StartEnemyTurn()
     {
+        CheckVictory();
+        if (isBattleOver) return;
+        enemyUnits.RemoveAll(u => u == null || u.currentHP <= 0);
+        if (enemyUnits.Count == 0)
+        {
+            CheckVictory();
+            return;
+        }
         currentPhase = TurnPhase.EnemyTurn;
         Debug.Log($"===== 第 {currentTurnNumber} 回合 - 敌人回合 =====");
         Debug.Log($"===== 剩余 {enemyUnits.Count} 个敌人 =====");
@@ -307,11 +312,28 @@ public class TurnManager : MonoBehaviour
     public void OnEnemyDied(EnemyUnit enemy)
     {
         enemyUnits.Remove(enemy);
-        if (enemyUnits.Count == 0 && currentPhase != TurnPhase.EnemyTurn)
+        //死亡特效
+    }
+    public void ResetBattle()
+    {
+        isBattleOver = false;
+    }
+    private void CheckVictory()
+    {
+        if (isBattleOver) return;
+        enemyUnits.RemoveAll(u => u == null || u.currentHP <= 0);
+        if (enemyUnits.Count == 0)
         {
-            // 所有敌人死亡，战斗胜利
+            isBattleOver = true;
             Debug.Log("战斗胜利！");
-            RouteManager.Instance.OnCombatVictory();
+            currentPhase = TurnPhase.None;
+            if (currentActiveUnit != null)
+            {
+                MovementSystem.Instance.ClearHighlights();
+                currentActiveUnit = null;
+            }
+            StopAllCoroutines();  // 停止所有敌人 AI 协程
+            RouteManager.Instance.OnRoomCleared();
         }
     }
 }

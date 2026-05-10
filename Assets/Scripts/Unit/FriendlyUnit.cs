@@ -48,7 +48,6 @@ public class FriendlyUnit : Unit
         if (skillData == null) return false;
 
         // 这里可以写通用的距离判断逻辑
-        // 例如：计算格子距离是否 <= 技能射程
         int distance = GridManager.GetDistance(this.currentTile, target.currentTile);
         return distance <= skillData.skillRange;
     }
@@ -62,7 +61,6 @@ public class FriendlyUnit : Unit
         if (skillData == null) return;
 
         // 执行技能 (核心：通过接口调用)
-        // 这里可以使用一个 SkillFactory 来根据 skillData.type 获取对应的 ISkillEffect 实例
         ISkillEffect effect = SkillFactory.GetSkillEffect(skillData.skillType);
         effect.Execute(this, attackTarget, skillData);
 

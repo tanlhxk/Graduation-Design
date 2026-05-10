@@ -73,9 +73,18 @@ public class UnitAttackingState : IUnitState
 
     private IEnumerator AttackCoroutine(Unit unit)
     {
-        // 执行攻击逻辑（例如调用攻击方法，等待动画等）
+        // 1. 执行伤害逻辑（可能导致敌人死亡，但不会立即胜利）
         unit.PerformAttackWithSkill();
-        yield return new WaitForSeconds(0.5f); // 模拟攻击动画时间
+
+        // 2. 获取技能的特效/动画时长（如果没有，默认0.5秒）
+        float duration = 0.5f;
+        if (unit.currentSelectedSkillData != null)
+            duration = unit.currentSelectedSkillData.effectDuration; // 需要在 SkillDataSO 中添加该字段
+
+        // 3. 等待特效播放完成
+        yield return new WaitForSeconds(duration);
+
+        // 4. 特效结束，切换状态并通知回合管理器
         unit.ChangeState(UnitState.Idle);
         if (TurnManager.Instance != null && unit.currentHP > 0)
         {
@@ -121,7 +130,7 @@ public class Unit : MonoBehaviour
 
     public UnitState CurrentStateEnum { get; private set; }
     private IUnitState currentState;
-    private SkillDataSO currentSelectedSkillData;
+    public SkillDataSO currentSelectedSkillData { get; private set; }
 
     // 状态对象字典，便于复用
     private Dictionary<UnitState, IUnitState> states = new Dictionary<UnitState, IUnitState>();

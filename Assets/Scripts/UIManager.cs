@@ -31,7 +31,6 @@ public class UIManager : MonoBehaviour
 
     [Header("按钮")]
     [SerializeField] private Button endTurnButton;
-    public RouteMapUI routeMapUI;
     private List<SkillButtonUI> activeButtons = new List<SkillButtonUI>();
     void Start()
     {
@@ -128,11 +127,6 @@ public class UIManager : MonoBehaviour
             // 强制结束玩家回合
             // 需要通知TurnManager跳过剩余玩家单位
         }
-    }
-    public void ShowRouteSelection(RouteNode currentNode, List<RouteNode> nextNodes)
-    {
-        routeMapUI.ShowNodes(nextNodes, currentNode);
-        routeMapUI.gameObject.SetActive(true);
     }
     public void ShowBattleUI()
     {
