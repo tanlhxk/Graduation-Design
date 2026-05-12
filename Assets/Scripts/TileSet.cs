@@ -1,24 +1,28 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Game.Map;
 
-[CreateAssetMenu(fileName = "Tile", menuName = "WFC/Tile")]
-public class TileSet : ScriptableObject
+namespace Game.Map
 {
-    [System.Serializable]
-    public struct TileEntry
+    [CreateAssetMenu(fileName = "Tile", menuName = "WFC/Tile")]
+    public class TileSet : ScriptableObject
     {
-        public TileType type;
-        public TileBase tile;
-    }
-
-    public TileEntry[] entries;
-
-    public TileBase GetTile(TileType type)
-    {
-        foreach (var entry in entries)
+        [System.Serializable]
+        public struct TileEntry
         {
-            if (entry.type == type) return entry.tile;
+            public TileType type;
+            public TileBase tile;
         }
-        return null;
+
+        public TileEntry[] entries;
+
+        public TileBase GetTile(TileType type)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.type == type) return entry.tile;
+            }
+            return null;
+        }
     }
 }

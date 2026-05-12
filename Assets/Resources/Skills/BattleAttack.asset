@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skillName: "\u6280\u80FD2"
   skillType: 1
-  icon: {fileID: 21300000, guid: af11fb7bd15c82345a0bafcfd13a7cbe, type: 3}
+  icon: {fileID: 21300000, guid: b81ae31bd95aa664b9ab45f8a4d905a3, type: 3}
   description: "\u6218\u6280"
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 1372040286346358, guid: 53ebac442b16db64f9177d0c749cbb06, type: 3}
   hitSound: {fileID: 0}
+  effectDuration: 0
   damageMultiplier: 2
   skillRange: 5
   cooldown: 0

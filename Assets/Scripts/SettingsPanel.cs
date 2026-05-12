@@ -1,31 +1,34 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SettingsPanel : MonoBehaviour
+namespace Game.UI
 {
-    public Slider volumeSlider;
-    //public Toggle fullscreenToggle;
-
-    private void Start()
+    public class SettingsPanel : MonoBehaviour
     {
-        // 加载已保存的设置
-        volumeSlider.value = PlayerPrefs.GetFloat("MasterVolume", 0.75f);
-        //fullscreenToggle.isOn = Screen.fullScreen;
+        public Slider volumeSlider;
+        //public Toggle fullscreenToggle;
 
-        // 添加监听器
-        volumeSlider.onValueChanged.AddListener(SetVolume);
-        //fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
-    }
+        private void Start()
+        {
+            // 加载已保存的设置
+            volumeSlider.value = PlayerPrefs.GetFloat("MasterVolume", 0.75f);
+            //fullscreenToggle.isOn = Screen.fullScreen;
 
-    public void SetVolume(float volume)
-    {
-        AudioListener.volume = volume;
-        PlayerPrefs.SetFloat("MasterVolume", volume);
-    }
+            // 添加监听器
+            volumeSlider.onValueChanged.AddListener(SetVolume);
+            //fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
+        }
 
-    public void SetFullscreen(bool isFull)
-    {
-        Screen.fullScreen = isFull;
-        PlayerPrefs.SetInt("Fullscreen", isFull ? 1 : 0);
+        public void SetVolume(float volume)
+        {
+            AudioListener.volume = volume;
+            PlayerPrefs.SetFloat("MasterVolume", volume);
+        }
+
+        public void SetFullscreen(bool isFull)
+        {
+            Screen.fullScreen = isFull;
+            PlayerPrefs.SetInt("Fullscreen", isFull ? 1 : 0);
+        }
     }
 }

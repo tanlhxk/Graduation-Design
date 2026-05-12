@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using Game.Combat.Units;
 
 // 技能类型枚举
 public enum SkillType
