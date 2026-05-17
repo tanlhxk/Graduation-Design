@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd0aa8c8d8e24654c9c821020ce84b7f, type: 3}
-  m_Name: BattleAttack
+  m_Name: EnemyAttack
   m_EditorClassIdentifier: 
-  skillName: "\u5251_1"
-  skillType: 1
-  icon: {fileID: 21300000, guid: b81ae31bd95aa664b9ab45f8a4d905a3, type: 3}
-  description: "\u65CB\u98CE\u65A9"
+  skillName: Pencil_0
+  skillType: 0
+  icon: {fileID: 21300000, guid: 8948a6ef43d8458468ac620c55b3c29b, type: 3}
+  description: "\u8FD1\u6218\u5288\u780D"
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   hitSound: {fileID: 0}
-  effectDuration: 0.45
-  skillAnimation: {fileID: 7400000, guid: 51ab90663a0597643bf52a486ad431d8, type: 2}
-  damageMultiplier: 2
-  skillRange: 5
+  effectDuration: 0.5
+  skillAnimation: {fileID: 7400000, guid: 7da17b12f7f41e54e82266509d01e68f, type: 2}
+  damageMultiplier: 1.1
+  skillRange: 3
   cooldown: 0

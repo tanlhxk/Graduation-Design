@@ -4,6 +4,8 @@ using System.Collections;
 using UnityEngine.UI;
 using Game.Combat;
 using Game.Map;
+using Unity.VisualScripting;
+using Game.Camera;
 
 namespace Game.Combat.Units
 {
@@ -35,7 +37,11 @@ namespace Game.Combat.Units
     // 空闲状态
     public class UnitIdleState : IUnitState
     {
-        public void Enter(Unit unit) { }
+        public void Enter(Unit unit)
+        {
+            // 进入空闲：确保速度为 0
+            unit.SetMoveAnimation(0);
+        }
         public void Update(Unit unit) { }
         public void Exit(Unit unit) { }
     }
@@ -46,6 +52,7 @@ namespace Game.Combat.Units
         public void Enter(Unit unit)
         {
             // 启动移动协程，移动完成后自动切换回 Idle
+            unit.SetMoveAnimation(unit.moveSpeed);
             unit.StartCoroutine(MoveCoroutine(unit));
         }
 
@@ -63,7 +70,10 @@ namespace Game.Combat.Units
         }
 
         public void Update(Unit unit) { }
-        public void Exit(Unit unit) { }
+        public void Exit(Unit unit)
+        {
+            unit.SetMoveAnimation(0);
+        }
     }
 
     // 攻击状态
@@ -77,17 +87,15 @@ namespace Game.Combat.Units
 
         private IEnumerator AttackCoroutine(Unit unit)
         {
+            unit.PlayAttackAnimation(unit.currentSelectedSkillData);
             // 1. 执行伤害逻辑（可能导致敌人死亡，但不会立即胜利）
             unit.PerformAttackWithSkill();
 
             // 2. 获取技能的特效/动画时长（如果没有，默认0.5秒）
-            float duration = 0.5f;
-            if (unit.currentSelectedSkillData != null)
-                duration = unit.currentSelectedSkillData.effectDuration; // 需要在 SkillDataSO 中添加该字段
-
+            float duration = unit.currentSelectedSkillData?.effectDuration ?? 0.5f;
             // 3. 等待特效播放完成
             yield return new WaitForSeconds(duration);
-
+            unit.SetMoveAnimation(0);
             // 4. 特效结束，切换状态并通知回合管理器
             unit.ChangeState(UnitState.Idle);
             if (TurnManager.Instance != null && unit.currentHP > 0)
@@ -106,11 +114,20 @@ namespace Game.Combat.Units
     {
         public void Enter(Unit unit)
         {
-            // 死亡时执行清理，如从网格移除、停用对象等
-            unit.DieImmediate();
+            // 停止所有动作
+            unit.SetMoveAnimation(0);
+
+            // 如果有死亡动画，等待它播放完毕再销毁
+            // 假设死亡动画时长为 2 秒
+            unit.StartCoroutine(DestroyAfterAnimation(unit, 2f));
         }
         public void Update(Unit unit) { }
         public void Exit(Unit unit) { }
+        private IEnumerator DestroyAfterAnimation(Unit unit, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            unit.DieImmediate();
+        }
     }
 
     public class Unit : MonoBehaviour
@@ -118,6 +135,7 @@ namespace Game.Combat.Units
         [Header("基础属性")]
         public string unitName;
         public UnitType unitType;
+        public GameObject healthBarPrefab;
 
         [Header("战斗属性")]
         public int maxHP = 10;
@@ -125,9 +143,19 @@ namespace Game.Combat.Units
         public int moveRange = 3;
         public int baseAttack = 3;
         public float moveSpeed = 2f;
+        public int attackRange = 1;     // 攻击范围（格，1为相邻）
+        private List<SkillDataSO> skillData = new List<SkillDataSO>();
 
         [Header("引用")]
         public Tile currentTile;         // 当前所在格子
+
+        [Header("动画")]
+        public Animator animator;
+        //定义动画参数的 Hash
+        private int animIDSpeed;
+        private int animIDHit;
+        private int animIDDeath;
+        private AnimatorOverrideController overrideController;
 
         // 静态列表，存储所有当前存活的单位
         public static List<Unit> AllUnits = new List<Unit>();
@@ -156,11 +184,34 @@ namespace Game.Combat.Units
             states[UnitState.Moving] = new UnitMovingState();
             states[UnitState.Attacking] = new UnitAttackingState();
             states[UnitState.Dead] = new UnitDeadState();
-
+            if (animator == null)
+                animator = GetComponent<Animator>();
+            if (animator != null)
+            {
+                // 保存原始的 AnimatorController
+                var originalController = animator.runtimeAnimatorController;
+                // 创建 OverrideController 包裹原始控制器
+                overrideController = new AnimatorOverrideController(originalController);
+                // 将 OverrideController 赋值给 Animator
+                animator.runtimeAnimatorController = overrideController;
+            }
+            // 缓存参数 ID
+            animIDSpeed = Animator.StringToHash("Speed");
+            animIDHit = Animator.StringToHash("Hit");
+            animIDDeath = Animator.StringToHash("Death");
             // 初始状态设为 Idle
             ChangeState(UnitState.Idle);
+            // 动态创建血条
+            if (healthBarPrefab != null)
+            {
+                Debug.Log("创建");
+                GameObject healthBarObj = Instantiate(healthBarPrefab, transform);
+                HealthBar hpBar = healthBarObj.GetComponent<HealthBar>();
+                hpBar.targetUnit = this;
+                hpBar.slider.maxValue = maxHP;
+                hpBar.slider.value = currentHP;
+            }
         }
-
         public void Update()
         {
             currentState?.Update(this);
@@ -193,13 +244,28 @@ namespace Game.Combat.Units
             if (currentPath.Count > 1)
                 ChangeState(UnitState.Moving);
         }
+        public void AddSkill(SkillDataSO skill)
+        {
+            if (skill != null && !skillData.Contains(skill))
+                skillData.Add(skill);
+        }
 
+        // 外部读取技能
+        public List<SkillDataSO> GetUnitSkills()
+        {
+            return skillData;
+        }
+
+        // 1. 提供一个公共方法，根据索引返回技能数据
+        public SkillDataSO GetSkillData(int index)
+        {
+            return skillData[index];
+        }
         // 对外接口：攻击目标
         public void Attack(Unit target, int skillIndex)
         {
             if (CurrentStateEnum != UnitState.Idle) return;
             // 检查攻击范围（需要具体实现，此处简化）
-            // ...
             attackTarget = target;
             attackSkillIndex = skillIndex;
             ChangeState(UnitState.Attacking);
@@ -209,7 +275,7 @@ namespace Game.Combat.Units
         {
             if (CurrentStateEnum != UnitState.Idle) return;
             attackTarget = target;
-            currentSelectedSkillData = skillData;   // 新增字段：SkillDataSO currentSelectedSkillData
+            currentSelectedSkillData = skillData;
             ChangeState(UnitState.Attacking);
         }
 
@@ -229,8 +295,24 @@ namespace Game.Combat.Units
 
         public virtual void TakeDamage(int damage)
         {
-            // 此处暂时留空，具体由子类重写
-            Debug.Log($"{unitName} 收到攻击");
+            currentHP -= damage;
+
+            // 1. 播放受击动画
+            PlayHitAnimation();
+
+            // 2. 如果死亡，播放死亡动画并进入 Dead 状态
+            if (currentHP <= 0)
+            {
+                PlayDeathAnimation(); // 播放死亡动画
+                Die(); // 进入死亡状态 (会调用 UnitDeadState)
+            }
+            else
+            {
+                // 3. 如果没死，触发屏幕震动等反馈
+                CameraShake camShake = UnityEngine.Camera.main.GetComponent<CameraShake>();
+                if (camShake != null)
+                    camShake.Shake(0.1f, 0.1f);
+            }
         }
 
         // 立即死亡（由死亡状态调用）
@@ -240,7 +322,8 @@ namespace Game.Combat.Units
                                   // 从网格中移除
             if (currentTile != null)
                 currentTile.occupyingUnit = null;
-
+            HealthBar hpBar = GetComponentInChildren<HealthBar>();
+            if (hpBar != null) Destroy(hpBar.gameObject);
             TurnManager turnManager = TurnManager.Instance;
             if (turnManager != null)
             {
@@ -254,12 +337,12 @@ namespace Game.Combat.Units
             }
 
             AllUnits.Remove(this);
-            gameObject.SetActive(false);
             Debug.Log($"{unitName} 死亡");
             if (TurnManager.Instance != null && unitType == UnitType.Enemy)
             {
                 TurnManager.Instance.OnEnemyDied(this as EnemyUnit);
             }
+            Destroy(gameObject);
         }
 
         // 死亡（外部调用）
@@ -287,7 +370,50 @@ namespace Game.Combat.Units
             }
             return targets;
         }
+        public virtual void PlayAttackAnimation(SkillDataSO skillData)
+        {
+            // 播放音效
+            /*if (skillData.hitSound != null)
+            {
+                AudioSource.PlayClipAtPoint(skillData.hitSound, transform.position);
+            }*/
 
+            if (animator == null || skillData.skillAnimation == null)
+            {
+                Debug.LogWarning("Missing animator or animation clip");
+                return;
+            }
+            // 覆盖动画
+            overrideController["SkillPlay"] = skillData.skillAnimation;
+
+            animator.SetTrigger("PlaySkill");
+        }
+        //设置移动速度
+        public void SetMoveAnimation(float speed)
+        {
+            if (animator != null)
+            {
+                animator.SetFloat(animIDSpeed, speed);
+            }
+        }
+
+        //播放受击动画
+        public virtual void PlayHitAnimation()
+        {
+            if (animator != null)
+            {
+                animator.SetTrigger(animIDHit);
+            }
+        }
+
+        //播放死亡动画
+        public virtual void PlayDeathAnimation()
+        {
+            if (animator != null)
+            {
+                animator.SetTrigger(animIDDeath);
+            }
+        }
         // 重置回合（每回合开始调用）
         public void NewTurn()
         {

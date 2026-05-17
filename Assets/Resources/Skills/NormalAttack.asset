@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd0aa8c8d8e24654c9c821020ce84b7f, type: 3}
   m_Name: NormalAttack
   m_EditorClassIdentifier: 
-  skillName: "\u6280\u80FD1"
+  skillName: "\u5251_0"
   skillType: 0
   icon: {fileID: 21300000, guid: 8948a6ef43d8458468ac620c55b3c29b, type: 3}
-  description: "\u666E\u653B"
+  description: "\u8FD1\u6218\u5288\u780D"
   castEffectPrefab: {fileID: 0}
-  hitEffectPrefab: {fileID: 4400419719167067266, guid: 28683d8a8076f2f4e9473aa1e79b9542, type: 3}
+  hitEffectPrefab: {fileID: 0}
   hitSound: {fileID: 0}
-  effectDuration: 0
+  effectDuration: 1
+  skillAnimation: {fileID: 7400000, guid: 5a606a5a03a256040a6f509281644df4, type: 2}
   damageMultiplier: 1.1
   skillRange: 3
   cooldown: 0

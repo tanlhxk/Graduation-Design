@@ -592,7 +592,8 @@ namespace Game.Map.Generation
             }
 
             // 重新强制边界为 Obstacle，避免因移除小集群导致边界出现缺口
-            for (int x = 0; x < width; x++)
+            /*
+             * for (int x = 0; x < width; x++)
             {
                 ForceCollapseCell(x, 0, TileType.Obstacle);
                 ForceCollapseCell(x, height - 1, TileType.Obstacle);
@@ -611,7 +612,7 @@ namespace Game.Map.Generation
             {
                 ForceCollapseCell(0, y, TileType.Obstacle);
                 ForceCollapseCell(width - 1, y, TileType.Obstacle);
-            }
+            }*/
         }
     }
 

@@ -76,7 +76,7 @@ namespace Game.Combat
             if (isGameReady && currentPhase == TurnPhase.None)
             {
                 Debug.Log("准备开始第一回合...");
-
+                currentTurnNumber = 1;
                 // 再次防御性检查
                 if (playerUnits == null || playerUnits.Count == 0)
                 {
@@ -211,46 +211,76 @@ namespace Game.Combat
         // 执行敌人AI行动
         IEnumerator ExecuteEnemyTurn(EnemyUnit enemy)
         {
-            // 死亡检查
             if (enemy == null || enemy.currentHP <= 0)
             {
                 UnitFinishedAction(enemy);
                 yield break;
             }
 
-            yield return new WaitForSeconds(0.5f); // 行动前等待，让玩家看清
+            yield return new WaitForSeconds(0.3f);
 
-            // 寻找最近的玩家
-            FriendlyUnit targetPlayer = FindNearestPlayer(enemy);
-
-            // 情况1：可以攻击
-            if (targetPlayer != null && enemy.CanAttack(targetPlayer, 1))
+            // 1. 收集所有可用的玩家目标
+            List<FriendlyUnit> validTargets = playerUnits.Where(p => p != null && p.currentHP > 0).ToList();
+            if (validTargets.Count == 0)
             {
-                Debug.Log($"{enemy.unitName} 攻击 {targetPlayer.unitName}");
-                // 调用 Attack 方法，内部会触发状态机，攻击完成后自动调用 UnitFinishedAction
-                enemy.Attack(targetPlayer);
-                // 立即退出协程，状态机会在攻击结束后通知 TurnManager
+                UnitFinishedAction(enemy);
                 yield break;
             }
 
-            // 情况2：无法攻击，尝试移动
-            if (targetPlayer != null)
-            {
-                List<Tile> moveableTiles = MovementSystem.Instance.GetMoveableTiles(enemy, enemy.moveRange);
-                Tile bestTile = FindTileClosestToPlayer(moveableTiles, targetPlayer);
+            // 2. 评估所有技能，选择最佳行动
+            SkillDataSO bestSkill = null;
+            FriendlyUnit bestTarget = null;
+            float bestScore = -1f;
 
-                if (bestTile != null && bestTile != enemy.currentTile)
+            foreach (var skill in enemy.GetUnitSkills())
+            {
+                foreach (var target in validTargets)
                 {
-                    // 通过状态机移动，移动完成后状态机会自动调用 UnitFinishedAction
-                    enemy.MoveTo(bestTile);
-                    yield break; // 等待状态机完成回调
+                    if (!enemy.CanUseSkill(target, skill)) continue;
+
+                    // 计算技能得分（示例：伤害期望值）
+                    float score = EvaluateSkill(enemy, target, skill);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestSkill = skill;
+                        bestTarget = target;
+                    }
                 }
             }
 
-            // 情况3：既不能攻击也无法移动，直接结束该敌人回合
+            // 3. 执行最佳行动
+            if (bestSkill != null && bestTarget != null)
+            {
+                Debug.Log($"{enemy.unitName} 使用 {bestSkill.skillName} 攻击 {bestTarget.unitName}");
+                enemy.Attack(bestTarget, bestSkill);
+                yield break; // 等待状态机完成回调
+            }
+
+            // 4. 如果没有可用技能（全部冷却或范围不够），尝试移动
+            List<Tile> moveableTiles = MovementSystem.Instance.GetMoveableTiles(enemy, enemy.moveRange);
+            Tile bestTile = FindTileClosestToPlayer(moveableTiles, validTargets.First());
+            if (bestTile != null && bestTile != enemy.currentTile)
+            {
+                enemy.MoveTo(bestTile);
+                yield break;
+            }
+
+            // 5. 什么都做不了，结束回合
             UnitFinishedAction(enemy);
         }
-
+        float EvaluateSkill(EnemyUnit caster, FriendlyUnit target, SkillDataSO skill)
+        {
+            float score = 0f;
+            // 基础伤害期望（假设伤害倍率直接乘攻击力）
+            float damage = caster.baseAttack * skill.damageMultiplier;
+            score += damage;
+            // 如果目标血量很低，可以增加权重（斩杀倾向）
+            if (target.currentHP <= damage) score += 50f;
+            // 如果技能有特殊效果（如眩晕），可额外加分
+            // 如果技能在冷却中，score = -1 跳过
+            return score;
+        }
         // 找到最近的玩家
         FriendlyUnit FindNearestPlayer(EnemyUnit enemy)
         {

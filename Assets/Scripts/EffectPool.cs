@@ -49,7 +49,7 @@ namespace Game.Effects
             }
         }
 
-        // 可选：清理所有池（场景切换时调用）
+        // 清理所有池（场景切换时调用）
         public void Clear()
         {
             foreach (var stack in pool.Values)

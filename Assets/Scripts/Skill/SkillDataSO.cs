@@ -31,6 +31,7 @@ public class SkillDataSO : ScriptableObject
     public GameObject hitEffectPrefab;    // 命中目标时的特效
     public AudioClip hitSound;            // 命中音效
     public float effectDuration = 0.5f;  // 特效/动画播放时长（秒）
+    public AnimationClip skillAnimation;
 
     [Header("数值配置")]
     public float damageMultiplier = 1f; // 伤害倍率

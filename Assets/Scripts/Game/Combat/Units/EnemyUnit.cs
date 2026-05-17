@@ -9,37 +9,38 @@ namespace Game.Combat.Units
 {
     public class EnemyUnit : Unit
     {
-        [Header("战斗属性")]
-        public int attackRange = 1;     // 攻击范围（格，1为相邻）
-                                        //private List<SkillData> skillData = new List<SkillData>();
-
         void Start()
         {
             // 确保基础血量初始化
             if (currentHP == 0) currentHP = maxHP;
         }
-
-        // 受伤
-        public override void TakeDamage(int damage)
+        public bool CanUseSkill(FriendlyUnit target, SkillDataSO skillData)
         {
-            currentHP -= damage;
-            Debug.Log($"{unitName} 受到 {damage} 点伤害，剩余 HP: {currentHP}");
+            if (skillData == null) return false;
 
-            if (currentHP <= 0)
-            {
-                Die();
-            }
+            // 这里可以写通用的距离判断逻辑
+            int distance = GridManager.GetDistance(currentTile, target.currentTile);
+            return distance <= skillData.skillRange;
         }
-
         // 攻击范围判断
-        public bool CanAttack(Unit target, int skillIndex)
+        public bool CanAttack(FriendlyUnit target, int skillIndex)
         {
             if (target == null || target.currentHP <= 0) return false;
 
+            // 计算曼哈顿距离
             int distance = Mathf.Abs(currentTile.gridPos.x - target.currentTile.gridPos.x) +
                           Mathf.Abs(currentTile.gridPos.y - target.currentTile.gridPos.y);
 
-            return distance <= attackRange;
+            // 如果没有技能数据，或者索引为0（普攻），使用单位的 attackRange
+            // 否则使用技能的 attackRange
+            int effectiveRange = attackRange;
+            List<SkillDataSO> skillDataSO = GetUnitSkills();
+            if (skillDataSO.Count > skillIndex && skillIndex > 0)
+            {
+                effectiveRange = skillDataSO[skillIndex].skillRange;
+            }
+
+            return distance <= effectiveRange;
         }
 
         public override void PerformAttack()

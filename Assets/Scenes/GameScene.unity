@@ -1026,7 +1026,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39fe671ac055b544f82f6262dd8c857a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 6053568271378320040, guid: 632f6c1da4420184e919cf9e0a7f3761, type: 3}
+  playerPrefab: {fileID: 8917780693466924492, guid: 85686e2baa6e8904e8609e87899b0c43, type: 3}
   enemyPrefab: {fileID: 1628299741716654555, guid: a467857b90e4d0e419c1bb886bea9482, type: 3}
   seed: 12345
   simpleWFCGenerator: {fileID: 733257383}
@@ -1061,7 +1061,7 @@ MonoBehaviour:
   width: 15
   height: 15
   tileTypes: 000000000100000002000000
-  weights: 080000000200000000000000
+  weights: 080000000400000000000000
   adjacencyRules:
   - type: 0
     allowedNeighbors: 000000000100000002000000
@@ -1069,9 +1069,7 @@ MonoBehaviour:
     allowedNeighbors: 000000000100000002000000
   enableConnectivityPostProcess: 1
   criticalPoints:
-  - {x: 1, y: 1}
-  - {x: 7, y: 7}
-  - {x: 14, y: 14}
+  - {x: 5, y: 5}
   walkableTypes: 00000000
   mapSize: {x: 10, y: 10}
   billboardObstacles: []

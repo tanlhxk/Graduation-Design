@@ -9,52 +9,9 @@ namespace Game.Combat.Units
 {
     public class FriendlyUnit : Unit
     {
-        [Header("战斗属性")]
-        public int attackRange = 1;
-        private List<SkillDataSO> skillData = new List<SkillDataSO>();
-
         void Start()
         {
             currentHP = maxHP;
-        }
-
-        // 受伤
-        public override void TakeDamage(int damage)
-        {
-            currentHP -= damage;
-            Debug.Log($"{unitName} 受到 {damage} 点伤害，剩余 HP: {currentHP}");
-
-            if (currentHP <= 0)
-            {
-                Die();
-            }
-        }
-
-        public void AddSkill(SkillDataSO skill)
-        {
-            if (skill != null && !skillData.Contains(skill))
-                skillData.Add(skill);
-        }
-
-        // 外部读取技能
-        public List<SkillDataSO> GetUnitSkills()
-        {
-            return skillData;
-        }
-
-        // 1. 提供一个公共方法，根据索引返回技能数据
-        public SkillDataSO GetSkillData(int index)
-        {
-            return skillData[index];
-        }
-
-        public bool CanUseSkill(EnemyUnit target, SkillDataSO skillData)
-        {
-            if (skillData == null) return false;
-
-            // 这里可以写通用的距离判断逻辑
-            int distance = GridManager.GetDistance(currentTile, target.currentTile);
-            return distance <= skillData.skillRange;
         }
 
         public override void PerformAttack()
@@ -82,7 +39,14 @@ namespace Game.Combat.Units
         {
             base.Attack(target, skillIndex);
         }
+        public bool CanUseSkill(EnemyUnit target, SkillDataSO skillData)
+        {
+            if (skillData == null) return false;
 
+            // 这里可以写通用的距离判断逻辑
+            int distance = GridManager.GetDistance(currentTile, target.currentTile);
+            return distance <= skillData.skillRange;
+        }
         public bool CanAttack(EnemyUnit target, int skillIndex)
         {
             if (target == null || target.currentHP <= 0) return false;
@@ -94,9 +58,10 @@ namespace Game.Combat.Units
             // 如果没有技能数据，或者索引为0（普攻），使用单位的 attackRange
             // 否则使用技能的 attackRange
             int effectiveRange = attackRange;
-            if (skillData.Count > skillIndex && skillIndex > 0)
+            List<SkillDataSO> skillDataSO = GetUnitSkills();
+            if (skillDataSO.Count > skillIndex && skillIndex > 0)
             {
-                effectiveRange = skillData[skillIndex].skillRange;
+                effectiveRange = skillDataSO[skillIndex].skillRange;
             }
 
             return distance <= effectiveRange;

@@ -6,6 +6,8 @@ using Game.Camera;
 using Game.Map.Generation;
 using Game.Map;
 using System.Collections.Generic;
+using System.Collections;
+using System.Linq;
 
 namespace Game.Core
 {
@@ -51,6 +53,7 @@ namespace Game.Core
             }
             else
             {
+                Random.InitState(seed);
                 // 没有路线数据（例如直接在编辑器中运行 GameScene），使用测试模式
                 Debug.Log("未检测到肉鸽路线，使用测试模式生成地图");
                 simpleWFCGenerator.GenerateAndBuildMap(seed);
@@ -96,16 +99,17 @@ namespace Game.Core
                 enemyUnit.moveRange = 3;
                 enemyUnit.attackRange = 1;
                 enemyUnit.unitType = UnitType.Enemy;
-
+                SkillDataSO normalAttack = Resources.Load<SkillDataSO>("Skills/NormalAttack");
+                enemyUnit.AddSkill(normalAttack);
                 // 通知GridManager该单位占据了格子
                 GridManager.Instance.SetUnitOnTile(enemyUnit, gridPos);
             }
 
-            if (TurnManager.Instance != null)
+            /*if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.enemyUnits.Add(enemyUnit);
                 TurnManager.Instance.allUnits.Add(enemyUnit);
-            }
+            }*/
             //facingCamera.RefreshFacing();
             Debug.Log($"敌方已生成在网格位置 {gridPos}");
         }
@@ -145,11 +149,11 @@ namespace Game.Core
             }
 
             // 将玩家添加到TurnManager
-            if (TurnManager.Instance != null)
+            /*if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.playerUnits.Add(playerUnit);
                 TurnManager.Instance.allUnits.Add(playerUnit);
-            }
+            }*/
             if (CameraController.Instance != null)
             {
                 CameraController.Instance.ForcePosition(playerObj.transform.position);
@@ -165,6 +169,12 @@ namespace Game.Core
         {
             TurnManager.Instance.ResetBattle();
             ClearAllUnits();
+            StartCoroutine(DelayedStartCombat(nodeType));
+        }
+        private IEnumerator DelayedStartCombat(NodeType nodeType)
+        {
+            yield return null; // 等待一帧
+
             currentCombatType = nodeType;
 
             // 生成地图
@@ -189,12 +199,6 @@ namespace Game.Core
         }
         private void ClearAllUnits()
         {
-            // 销毁所有现有单位物体
-            var allUnits = FindObjectsOfType<Unit>();
-            foreach (var unit in allUnits)
-            {
-                Destroy(unit.gameObject);
-            }
             // 清空静态列表和 TurnManager 中的列表
             Unit.AllUnits.Clear();
             if (TurnManager.Instance != null)
@@ -203,6 +207,12 @@ namespace Game.Core
                 TurnManager.Instance.enemyUnits.Clear();
                 TurnManager.Instance.allUnits.Clear();
                 TurnManager.Instance.currentActiveUnit = null;
+            }
+            var allUnits = FindObjectsOfType<Unit>(true);
+            foreach (var unit in allUnits)
+            {
+                if (unit != null)
+                    DestroyImmediate(unit.gameObject); // 立即销毁
             }
         }
         /// <summary>
@@ -253,8 +263,7 @@ namespace Game.Core
             GameObject enemyObj = Instantiate(enemyPrefab, worldPos, Quaternion.identity);
             enemyObj.tag = "Enemy";
             enemyObj.name = name;
-
-            EnemyUnit enemyUnit = enemyObj.GetComponent<EnemyUnit>();
+            enemyUnit = enemyObj.GetComponent<EnemyUnit>();
             if (enemyUnit != null)
             {
                 enemyUnit.unitName = name;
@@ -264,15 +273,16 @@ namespace Game.Core
                 enemyUnit.moveRange = 3;
                 enemyUnit.attackRange = 1;
                 enemyUnit.unitType = UnitType.Enemy;
-
+                SkillDataSO normalAttack = Resources.Load<SkillDataSO>("Skills/EnemyAttack");
+                enemyUnit.AddSkill(normalAttack);
                 GridManager.Instance.SetUnitOnTile(enemyUnit, gridPos);
             }
 
-            if (TurnManager.Instance != null)
+            /*if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.enemyUnits.Add(enemyUnit);
                 TurnManager.Instance.allUnits.Add(enemyUnit);
-            }
+            }*/
         }
 
         /// <summary>
