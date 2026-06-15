@@ -9,7 +9,7 @@ namespace Game.Effects
         public static EffectPool Instance;
 
         private Dictionary<GameObject, Stack<GameObject>> pool = new Dictionary<GameObject, Stack<GameObject>>();
-        private Dictionary<GameObject, GameObject> prefabMap = new Dictionary<GameObject, GameObject>(); // ÊµÀı -> Ô¤ÖÆÌå
+        private Dictionary<GameObject, GameObject> prefabMap = new Dictionary<GameObject, GameObject>(); // å®ä¾‹ -> é¢„åˆ¶ä½“
 
         void Awake()
         {
@@ -21,7 +21,7 @@ namespace Game.Effects
         {
             if (!pool.ContainsKey(prefab) || pool[prefab].Count == 0)
             {
-                // ´´½¨ĞÂÊµÀı
+                // åˆ›å»ºæ–°å®ä¾‹
                 GameObject obj = Instantiate(prefab);
                 obj.SetActive(false);
                 prefabMap[obj] = prefab;
@@ -44,12 +44,12 @@ namespace Game.Effects
             }
             else
             {
-                // Î´¼ÇÂ¼Ô¤ÖÆÌå£¬Ö±½ÓÏú»Ù
+                // æœªè®°å½•é¢„åˆ¶ä½“ï¼Œç›´æ¥é”€æ¯
                 Destroy(obj);
             }
         }
 
-        // ÇåÀíËùÓĞ³Ø£¨³¡¾°ÇĞ»»Ê±µ÷ÓÃ£©
+        // æ¸…ç†æ‰€æœ‰æ± ï¼ˆåœºæ™¯åˆ‡æ¢æ—¶è°ƒç”¨ï¼‰
         public void Clear()
         {
             foreach (var stack in pool.Values)

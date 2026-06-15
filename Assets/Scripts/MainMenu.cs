@@ -1,112 +1,167 @@
+using Game.RogueLike;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using static Game.UI.SaveSystem;
 
 namespace Game.UI
 {
     public class MainMenu : MonoBehaviour
     {
         [Header("Buttons")]
-        public Button continueButton;      // ¼ÌĞøÓÎÏ·°´Å¥
-        public GameObject settingsPanel;   // ÉèÖÃÃæ°å
+        public Button continueButton;      // ç»§ç»­æ¸¸æˆæŒ‰é’®
+        public GameObject settingsPanel;   // è®¾ç½®é¢æ¿
 
         private void Start()
         {
-            // ¼ì²éÊÇ·ñ´æÔÚ´æµµ£¬¾ö¶¨¼ÌĞø°´Å¥ÊÇ·ñ¿ÉÓÃ
+            // æ£€æŸ¥æ˜¯å¦å­˜åœ¨å­˜æ¡£ï¼Œå†³å®šç»§ç»­æŒ‰é’®æ˜¯å¦å¯ç”¨
             bool hasSave = SaveSystem.HasSaveData();
             continueButton.interactable = hasSave;
 
-            // È·±£ÉèÖÃÃæ°å³õÊ¼¹Ø±Õ
+            // ç¡®ä¿è®¾ç½®é¢æ¿åˆå§‹å…³é—­
             settingsPanel.SetActive(false);
+            /*GameProgress progress = SaveSystem.LoadProgress();
+            if (progress.hasBeatenBoss)
+            {
+                Debug.Log($"æ¬¢è¿å›æ¥ï¼æ‚¨å·²é€šå…³ {progress.clearedRuns} æ¬¡ï¼Œæœ€é«˜ç§å­ï¼š{progress.highestSeed}");
+                // å¯ä»¥æ˜¾ç¤ºåœ¨ UI æ–‡æœ¬ä¸Šï¼Œæ¯”å¦‚é€šå…³æ¬¡æ•°ã€è§£é”æ–°éš¾åº¦æŒ‰é’®ç­‰
+            }*/
         }
 
-        // ¿ªÊ¼ĞÂÓÎÏ·
+        // å¼€å§‹æ–°æ¸¸æˆ
         public void StartNewGame()
         {
             SaveSystem.ClearSaveData();
             SceneManager.LoadScene("LoadingScene");
         }
 
-        // ¼ÌĞøÓÎÏ·
+        // ç»§ç»­æ¸¸æˆ
         public void ContinueGame()
         {
-            if (SaveSystem.HasSaveData())
+            SaveData save = SaveSystem.LoadGameData();
+            if (save != null)
             {
-                // ¼ÓÔØ´æµµÖĞ±£´æµÄ³¡¾°£¨Ê¾ÀıÖĞÄ¬ÈÏ¼ÓÔØ GameScene£©
+                // è®¾ç½®é™æ€æ•°æ®ï¼Œè®© RouteManager åœ¨ GameScene ä¸­è‡ªå·±åŠ è½½
+                RouteManager.LoadFromSave = true;
+                RouteManager.PendingSaveData = save;
                 SceneManager.LoadScene("GameScene");
-                // Êµ¼ÊÏîÄ¿ÖĞ£¬½øÈë³¡¾°ºóĞèÒªÍ¨¹ıÊÂ¼ş»ò¾²Ì¬±äÁ¿¸æÖª¼ÓÔØ´æµµÊı¾İ
-                // ÀıÈç£ºGameManager.LoadFromSave = true;
             }
             else
             {
-                Debug.LogWarning("Ã»ÓĞ´æµµ£¬ÎŞ·¨¼ÌĞøÓÎÏ·£¡");
+                Debug.LogWarning("æ²¡æœ‰å­˜æ¡£ï¼Œæ— æ³•ç»§ç»­æ¸¸æˆï¼");
                 continueButton.interactable = false;
             }
         }
 
-        // ´ò¿ª/¹Ø±ÕÉèÖÃÃæ°å
+        // æ‰“å¼€/å…³é—­è®¾ç½®é¢æ¿
         public void ToggleSettings(bool open)
         {
             settingsPanel.SetActive(open);
         }
 
-        // ÍË³öÓÎÏ·
+        // é€€å‡ºæ¸¸æˆ
         public void QuitGame()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;  // ±à¼­Æ÷Ä£Ê½ÏÂÍ£Ö¹ÔËĞĞ
+            UnityEditor.EditorApplication.isPlaying = false;  // ç¼–è¾‘å™¨æ¨¡å¼ä¸‹åœæ­¢è¿è¡Œ
 #else
-            Application.Quit();                               // ÕıÊ½¹¹½¨Ê±ÍË³öÓ¦ÓÃ
+            Application.Quit();                               // æ­£å¼æ„å»ºæ—¶é€€å‡ºåº”ç”¨
 #endif
         }
     }
-
     public static class SaveSystem
     {
-        // ´æµµ±êÊ¶¼ü
+        // å­˜æ¡£æ ‡è¯†é”®
         private const string SAVE_KEY = "GameSaveData";
+        private const string PROGRESS_KEY = "GameProgress";
 
-        // ¼ì²éÊÇ·ñ´æÔÚ´æµµ
+        // æ£€æŸ¥æ˜¯å¦å­˜åœ¨å­˜æ¡£
         public static bool HasSaveData()
         {
             return PlayerPrefs.HasKey(SAVE_KEY);
         }
 
-        // Çå³ı´æµµ£¨¿ªÊ¼ĞÂÓÎÏ·Ê±µ÷ÓÃ£©
+        // æ¸…é™¤å­˜æ¡£ï¼ˆå¼€å§‹æ–°æ¸¸æˆæ—¶è°ƒç”¨ï¼‰
         public static void ClearSaveData()
         {
             PlayerPrefs.DeleteKey(SAVE_KEY);
-            Debug.Log("´æµµÒÑÇå³ı");
+            Debug.Log("å­˜æ¡£å·²æ¸…é™¤");
         }
 
-        // ±£´æÓÎÏ·Êı¾İ
-        public static void SaveGame(int sceneIndex, int playerLevel)
+        // ä¿å­˜æ¸¸æˆæ•°æ®
+        public static void SaveGameData(SaveData data)
         {
-            SaveData data = new SaveData(sceneIndex, playerLevel);
             string json = JsonUtility.ToJson(data);
             PlayerPrefs.SetString(SAVE_KEY, json);
             PlayerPrefs.Save();
         }
 
-        // ¼ÓÔØ´æµµÊı¾İ£¨·µ»Ø null ±íÊ¾ÎŞ´æµµ£©
-        public static SaveData LoadSaveData()
+        // åŠ è½½å­˜æ¡£æ•°æ®ï¼ˆè¿”å› null è¡¨ç¤ºæ— å­˜æ¡£ï¼‰
+        public static SaveData LoadGameData()
         {
             if (!HasSaveData()) return null;
             string json = PlayerPrefs.GetString(SAVE_KEY);
             return JsonUtility.FromJson<SaveData>(json);
         }
+        public static void SaveProgress(GameProgress progress)
+        {
+            string json = JsonUtility.ToJson(progress);
+            PlayerPrefs.SetString(PROGRESS_KEY, json);
+            PlayerPrefs.Save();
+        }
 
-        // ´æµµÊı¾İ½á¹¹
+        public static GameProgress LoadProgress()
+        {
+            if (!PlayerPrefs.HasKey(PROGRESS_KEY))
+                return new GameProgress(); // è¿”å›é»˜è®¤å€¼ï¼ˆæœªé€šå…³ï¼Œæ¬¡æ•°0ï¼Œç§å­0ï¼‰
+
+            string json = PlayerPrefs.GetString(PROGRESS_KEY);
+            return JsonUtility.FromJson<GameProgress>(json);
+        }
+
+        public static void ClearProgress()
+        {
+            PlayerPrefs.DeleteKey(PROGRESS_KEY);
+            Debug.Log("æˆå°±è®°å½•å·²æ¸…é™¤");
+        }
+        // å­˜æ¡£æ•°æ®ç»“æ„
         [System.Serializable]
         public class SaveData
         {
             public int sceneIndex;
             public int playerLevel;
 
-            public SaveData(int sceneIndex, int playerLevel)
+            // ===== è‚‰é¸½è¿›åº¦ =====
+            public int seed;                     // åœ°å›¾ç§å­
+            public int currentNodeX;             // å½“å‰èŠ‚ç‚¹Xåæ ‡
+            public int currentNodeY;             // å½“å‰èŠ‚ç‚¹Yåæ ‡
+            public NodeType currentNodeType;     // å½“å‰èŠ‚ç‚¹ç±»å‹
+            public List<VisitedNodeData> visitedNodes; // å·²è®¿é—®èŠ‚ç‚¹åˆ—è¡¨
+        }
+
+        [System.Serializable]
+        public class VisitedNodeData
+        {
+            public int x, y;
+            public bool isVisited;
+        }
+        [System.Serializable]
+        public class GameProgress
+        {
+            public bool hasBeatenBoss;      // æ˜¯å¦å‡»è´¥è¿‡ BOSS
+            public int clearedRuns;         // é€šå…³æ¬¡æ•°
+            public int highestSeed;         // é€šå…³æ—¶çš„æœ€é«˜ç§å­
+            public int deathCount;          // æ€»æ­»äº¡æ¬¡æ•°ï¼ˆæ–°å¢ï¼‰
+            public int farthestLayer;       // åˆ°è¾¾çš„æœ€è¿œå±‚æ•°
+
+            public GameProgress()
             {
-                this.sceneIndex = sceneIndex;
-                this.playerLevel = playerLevel;
+                hasBeatenBoss = false;
+                clearedRuns = 0;
+                highestSeed = 0;
+                deathCount = 0;
+                farthestLayer = 0;
             }
         }
     }

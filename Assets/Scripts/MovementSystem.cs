@@ -14,7 +14,7 @@ namespace Game.Map
         public static MovementSystem Instance { get; private set; }
         public TurnManager turnManager;
 
-        [Header("¸ßÁÁ²ÄÖÊ")]
+        [Header("é«˜äº®æè´¨")]
         [Header("Highlight Colors")]
         public Color moveRangeColor = new Color(0, 0, 1, 0.5f);
         public Color attackRangeColor = new Color(1, 0, 0, 0.5f);
@@ -27,7 +27,7 @@ namespace Game.Map
                 Destroy(gameObject);
         }
 
-        // ¼ÆËã¿ÉÒÆ¶¯·¶Î§£¨¹ã¶ÈÓÅÏÈËÑË÷£©
+        // è®¡ç®—å¯ç§»åŠ¨èŒƒå›´ï¼ˆå¹¿åº¦ä¼˜å…ˆæœç´¢ï¼‰
         public List<Tile> GetMoveableTiles(Unit unit, int moveRange)
         {
             if (unit == null || unit.currentTile == null) return new List<Tile>();
@@ -36,37 +36,37 @@ namespace Game.Map
             Queue<Tile> queue = new Queue<Tile>();
             Dictionary<Tile, int> distanceMap = new Dictionary<Tile, int>();
 
-            // ´Óµ±Ç°¸ñ×Ó¿ªÊ¼
+            // ä»å½“å‰æ ¼å­å¼€å§‹
             Tile startTile = unit.currentTile;
             queue.Enqueue(startTile);
             distanceMap[startTile] = 0;
 
-            // BFS±éÀú
+            // BFSéå†
             while (queue.Count > 0)
             {
                 Tile current = queue.Dequeue();
                 int currentDist = distanceMap[current];
 
-                // Èç¹ûÔÚÒÆ¶¯·¶Î§ÄÚ£¬¼ÓÈë½á¹û
+                // å¦‚æœåœ¨ç§»åŠ¨èŒƒå›´å†…ï¼ŒåŠ å…¥ç»“æœ
                 if (currentDist <= moveRange)
                 {
-                    // µ±Ç°¸ñ×Ó¿ÉÒÔÒÆ¶¯£¨³ı·Ç±»ÆäËûµ¥Î»Õ¼¾İ£©
+                    // å½“å‰æ ¼å­å¯ä»¥ç§»åŠ¨ï¼ˆé™¤éè¢«å…¶ä»–å•ä½å æ®ï¼‰
                     if (current == startTile || current.IsWalkable())
                     {
                         result.Add(current);
                     }
                 }
 
-                // Èç¹ûÒÑ¾­´ïµ½×î´óÒÆ¶¯¾àÀë£¬²»ÔÙÀ©Õ¹
+                // å¦‚æœå·²ç»è¾¾åˆ°æœ€å¤§ç§»åŠ¨è·ç¦»ï¼Œä¸å†æ‰©å±•
                 if (currentDist >= moveRange)
                     continue;
 
-                // ¼ì²éËÄ¸ö·½ÏòµÄÁÚ¾Ó
+                // æ£€æŸ¥å››ä¸ªæ–¹å‘çš„é‚»å±…
                 Vector2Int[] directions = {
-                new Vector2Int(0, 1),   // ÉÏ
-                new Vector2Int(1, 0),   // ÓÒ
-                new Vector2Int(0, -1),  // ÏÂ
-                new Vector2Int(-1, 0)   // ×ó
+                new Vector2Int(0, 1),   // ä¸Š
+                new Vector2Int(1, 0),   // å³
+                new Vector2Int(0, -1),  // ä¸‹
+                new Vector2Int(-1, 0)   // å·¦
             };
 
                 foreach (var dir in directions)
@@ -76,15 +76,15 @@ namespace Game.Map
 
                     if (neighbor == null) continue;
 
-                    // Èç¹ûÁÚ¾ÓÊÇÕÏ°­ÎïÇÒ²»ÊÇµ¥Î»µ±Ç°ËùÔÚÎ»ÖÃ£¬Ìø¹ı
+                    // å¦‚æœé‚»å±…æ˜¯éšœç¢ç‰©ä¸”ä¸æ˜¯å•ä½å½“å‰æ‰€åœ¨ä½ç½®ï¼Œè·³è¿‡
                     if (neighbor.type == TileType.Obstacle && neighbor != startTile)
                         continue;
 
-                    // Èç¹ûÁÚ¾Ó±»ÆäËûµ¥Î»Õ¼¾İÇÒ²»ÊÇÆğµã£¬Ìø¹ı
+                    // å¦‚æœé‚»å±…è¢«å…¶ä»–å•ä½å æ®ä¸”ä¸æ˜¯èµ·ç‚¹ï¼Œè·³è¿‡
                     if (neighbor.occupyingUnit != null && neighbor != startTile)
                         continue;
 
-                    // Èç¹û»¹Ã»·ÃÎÊ¹ı
+                    // å¦‚æœè¿˜æ²¡è®¿é—®è¿‡
                     if (!distanceMap.ContainsKey(neighbor))
                     {
                         distanceMap[neighbor] = currentDist + 1;
@@ -96,12 +96,12 @@ namespace Game.Map
             return result;
         }
 
-        //Ñ°Â·£¨A*Ëã·¨¼ò»¯°æ£©
+        //å¯»è·¯ï¼ˆA*ç®—æ³•ç®€åŒ–ç‰ˆï¼‰
         public List<Tile> FindPath(Unit unit, Tile startTile, Tile targetTile)
         {
             if (startTile == null || targetTile == null) return new List<Tile>();
 
-            // Ê¹ÓÃA*Ëã·¨Ñ°Â·
+            // ä½¿ç”¨A*ç®—æ³•å¯»è·¯
             List<Tile> openSet = new List<Tile> { startTile };
             Dictionary<Tile, Tile> cameFrom = new Dictionary<Tile, Tile>();
             Dictionary<Tile, int> gScore = new Dictionary<Tile, int>();
@@ -112,7 +112,7 @@ namespace Game.Map
 
             while (openSet.Count > 0)
             {
-                // »ñÈ¡fScore×îĞ¡µÄ½Úµã
+                // è·å–fScoreæœ€å°çš„èŠ‚ç‚¹
                 Tile current = openSet.OrderBy(t => fScore.ContainsKey(t) ? fScore[t] : int.MaxValue).First();
 
                 if (current == targetTile)
@@ -122,7 +122,7 @@ namespace Game.Map
 
                 openSet.Remove(current);
 
-                // ¼ì²éËÄ¸ö·½Ïò
+                // æ£€æŸ¥å››ä¸ªæ–¹å‘
                 Vector2Int[] directions = {
                 new Vector2Int(0, 1), new Vector2Int(1, 0),
                 new Vector2Int(0, -1), new Vector2Int(-1, 0)
@@ -135,7 +135,7 @@ namespace Game.Map
 
                     if (neighbor == null) continue;
 
-                    // Ìø¹ıÕÏ°­Îï
+                    // è·³è¿‡éšœç¢ç‰©
                     if (neighbor.type == TileType.Obstacle || neighbor.type == TileType.Wallside)
                     {
                         if(neighbor != startTile)
@@ -144,7 +144,7 @@ namespace Game.Map
                     if (neighbor.occupyingUnit != null && neighbor != startTile)
                         continue;
 
-                    // ¼ÆËãµ½ÁÚ¾ÓµÄ¾àÀë
+                    // è®¡ç®—åˆ°é‚»å±…çš„è·ç¦»
                     int tentativeGScore = gScore[current] + 1;
 
                     if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
@@ -160,16 +160,16 @@ namespace Game.Map
                     }
                 }
             }
-            return new List<Tile>(); // ÎŞÂ·¾¶
+            return new List<Tile>(); // æ— è·¯å¾„
         }
 
-        // Æô·¢º¯Êı£¨Âü¹ş¶Ù¾àÀë£©
+        // å¯å‘å‡½æ•°ï¼ˆæ›¼å“ˆé¡¿è·ç¦»ï¼‰
         int Heuristic(Tile a, Tile b)
         {
             return Mathf.Abs(a.gridPos.x - b.gridPos.x) + Mathf.Abs(a.gridPos.y - b.gridPos.y);
         }
 
-        // ÖØ½¨Â·¾¶
+        // é‡å»ºè·¯å¾„
         List<Tile> ReconstructPath(Dictionary<Tile, Tile> cameFrom, Tile current)
         {
             List<Tile> path = new List<Tile> { current };
@@ -181,45 +181,45 @@ namespace Game.Map
             return path;
         }
 
-        // ÒÆ¶¯Ö´ĞĞ
+        // ç§»åŠ¨æ‰§è¡Œ
         public IEnumerator MoveUnitAlongPath(Unit unit, List<Tile> path)
         {
-            // ¼ì²éÂ·¾¶ÓĞĞ§ĞÔ
+            // æ£€æŸ¥è·¯å¾„æœ‰æ•ˆæ€§
             if (path == null || path.Count < 2)
-                yield break;   // ÎŞĞèÒÆ¶¯£¬Ö±½ÓÍË³ö
+                yield break;   // æ— éœ€ç§»åŠ¨ï¼Œç›´æ¥é€€å‡º
 
-            // ×¢Òâ£º´ËÊ± unit.CurrentStateEnum Ó¦Îª Moving£¨ÓÉ×´Ì¬»ú±£Ö¤£©
-            // ±éÀúÂ·¾¶ÖĞµÄÃ¿Ò»¸öÄ¿±ê¸ñ×Ó£¨Ìø¹ıÆğµã£©
+            // æ³¨æ„ï¼šæ­¤æ—¶ unit.CurrentStateEnum åº”ä¸º Movingï¼ˆç”±çŠ¶æ€æœºä¿è¯ï¼‰
+            // éå†è·¯å¾„ä¸­çš„æ¯ä¸€ä¸ªç›®æ ‡æ ¼å­ï¼ˆè·³è¿‡èµ·ç‚¹ï¼‰
             for (int i = 1; i < path.Count; i++)
             {
                 Tile nextTile = path[i];
                 Vector3 targetPos = GridManager.Instance.GridToWorld(nextTile.gridPos);
 
-                // ¼ÆËãÒÆ¶¯ºÄÊ±
+                // è®¡ç®—ç§»åŠ¨è€—æ—¶
                 float duration = Vector3.Distance(unit.transform.position, targetPos) / unit.moveSpeed;
 
-                // Ö´ĞĞ DOTween ÒÆ¶¯²¢µÈ´ıÍê³É
-                unit.transform.DOKill(); // Çå³ı¿ÉÄÜ²ĞÁôµÄ¶¯»­
+                // æ‰§è¡Œ DOTween ç§»åŠ¨å¹¶ç­‰å¾…å®Œæˆ
+                unit.transform.DOKill(); // æ¸…é™¤å¯èƒ½æ®‹ç•™çš„åŠ¨ç”»
                 Tween moveTween = unit.transform.DOMove(targetPos, duration).SetEase(Ease.OutSine);
                 yield return moveTween.WaitForCompletion();
 
-                // ĞŞÕıÎ»ÖÃ£¨·ÀÖ¹¸¡µãÊıÎó²î£©
+                // ä¿®æ­£ä½ç½®ï¼ˆé˜²æ­¢æµ®ç‚¹æ•°è¯¯å·®ï¼‰
                 unit.transform.position = targetPos;
 
-                // ¸üĞÂÍø¸ñ¹ÜÀíÆ÷ÖĞµÄµ¥Î»Õ¼¾İĞÅÏ¢
+                // æ›´æ–°ç½‘æ ¼ç®¡ç†å™¨ä¸­çš„å•ä½å æ®ä¿¡æ¯
                 GridManager.Instance.SetUnitOnTile(unit, nextTile.gridPos);
             }
 
-            // ÒÆ¶¯Íê³É£¬Ğ­³Ì×ÔÈ»½áÊø¡£×´Ì¬»ú»áÔÚ UnitMovingState ÖĞ´¦ÀíºóĞøµÄÇĞ»»×´Ì¬ºÍ»ØºÏÍ¨Öª
+            // ç§»åŠ¨å®Œæˆï¼Œåç¨‹è‡ªç„¶ç»“æŸã€‚çŠ¶æ€æœºä¼šåœ¨ UnitMovingState ä¸­å¤„ç†åç»­çš„åˆ‡æ¢çŠ¶æ€å’Œå›åˆé€šçŸ¥
         }
 
-        // ¸ßÁÁ¿ÉÒÆ¶¯·¶Î§
+        // é«˜äº®å¯ç§»åŠ¨èŒƒå›´
         public void HighlightMoveRange(List<Tile> tiles)
         {
             GridManager.Instance.CreateHighlights(tiles, moveRangeColor);
         }
 
-        // Çå³ı¸ßÁÁ
+        // æ¸…é™¤é«˜äº®
         public void ClearHighlights()
         {
             GridManager.Instance.ClearAllHighlights();

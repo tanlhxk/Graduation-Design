@@ -5,10 +5,10 @@ namespace Game.Rendering
     [RequireComponent(typeof(SpriteRenderer))]
     public class SortableObject : MonoBehaviour
     {
-        [Tooltip("»ù´¡ÅÅĞòÆ«ÒÆ£¬ÖµÔ½´óäÖÈ¾Ô½¿¿Ç°")]
+        [Tooltip("åŸºç¡€æ’åºåç§»ï¼Œå€¼è¶Šå¤§æ¸²æŸ“è¶Šé å‰")]
         public int baseOrder = 0;
 
-        [Tooltip("ÅÅĞòÏµÊı£¬ÖµÔ½´óZ×ø±ê¶ÔÅÅĞòÓ°ÏìÔ½Ã÷ÏÔ")]
+        [Tooltip("æ’åºç³»æ•°ï¼Œå€¼è¶Šå¤§Zåæ ‡å¯¹æ’åºå½±å“è¶Šæ˜æ˜¾")]
         public int orderFactor = 100;
 
         private SpriteRenderer spriteRenderer;
@@ -26,7 +26,7 @@ namespace Game.Rendering
             }
             else
             {
-                Debug.LogError("³¡¾°ÖĞÈ±ÉÙ SortingOrderManager ÊµÀı£¡");
+                Debug.LogError("åœºæ™¯ä¸­ç¼ºå°‘ SortingOrderManager å®ä¾‹ï¼");
             }
         }
 

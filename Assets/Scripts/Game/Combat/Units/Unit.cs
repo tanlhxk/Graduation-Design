@@ -9,7 +9,7 @@ using Game.Camera;
 
 namespace Game.Combat.Units
 {
-    // µ¥Î»ÀàĞÍÃ¶¾Ù
+    // å•ä½ç±»å‹æšä¸¾
     public enum UnitType
     {
         Player,
@@ -17,16 +17,16 @@ namespace Game.Combat.Units
         NPC
     }
 
-    // µ¥Î»×´Ì¬Ã¶¾Ù
+    // å•ä½çŠ¶æ€æšä¸¾
     public enum UnitState
     {
-        Idle,       // µÈ´ıĞĞ¶¯
-        Moving,     // ÒÆ¶¯ÖĞ
-        Attacking,  // ¹¥»÷ÖĞ
-        Dead        // ËÀÍö
+        Idle,       // ç­‰å¾…è¡ŒåŠ¨
+        Moving,     // ç§»åŠ¨ä¸­
+        Attacking,  // æ”»å‡»ä¸­
+        Dead        // æ­»äº¡
     }
 
-    // ×´Ì¬½Ó¿Ú
+    // çŠ¶æ€æ¥å£
     public interface IUnitState
     {
         void Enter(Unit unit);
@@ -34,37 +34,37 @@ namespace Game.Combat.Units
         void Exit(Unit unit);
     }
 
-    // ¿ÕÏĞ×´Ì¬
+    // ç©ºé—²çŠ¶æ€
     public class UnitIdleState : IUnitState
     {
         public void Enter(Unit unit)
         {
-            // ½øÈë¿ÕÏĞ£ºÈ·±£ËÙ¶ÈÎª 0
+            // åŒæ­¥ Animator åˆ° Idleï¼Œé¿å…ä¸Šä¸€å›åˆ Hit/SkillPlay æ®‹ç•™å¯¼è‡´æ— æ³•å†æ¬¡è¿›å…¥ Walk
+            unit.SyncAnimatorToIdle();
             unit.SetMoveAnimation(0);
         }
         public void Update(Unit unit) { }
         public void Exit(Unit unit) { }
     }
 
-    // ÒÆ¶¯×´Ì¬
+    // ç§»åŠ¨çŠ¶æ€
     public class UnitMovingState : IUnitState
     {
         public void Enter(Unit unit)
         {
-            // Æô¶¯ÒÆ¶¯Ğ­³Ì£¬ÒÆ¶¯Íê³Éºó×Ô¶¯ÇĞ»»»Ø Idle
+            // å¯åŠ¨ç§»åŠ¨åç¨‹ï¼Œç§»åŠ¨å®Œæˆåè‡ªåŠ¨åˆ‡æ¢å› Idle
             unit.SetMoveAnimation(unit.moveSpeed);
             unit.StartCoroutine(MoveCoroutine(unit));
         }
 
         private IEnumerator MoveCoroutine(Unit unit)
         {
-            // ×¢Òâ£ºÕâÀïĞèÒª unit.movementSystem ÒıÓÃ£¬ÇëÈ·±£ÔÚ Unit ÖĞÒÑ¸³Öµ
             yield return MovementSystem.Instance.MoveUnitAlongPath(unit, unit.currentPath);
             unit.ChangeState(UnitState.Idle);
-            // Í¨Öª»ØºÏ¹ÜÀíÆ÷¸Ãµ¥Î»ĞĞ¶¯½áÊø
+            // é€šçŸ¥å›åˆç®¡ç†å™¨è¯¥å•ä½è¡ŒåŠ¨ç»“æŸ
             if (TurnManager.Instance != null && unit.currentHP > 0)
             {
-                Debug.Log($"×´Ì¬»úÍê³ÉĞĞ¶¯£¬×¼±¸Í¨Öª TurnManager£º{unit.unitName}");
+                Debug.Log($"çŠ¶æ€æœºå®Œæˆè¡ŒåŠ¨ï¼Œå‡†å¤‡é€šçŸ¥ TurnManagerï¼š{unit.unitName}");
                 TurnManager.Instance.UnitFinishedAction(unit);
             }
         }
@@ -76,31 +76,31 @@ namespace Game.Combat.Units
         }
     }
 
-    // ¹¥»÷×´Ì¬
+    // æ”»å‡»çŠ¶æ€
     public class UnitAttackingState : IUnitState
     {
         public void Enter(Unit unit)
         {
-            // Æô¶¯¹¥»÷Ğ­³Ì£¬¹¥»÷Íê³ÉºóÇĞ»»»Ø Idle
+            // å¯åŠ¨æ”»å‡»åç¨‹ï¼Œæ”»å‡»å®Œæˆååˆ‡æ¢å› Idle
             unit.StartCoroutine(AttackCoroutine(unit));
         }
 
         private IEnumerator AttackCoroutine(Unit unit)
         {
             unit.PlayAttackAnimation(unit.currentSelectedSkillData);
-            // 1. Ö´ĞĞÉËº¦Âß¼­£¨¿ÉÄÜµ¼ÖÂµĞÈËËÀÍö£¬µ«²»»áÁ¢¼´Ê¤Àû£©
+            // 1. æ‰§è¡Œä¼¤å®³é€»è¾‘ï¼ˆå¯èƒ½å¯¼è‡´æ•Œäººæ­»äº¡ï¼Œä½†ä¸ä¼šç«‹å³èƒœåˆ©ï¼‰
             unit.PerformAttackWithSkill();
 
-            // 2. »ñÈ¡¼¼ÄÜµÄÌØĞ§/¶¯»­Ê±³¤£¨Èç¹ûÃ»ÓĞ£¬Ä¬ÈÏ0.5Ãë£©
+            // 2. è·å–æŠ€èƒ½çš„ç‰¹æ•ˆ/åŠ¨ç”»æ—¶é•¿ï¼ˆå¦‚æœæ²¡æœ‰ï¼Œé»˜è®¤0.5ç§’ï¼‰
             float duration = unit.currentSelectedSkillData?.effectDuration ?? 0.5f;
-            // 3. µÈ´ıÌØĞ§²¥·ÅÍê³É
+            // 3. ç­‰å¾…ç‰¹æ•ˆæ’­æ”¾å®Œæˆ
             yield return new WaitForSeconds(duration);
             unit.SetMoveAnimation(0);
-            // 4. ÌØĞ§½áÊø£¬ÇĞ»»×´Ì¬²¢Í¨Öª»ØºÏ¹ÜÀíÆ÷
+            // 4. ç‰¹æ•ˆç»“æŸï¼Œåˆ‡æ¢çŠ¶æ€å¹¶é€šçŸ¥å›åˆç®¡ç†å™¨
             unit.ChangeState(UnitState.Idle);
             if (TurnManager.Instance != null && unit.currentHP > 0)
             {
-                Debug.Log($"×´Ì¬»úÍê³ÉĞĞ¶¯£¬×¼±¸Í¨Öª TurnManager£º{unit.unitName}");
+                Debug.Log($"çŠ¶æ€æœºå®Œæˆè¡ŒåŠ¨ï¼Œå‡†å¤‡é€šçŸ¥ TurnManagerï¼š{unit.unitName}");
                 TurnManager.Instance.UnitFinishedAction(unit);
             }
         }
@@ -109,16 +109,15 @@ namespace Game.Combat.Units
         public void Exit(Unit unit) { }
     }
 
-    // ËÀÍö×´Ì¬
+    // æ­»äº¡çŠ¶æ€
     public class UnitDeadState : IUnitState
     {
         public void Enter(Unit unit)
         {
-            // Í£Ö¹ËùÓĞ¶¯×÷
+            // åœæ­¢æ‰€æœ‰åŠ¨ä½œ
             unit.SetMoveAnimation(0);
 
-            // Èç¹ûÓĞËÀÍö¶¯»­£¬µÈ´ıËü²¥·ÅÍê±ÏÔÙÏú»Ù
-            // ¼ÙÉèËÀÍö¶¯»­Ê±³¤Îª 2 Ãë
+            // å¦‚æœæœ‰æ­»äº¡åŠ¨ç”»ï¼Œç­‰å¾…å®ƒæ’­æ”¾å®Œæ¯•å†é”€æ¯
             unit.StartCoroutine(DestroyAfterAnimation(unit, 2f));
         }
         public void Update(Unit unit) { }
@@ -132,54 +131,57 @@ namespace Game.Combat.Units
 
     public class Unit : MonoBehaviour
     {
-        [Header("»ù´¡ÊôĞÔ")]
+        [Header("åŸºç¡€å±æ€§")]
         public string unitName;
         public UnitType unitType;
         public GameObject healthBarPrefab;
 
-        [Header("Õ½¶·ÊôĞÔ")]
+        [Header("æˆ˜æ–—å±æ€§")]
         public int maxHP = 10;
         public int currentHP;
         public int moveRange = 3;
         public int baseAttack = 3;
         public float moveSpeed = 2f;
-        public int attackRange = 1;     // ¹¥»÷·¶Î§£¨¸ñ£¬1ÎªÏàÁÚ£©
-        private List<SkillDataSO> skillData = new List<SkillDataSO>();
+        public int attackRange = 1;     // æ”»å‡»èŒƒå›´ï¼ˆæ ¼ï¼Œ1ä¸ºç›¸é‚»ï¼‰
+        public List<SkillDataSO> skillData = new List<SkillDataSO>();
 
-        [Header("ÒıÓÃ")]
-        public Tile currentTile;         // µ±Ç°ËùÔÚ¸ñ×Ó
+        [Header("å¼•ç”¨")]
+        public Tile currentTile;         // å½“å‰æ‰€åœ¨æ ¼å­
 
-        [Header("¶¯»­")]
+        [Header("åŠ¨ç”»")]
         public Animator animator;
-        //¶¨Òå¶¯»­²ÎÊıµÄ Hash
+        //å®šä¹‰åŠ¨ç”»å‚æ•°çš„ Hash
         private int animIDSpeed;
         private int animIDHit;
         private int animIDDeath;
+        private int animIDPlaySkill;
+        private const int BaseLayerIndex = 0;
+        private const int ActionLayerIndex = 1;
         private AnimatorOverrideController overrideController;
 
-        // ¾²Ì¬ÁĞ±í£¬´æ´¢ËùÓĞµ±Ç°´æ»îµÄµ¥Î»
+        // é™æ€åˆ—è¡¨ï¼Œå­˜å‚¨æ‰€æœ‰å½“å‰å­˜æ´»çš„å•ä½
         public static List<Unit> AllUnits = new List<Unit>();
 
         public UnitState CurrentStateEnum { get; private set; }
         private IUnitState currentState;
         public SkillDataSO currentSelectedSkillData { get; private set; }
 
-        // ×´Ì¬¶ÔÏó×Öµä£¬±ãÓÚ¸´ÓÃ
+        // çŠ¶æ€å¯¹è±¡å­—å…¸ï¼Œä¾¿äºå¤ç”¨
         private Dictionary<UnitState, IUnitState> states = new Dictionary<UnitState, IUnitState>();
 
-        // µ±Ç°ÒÆ¶¯Â·¾¶£¨¹©ÒÆ¶¯×´Ì¬Ê¹ÓÃ£©
+        // å½“å‰ç§»åŠ¨è·¯å¾„ï¼ˆä¾›ç§»åŠ¨çŠ¶æ€ä½¿ç”¨ï¼‰
         public List<Tile> currentPath;
 
-        // ¹¥»÷Ä¿±ê¼°¼¼ÄÜË÷Òı£¨¹©¹¥»÷×´Ì¬Ê¹ÓÃ£©
-        protected Unit attackTarget;   // ¹¥»÷Ä¿±ê
-        protected int attackSkillIndex; // Ê¹ÓÃµÄ¼¼ÄÜË÷Òı
+        // æ”»å‡»ç›®æ ‡åŠæŠ€èƒ½ç´¢å¼•ï¼ˆä¾›æ”»å‡»çŠ¶æ€ä½¿ç”¨ï¼‰
+        protected Unit attackTarget;   // æ”»å‡»ç›®æ ‡
+        protected int attackSkillIndex; // ä½¿ç”¨çš„æŠ€èƒ½ç´¢å¼•
 
-        protected virtual void Awake()
+        public virtual void Awake()
         {
-            // ÔÚ Awake ÖĞ×¢²á£¬È·±£Éú³ÉÊ±Á¢¼´¼ÓÈë
+            // åœ¨ Awake ä¸­æ³¨å†Œï¼Œç¡®ä¿ç”Ÿæˆæ—¶ç«‹å³åŠ å…¥
             AllUnits.Add(this);
 
-            // ³õÊ¼»¯×´Ì¬×Öµä
+            // åˆå§‹åŒ–çŠ¶æ€å­—å…¸
             states[UnitState.Idle] = new UnitIdleState();
             states[UnitState.Moving] = new UnitMovingState();
             states[UnitState.Attacking] = new UnitAttackingState();
@@ -188,23 +190,24 @@ namespace Game.Combat.Units
                 animator = GetComponent<Animator>();
             if (animator != null)
             {
-                // ±£´æÔ­Ê¼µÄ AnimatorController
                 var originalController = animator.runtimeAnimatorController;
-                // ´´½¨ OverrideController °ü¹üÔ­Ê¼¿ØÖÆÆ÷
-                overrideController = new AnimatorOverrideController(originalController);
-                // ½« OverrideController ¸³Öµ¸ø Animator
-                animator.runtimeAnimatorController = overrideController;
+                if (originalController != null)
+                {
+                    overrideController = new AnimatorOverrideController(originalController);
+                    animator.runtimeAnimatorController = overrideController;
+                }
             }
-            // »º´æ²ÎÊı ID
+            // ç¼“å­˜å‚æ•° ID
             animIDSpeed = Animator.StringToHash("Speed");
             animIDHit = Animator.StringToHash("Hit");
             animIDDeath = Animator.StringToHash("Death");
-            // ³õÊ¼×´Ì¬ÉèÎª Idle
+            animIDPlaySkill = Animator.StringToHash("PlaySkill");
+            // åˆå§‹çŠ¶æ€è®¾ä¸º Idle
             ChangeState(UnitState.Idle);
-            // ¶¯Ì¬´´½¨ÑªÌõ
+            // åŠ¨æ€åˆ›å»ºè¡€æ¡
             if (healthBarPrefab != null)
             {
-                Debug.Log("´´½¨");
+                Debug.Log("åˆ›å»º");
                 GameObject healthBarObj = Instantiate(healthBarPrefab, transform);
                 HealthBar hpBar = healthBarObj.GetComponent<HealthBar>();
                 hpBar.targetUnit = this;
@@ -228,17 +231,17 @@ namespace Game.Combat.Units
 
         protected virtual void OnDestroy()
         {
-            // ÔÚ¶ÔÏóÏú»ÙÊ±´ÓÁĞ±íÖĞÒÆ³ı
+            // åœ¨å¯¹è±¡é”€æ¯æ—¶ä»åˆ—è¡¨ä¸­ç§»é™¤
             AllUnits.Remove(this);
         }
 
-        // ¶ÔÍâ½Ó¿Ú£ºÒÆ¶¯µ½Ä¿±ê¸ñ×Ó
-        public void MoveTo(Tile targetTile)
+        // å¯¹å¤–æ¥å£ï¼šç§»åŠ¨åˆ°ç›®æ ‡æ ¼å­
+        public virtual void MoveTo(Tile targetTile)
         {
             if (CurrentStateEnum != UnitState.Idle) return;
-            // ¼ÆËãÂ·¾¶
+            // è®¡ç®—è·¯å¾„
             currentPath = MovementSystem.Instance.FindPath(this, currentTile, targetTile);
-            // ÏŞÖÆÒÆ¶¯·¶Î§²»³¬¹ıÒÆ¶¯Á¦
+            // é™åˆ¶ç§»åŠ¨èŒƒå›´ä¸è¶…è¿‡ç§»åŠ¨åŠ›
             if (currentPath.Count > moveRange + 1)
                 currentPath = currentPath.GetRange(0, moveRange + 1);
             if (currentPath.Count > 1)
@@ -248,26 +251,51 @@ namespace Game.Combat.Units
         {
             if (skill != null && !skillData.Contains(skill))
                 skillData.Add(skill);
+            Debug.Log($"[AddSkill] æˆåŠŸå‘ {unitName} æ·»åŠ äº†æŠ€èƒ½ {skill.skillName}ï¼Œå½“å‰æŠ€èƒ½æ•°é‡: {skillData.Count}");
         }
 
-        // Íâ²¿¶ÁÈ¡¼¼ÄÜ
+        // å¤–éƒ¨è¯»å–æŠ€èƒ½
         public List<SkillDataSO> GetUnitSkills()
         {
             return skillData;
         }
 
-        // 1. Ìá¹©Ò»¸ö¹«¹²·½·¨£¬¸ù¾İË÷Òı·µ»Ø¼¼ÄÜÊı¾İ
+        // 1. æä¾›ä¸€ä¸ªå…¬å…±æ–¹æ³•ï¼Œæ ¹æ®ç´¢å¼•è¿”å›æŠ€èƒ½æ•°æ®
         public SkillDataSO GetSkillData(int index)
         {
+            // å¦‚æœåˆ—è¡¨ä¸ºç©ºï¼Œè¿”å› null
+            if (skillData == null || skillData.Count == 0)
+            {
+                Debug.LogError($"{unitName} æ²¡æœ‰é…ç½®ä»»ä½•æŠ€èƒ½ï¼");
+                return null;
+            }
+
+            // å¦‚æœç´¢å¼•ä¸º 0 ä¸”åˆ—è¡¨ä¸ºç©ºï¼Œæˆ–è€…ç´¢å¼•è¶…å‡ºèŒƒå›´
+            // æ³¨æ„ï¼šç´¢å¼• 0 é€šå¸¸ä»£è¡¨æ™®æ”»ï¼Œå¦‚æœåˆ—è¡¨é‡Œæ²¡æœ‰ï¼Œåº”è¯¥è¿”å› null æˆ–è€…é»˜è®¤æ•°æ®
+            if (index < 0 || index >= skillData.Count)
+            {
+                Debug.LogError($"{unitName} å°è¯•è®¿é—®æŠ€èƒ½ç´¢å¼• {index}ï¼Œä½†æŠ€èƒ½åˆ—è¡¨åªæœ‰ {skillData.Count} ä¸ªæŠ€èƒ½ã€‚");
+                return null;
+            }
+
             return skillData[index];
         }
-        // ¶ÔÍâ½Ó¿Ú£º¹¥»÷Ä¿±ê
+        // å¯¹å¤–æ¥å£ï¼šæ”»å‡»ç›®æ ‡
         public void Attack(Unit target, int skillIndex)
         {
             if (CurrentStateEnum != UnitState.Idle) return;
-            // ¼ì²é¹¥»÷·¶Î§£¨ĞèÒª¾ßÌåÊµÏÖ£¬´Ë´¦¼ò»¯£©
+
             attackTarget = target;
             attackSkillIndex = skillIndex;
+
+            currentSelectedSkillData = GetSkillData(skillIndex);
+
+            if (currentSelectedSkillData == null)
+            {
+                Debug.LogError($"{unitName} æ— æ³•è§£ææŠ€èƒ½ç´¢å¼• {skillIndex}ï¼Œæ”»å‡»å–æ¶ˆã€‚");
+                return;
+            }
+
             ChangeState(UnitState.Attacking);
         }
 
@@ -278,6 +306,25 @@ namespace Game.Combat.Units
             currentSelectedSkillData = skillData;
             ChangeState(UnitState.Attacking);
         }
+        /// <summary>
+        /// æ”»å‡»å¹¶ç­‰å¾…ç»“æŸï¼ˆä¾› AI åç¨‹è°ƒç”¨ï¼‰
+        /// </summary>
+        public IEnumerator AttackAndWait(Unit target, int skillIndex)
+        {
+            if (CurrentStateEnum != UnitState.Idle) yield break;
+
+            attackTarget = target;
+            attackSkillIndex = skillIndex;
+            currentSelectedSkillData = GetSkillData(skillIndex);
+
+            if (currentSelectedSkillData == null) yield break;
+
+            ChangeState(UnitState.Attacking);
+            while (CurrentStateEnum == UnitState.Attacking)
+            {
+                yield return null; // ç­‰å¾…ä¸€å¸§
+            }
+        }
 
         public virtual void PerformAttackWithSkill()
         {
@@ -286,40 +333,40 @@ namespace Game.Combat.Units
             effect.Execute(this, attackTarget, currentSelectedSkillData);
         }
 
-        // Êµ¼ÊÖ´ĞĞ¹¥»÷£¨ÓÉ¹¥»÷×´Ì¬µ÷ÓÃ£©
+        // å®é™…æ‰§è¡Œæ”»å‡»ï¼ˆç”±æ”»å‡»çŠ¶æ€è°ƒç”¨ï¼‰
         public virtual void PerformAttack()
         {
-            // ´Ë´¦ÔİÊ±Áô¿Õ£¬¾ßÌåÓÉ×ÓÀàÖØĞ´
-            Debug.Log($"{unitName} Ö´ĞĞ¹¥»÷");
+            // æ­¤å¤„æš‚æ—¶ç•™ç©ºï¼Œå…·ä½“ç”±å­ç±»é‡å†™
+            Debug.Log($"{unitName} æ‰§è¡Œæ”»å‡»");
         }
 
         public virtual void TakeDamage(int damage)
         {
             currentHP -= damage;
 
-            // 1. ²¥·ÅÊÜ»÷¶¯»­
+            // 1. æ’­æ”¾å—å‡»åŠ¨ç”»
             PlayHitAnimation();
 
-            // 2. Èç¹ûËÀÍö£¬²¥·ÅËÀÍö¶¯»­²¢½øÈë Dead ×´Ì¬
+            // 2. å¦‚æœæ­»äº¡ï¼Œæ’­æ”¾æ­»äº¡åŠ¨ç”»å¹¶è¿›å…¥ Dead çŠ¶æ€
             if (currentHP <= 0)
             {
-                PlayDeathAnimation(); // ²¥·ÅËÀÍö¶¯»­
-                Die(); // ½øÈëËÀÍö×´Ì¬ (»áµ÷ÓÃ UnitDeadState)
+                PlayDeathAnimation(); // æ’­æ”¾æ­»äº¡åŠ¨ç”»
+                Die(); // è¿›å…¥æ­»äº¡çŠ¶æ€ (ä¼šè°ƒç”¨ UnitDeadState)
             }
             else
             {
-                // 3. Èç¹ûÃ»ËÀ£¬´¥·¢ÆÁÄ»Õğ¶¯µÈ·´À¡
+                // 3. å¦‚æœæ²¡æ­»ï¼Œè§¦å‘å±å¹•éœ‡åŠ¨ç­‰åé¦ˆ
                 CameraShake camShake = UnityEngine.Camera.main.GetComponent<CameraShake>();
                 if (camShake != null)
                     camShake.Shake(0.1f, 0.1f);
             }
         }
 
-        // Á¢¼´ËÀÍö£¨ÓÉËÀÍö×´Ì¬µ÷ÓÃ£©
+        // ç«‹å³æ­»äº¡ï¼ˆç”±æ­»äº¡çŠ¶æ€è°ƒç”¨ï¼‰
         public void DieImmediate()
         {
-            StopAllCoroutines();  // Í£Ö¹ËùÓĞĞ­³Ì£¬°üÀ¨ÒÆ¶¯/¹¥»÷
-                                  // ´ÓÍø¸ñÖĞÒÆ³ı
+            StopAllCoroutines();  // åœæ­¢æ‰€æœ‰åç¨‹ï¼ŒåŒ…æ‹¬ç§»åŠ¨/æ”»å‡»
+                                  // ä»ç½‘æ ¼ä¸­ç§»é™¤
             if (currentTile != null)
                 currentTile.occupyingUnit = null;
             HealthBar hpBar = GetComponentInChildren<HealthBar>();
@@ -330,14 +377,14 @@ namespace Game.Combat.Units
                 turnManager.RemoveUnit(this);
                 if (turnManager.currentActiveUnit == this)
                 {
-                    Debug.Log($"µ¥Î» {unitName} ÔÚĞĞ¶¯ÖĞËÀÍö£¬Ç¿ÖÆ½áÊø»ØºÏ");
+                    Debug.Log($"å•ä½ {unitName} åœ¨è¡ŒåŠ¨ä¸­æ­»äº¡ï¼Œå¼ºåˆ¶ç»“æŸå›åˆ");
                     turnManager.UnitFinishedAction(this);
                 }
 
             }
 
             AllUnits.Remove(this);
-            Debug.Log($"{unitName} ËÀÍö");
+            Debug.Log($"{unitName} æ­»äº¡");
             if (TurnManager.Instance != null && unitType == UnitType.Enemy)
             {
                 TurnManager.Instance.OnEnemyDied(this as EnemyUnit);
@@ -345,22 +392,22 @@ namespace Game.Combat.Units
             Destroy(gameObject);
         }
 
-        // ËÀÍö£¨Íâ²¿µ÷ÓÃ£©
-        public void Die()
+        // æ­»äº¡ï¼ˆå¤–éƒ¨è°ƒç”¨ï¼‰
+        public virtual void Die()
         {
             if (CurrentStateEnum != UnitState.Dead)
                 ChangeState(UnitState.Dead);
         }
 
-        // »ñÈ¡¿É¹¥»÷Ä¿±êÁĞ±í£¨Ê¹ÓÃ»º´æµÄ AllUnits£©
+        // è·å–å¯æ”»å‡»ç›®æ ‡åˆ—è¡¨ï¼ˆä½¿ç”¨ç¼“å­˜çš„ AllUnitsï¼‰
         public List<Unit> GetAttackTargets(SkillDataSO skill)
         {
             List<Unit> targets = new List<Unit>();
             Vector2Int myPos = currentTile.gridPos;
             foreach (Unit unit in AllUnits)
             {
-                if (unit.unitType == unitType) continue; // Ìø¹ıÍ¬ÕóÓª
-                if (unit.currentHP <= 0) continue;       // Ìø¹ıÒÑËÀÍö
+                if (unit.unitType == unitType) continue; // è·³è¿‡åŒé˜µè¥
+                if (unit.currentHP <= 0) continue;       // è·³è¿‡å·²æ­»äº¡
                 int distance = Mathf.Abs(myPos.x - unit.currentTile.gridPos.x) +
                                Mathf.Abs(myPos.y - unit.currentTile.gridPos.y);
                 if (distance <= skill.skillRange)
@@ -372,23 +419,68 @@ namespace Game.Combat.Units
         }
         public virtual void PlayAttackAnimation(SkillDataSO skillData)
         {
-            // ²¥·ÅÒôĞ§
+            // æ’­æ”¾éŸ³æ•ˆ
             /*if (skillData.hitSound != null)
             {
                 AudioSource.PlayClipAtPoint(skillData.hitSound, transform.position);
             }*/
 
-            if (animator == null || skillData.skillAnimation == null)
+            // å¢åŠ å¯¹ skillData æœ¬èº«çš„åˆ¤ç©º
+            if (skillData == null)
             {
-                Debug.LogWarning("Missing animator or animation clip");
+                Debug.LogError($"{unitName} å°è¯•æ’­æ”¾æ”»å‡»åŠ¨ç”»ï¼Œä½† skillData ä¸º nullï¼");
                 return;
             }
-            // ¸²¸Ç¶¯»­
+
+            // æ£€æŸ¥åŠ¨ç”»ç»„ä»¶å’ŒåŠ¨ç”»å‰ªè¾‘
+            if (animator == null)
+            {
+                Debug.LogWarning($"{unitName} ç¼ºå°‘ Animator ç»„ä»¶");
+                return;
+            }
+
+            // æ£€æŸ¥æŠ€èƒ½åŠ¨ç”»æ˜¯å¦ä¸ºç©º
+            if (skillData.skillAnimation == null)
+            {
+                Debug.LogError($"{unitName} çš„æŠ€èƒ½ [{skillData.skillName}] ç¼ºå°‘åŠ¨ç”»å‰ªè¾‘ï¼è¯·æ£€æŸ¥ Resources é…ç½®ã€‚");
+
+                // å¦‚æœæ²¡æœ‰é…ç½®åŠ¨ç”»ï¼Œç›´æ¥æ’­æ”¾é»˜è®¤æ”»å‡» Triggerï¼ˆå‡è®¾ Animator ä¸­æœ‰é»˜è®¤çš„ Attack çŠ¶æ€ï¼‰
+                animator.SetTrigger("Attack");
+                return;
+            }
+            // ç¡®ä¿ overrideController å·²åˆå§‹åŒ–
+            if (overrideController == null)
+            {
+                // å°è¯•é‡æ–°åˆ›å»º overrideController
+                var originalController = animator.runtimeAnimatorController;
+                if (originalController != null)
+                {
+                    overrideController = new AnimatorOverrideController(originalController);
+                    animator.runtimeAnimatorController = overrideController;
+                }
+                else
+                {
+                    Debug.LogError($"{unitName} çš„ Animator æ²¡æœ‰ RuntimeAnimatorController");
+                    return;
+                }
+            }
+            // è¦†ç›–åŠ¨ç”»
             overrideController["SkillPlay"] = skillData.skillAnimation;
 
             animator.SetTrigger("PlaySkill");
         }
-        //ÉèÖÃÒÆ¶¯ËÙ¶È
+        // å¼ºåˆ¶å°† Animator å„å±‚å¤ä½åˆ° Idleï¼ˆé€»è¾‘çŠ¶æ€ä¸åŠ¨ç”»çŠ¶æ€è§£è€¦æ—¶çš„åŒæ­¥å…¥å£ï¼‰
+        public void SyncAnimatorToIdle()
+        {
+            if (animator == null) return;
+
+            animator.Play("Idle", BaseLayerIndex, 0f);
+            animator.Play("Idle", ActionLayerIndex, 0f);
+            animator.ResetTrigger(animIDHit);
+            animator.ResetTrigger(animIDPlaySkill);
+        }
+
+        //è®¾ç½®ç§»åŠ¨é€Ÿåº¦
         public void SetMoveAnimation(float speed)
         {
             if (animator != null)
@@ -397,16 +489,19 @@ namespace Game.Combat.Units
             }
         }
 
-        //²¥·ÅÊÜ»÷¶¯»­
+        //æ’­æ”¾å—å‡»åŠ¨ç”»
         public virtual void PlayHitAnimation()
         {
             if (animator != null)
             {
                 animator.SetTrigger(animIDHit);
+                // Hit çŠ¶æ€ WriteDefaultValues ä¼šæŠŠ Speed å†™å› 0ï¼Œç§»åŠ¨ä¸­éœ€ç«‹å³æ¢å¤ä»¥ä¾¿æ’­å®Œåå›åˆ° Walk
+                if (CurrentStateEnum == UnitState.Moving)
+                    SetMoveAnimation(moveSpeed);
             }
         }
 
-        //²¥·ÅËÀÍö¶¯»­
+        //æ’­æ”¾æ­»äº¡åŠ¨ç”»
         public virtual void PlayDeathAnimation()
         {
             if (animator != null)
@@ -414,8 +509,8 @@ namespace Game.Combat.Units
                 animator.SetTrigger(animIDDeath);
             }
         }
-        // ÖØÖÃ»ØºÏ£¨Ã¿»ØºÏ¿ªÊ¼µ÷ÓÃ£©
-        public void NewTurn()
+        // é‡ç½®å›åˆï¼ˆæ¯å›åˆå¼€å§‹è°ƒç”¨ï¼‰
+        public virtual void NewTurn()
         {
             if (CurrentStateEnum != UnitState.Dead)
             {

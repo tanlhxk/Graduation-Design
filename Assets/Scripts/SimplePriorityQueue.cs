@@ -10,13 +10,13 @@ namespace Game.Utilities
 
         public int Count => elements.Count;
 
-        // Èë¶Ó
+        // å…¥é˜Ÿ
         public void Enqueue(Vector2Int pos, float priority)
         {
             elements.Add((pos, priority));
         }
 
-        // ³ö¶Ó (·µ»ØÓÅÏÈ¼¶×îĞ¡µÄ)
+        // å‡ºé˜Ÿ (è¿”å›ä¼˜å…ˆçº§æœ€å°çš„)
         public Vector2Int Dequeue()
         {
             int bestIndex = 0;
@@ -32,13 +32,13 @@ namespace Game.Utilities
             return best.position;
         }
 
-        // ¼ì²éÊÇ·ñ°üº¬Ä³¸öÎ»ÖÃ
+        // æ£€æŸ¥æ˜¯å¦åŒ…å«æŸä¸ªä½ç½®
         public bool Contains(Vector2Int pos)
         {
             return elements.Exists(e => e.position == pos);
         }
 
-        // ¸üĞÂÄ³¸öÎ»ÖÃµÄÓÅÏÈ¼¶ (Èç¹ûĞèÒª)
+        // æ›´æ–°æŸä¸ªä½ç½®çš„ä¼˜å…ˆçº§ (å¦‚æœéœ€è¦)
         public void Update(Vector2Int pos, float newPriority)
         {
             for (int i = 0; i < elements.Count; i++)
@@ -53,7 +53,7 @@ namespace Game.Utilities
 
         public List<(Vector2Int position, float priority)> UnorderedItems
         {
-            get { return elements; } // Ö±½Ó·µ»ØÄÚ²¿ÁĞ±í£¬²»½øĞĞÅÅĞò
+            get { return elements; } // ç›´æ¥è¿”å›å†…éƒ¨åˆ—è¡¨ï¼Œä¸è¿›è¡Œæ’åº
         }
     }
 }

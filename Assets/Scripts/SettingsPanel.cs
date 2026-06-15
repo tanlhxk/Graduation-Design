@@ -10,11 +10,11 @@ namespace Game.UI
 
         private void Start()
         {
-            // ¼ÓÔØÒÑ±£´æµÄÉèÖÃ
+            // åŠ è½½å·²ä¿å­˜çš„è®¾ç½®
             volumeSlider.value = PlayerPrefs.GetFloat("MasterVolume", 0.75f);
             //fullscreenToggle.isOn = Screen.fullScreen;
 
-            // Ìí¼Ó¼àÌıÆ÷
+            // æ·»åŠ ç›‘å¬å™¨
             volumeSlider.onValueChanged.AddListener(SetVolume);
             //fullscreenToggle.onValueChanged.AddListener(SetFullscreen);
         }

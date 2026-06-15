@@ -7,46 +7,46 @@ using Game.Utilities;
 namespace Game.Map.Generation
 {
     /// <summary>
-    /// ¼òµ¥µÄ²¨º¯ÊıÌ®ËõµØÍ¼Éú³ÉÆ÷
+    /// ç®€å•çš„æ³¢å‡½æ•°åç¼©åœ°å›¾ç”Ÿæˆå™¨
     /// </summary>
     public class SimpleWFCGenerator : MonoBehaviour
     {
-        [Header("µØÍ¼³ß´ç")]
+        [Header("åœ°å›¾å°ºå¯¸")]
         public int width = 10;
         public int height = 10;
 
-        [Header("Í¼¿éÀàĞÍ")]
+        [Header("å›¾å—ç±»å‹")]
         public List<TileType> tileTypes = new List<TileType>()
         { TileType.Walkable, TileType.Obstacle, TileType.Exit };
 
-        [Header("Ã¿ÖÖÀàĞÍµÄÉú³ÉÈ¨ÖØ£¨Ë³ĞòÓëtileTypes¶ÔÓ¦£©")]
+        [Header("æ¯ç§ç±»å‹çš„ç”Ÿæˆæƒé‡ï¼ˆé¡ºåºä¸tileTypeså¯¹åº”ï¼‰")]
         public List<int> weights = new List<int>() { 20, 5, 1 };
 
-        [Header("ÏàÁÚ¹æÔò")]
+        [Header("ç›¸é‚»è§„åˆ™")]
         public List<TileAdjacencyRule> adjacencyRules;
 
-        [Header("Á¬Í¨ĞÔºó´¦Àí")]
+        [Header("è¿é€šæ€§åå¤„ç†")]
         public bool enableConnectivityPostProcess = true;
-        public List<Vector2Int> criticalPoints;      // ±ØĞëÁ¬Í¨µÄ¹Ø¼üµã£¨ÈçÆğµã¡¢³ö¿Ú£©
-        public List<TileType> walkableTypes;          // ÄÄĞ©ÀàĞÍ±»ÊÓÎª¿ÉĞĞ×ß£¨ÓÃÓÚÁ¬Í¨ĞÔÅĞ¶Ï£©
+        public List<Vector2Int> criticalPoints;      // å¿…é¡»è¿é€šçš„å…³é”®ç‚¹ï¼ˆå¦‚èµ·ç‚¹ã€å‡ºå£ï¼‰
+        public List<TileType> walkableTypes;          // å“ªäº›ç±»å‹è¢«è§†ä¸ºå¯è¡Œèµ°ï¼ˆç”¨äºè¿é€šæ€§åˆ¤æ–­ï¼‰
         public Vector2Int mapSize;
 
         public List<BillboardObstacleConfig> billboardObstacles;
         public void GenerateAndBuildMap(int seed)
         {
-            TileType[,] mapData = RunWFC(seed);   // WFCËã·¨·µ»Ø¶şÎ¬Êı×é
+            TileType[,] mapData = RunWFC(seed);   // WFCç®—æ³•è¿”å›äºŒç»´æ•°ç»„
             GridManager.Instance.BuildGridFromData(mapData);
         }
 
-        // ÄÚ²¿Êı¾İ½á¹¹£ºÀàĞÍ¼æÈİĞÔ²éÕÒ±í£¨Ë«Ïò£©
+        // å†…éƒ¨æ•°æ®ç»“æ„ï¼šç±»å‹å…¼å®¹æ€§æŸ¥æ‰¾è¡¨ï¼ˆåŒå‘ï¼‰
         private Dictionary<TileType, HashSet<TileType>> compatibleNeighbors;
 
-        // ²¨º¯Êıµ¥Ôª
+        // æ³¢å‡½æ•°å•å…ƒ
         private class WFCCell
         {
-            public List<TileType> possibleTypes;    // µ±Ç°¿ÉÄÜµÄÀàĞÍ
-            public bool collapsed;                   // ÊÇ·ñÒÑÌ®Ëõ
-            public TileType finalType;                // Ì®ËõºóµÄ½á¹û
+            public List<TileType> possibleTypes;    // å½“å‰å¯èƒ½çš„ç±»å‹
+            public bool collapsed;                   // æ˜¯å¦å·²åç¼©
+            public TileType finalType;                // åç¼©åçš„ç»“æœ
 
             public WFCCell(List<TileType> allTypes)
             {
@@ -59,14 +59,14 @@ namespace Game.Map.Generation
         private Queue<Vector2Int> propagationQueue;
 
         /// <summary>
-        /// ¶ÔÍâµ÷ÓÃ£ºÔËĞĞWFCËã·¨£¬·µ»Ø¶şÎ¬ÀàĞÍÊı×é
+        /// å¯¹å¤–è°ƒç”¨ï¼šè¿è¡ŒWFCç®—æ³•ï¼Œè¿”å›äºŒç»´ç±»å‹æ•°ç»„
         /// </summary>
         public TileType[,] RunWFC(int seed)
         {
-            // ³õÊ¼»¯¼æÈİĞÔ×Öµä
+            // åˆå§‹åŒ–å…¼å®¹æ€§å­—å…¸
             InitializeCompatibility();
 
-            // ³õÊ¼»¯²¨º¯Êı
+            // åˆå§‹åŒ–æ³¢å‡½æ•°
             wave = new WFCCell[width, height];
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
@@ -74,7 +74,7 @@ namespace Game.Map.Generation
 
             propagationQueue = new Queue<Vector2Int>();
 
-            // Ç¿ÖÆ±ß½çÎªÕÏ°­Îï
+            // å¼ºåˆ¶è¾¹ç•Œä¸ºéšœç¢ç‰©
             for (int x = 0; x < width; x++)
             {
                 ForceCollapseCell(x, 0, TileType.Obstacle);
@@ -90,11 +90,11 @@ namespace Game.Map.Generation
                 ForceCollapseCell(width - 1, y, TileType.Obstacle);
             }
 
-            // Ç¿ÖÆÖĞĞÄÇøÓò¿É×ß
+            // å¼ºåˆ¶ä¸­å¿ƒåŒºåŸŸå¯èµ°
             ForceCollapseCell(width / 2, height / 2, TileType.Walkable);
             ForceCollapseCell(1, 1, TileType.Walkable);
 
-            // Ö÷Ñ­»·
+            // ä¸»å¾ªç¯
             while (true)
             {
                 Vector2Int? target = FindMinEntropyCell();
@@ -104,18 +104,18 @@ namespace Game.Map.Generation
                 CollapseCell(target.Value.x, target.Value.y);
                 if (!Propagate())
                 {
-                    Debug.LogError("WFC Ã¬¶Ü·¢Éú£¬Éú³ÉÊ§°Ü");
+                    Debug.LogError("WFC çŸ›ç›¾å‘ç”Ÿï¼Œç”Ÿæˆå¤±è´¥");
                     return null;
                 }
             }
 
-            // ¹¹½¨½á¹ûÊı×é
+            // æ„å»ºç»“æœæ•°ç»„
             TileType[,] result = new TileType[width, height];
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
                     result[x, y] = wave[x, y].finalType;
 
-            // ºó´¦Àí£ºÈ·±£¹Ø¼üµãÁ¬Í¨
+            // åå¤„ç†ï¼šç¡®ä¿å…³é”®ç‚¹è¿é€š
             if (enableConnectivityPostProcess && criticalPoints.Count >= 2)
             {
                 EnsureConnectivity(ref result);
@@ -125,7 +125,7 @@ namespace Game.Map.Generation
             return result;
         }
         /// <summary>
-        /// ½«ËùÓĞÓë¿ÉĞĞ×ßµØ¿éÏàÁÚµÄÕÏ°­Îï×ª»»ÎªÇ½±ßÀàĞÍ
+        /// å°†æ‰€æœ‰ä¸å¯è¡Œèµ°åœ°å—ç›¸é‚»çš„éšœç¢ç‰©è½¬æ¢ä¸ºå¢™è¾¹ç±»å‹
         /// </summary>
         private void ConvertAdjacentObstaclesToWallside(ref TileType[,] map)
         {
@@ -186,7 +186,7 @@ namespace Game.Map.Generation
                 map[pos.x, pos.y] = TileType.Obstacle;
         }
 
-        // ³õÊ¼»¯¼æÈİĞÔ¹æÔò
+        // åˆå§‹åŒ–å…¼å®¹æ€§è§„åˆ™
         private void InitializeCompatibility()
         {
             compatibleNeighbors = new Dictionary<TileType, HashSet<TileType>>();
@@ -206,7 +206,7 @@ namespace Game.Map.Generation
             }
         }
 
-        // ÕÒµ½ìØ×îĞ¡µÄÎ´Ì®Ëõ¸ñ×Ó
+        // æ‰¾åˆ°ç†µæœ€å°çš„æœªåç¼©æ ¼å­
         private Vector2Int? FindMinEntropyCell()
         {
             int minEntropy = int.MaxValue;
@@ -237,7 +237,7 @@ namespace Game.Map.Generation
             return candidates[randomIndex];
         }
 
-        // Ì®ËõÖ¸¶¨¸ñ×Ó
+        // åç¼©æŒ‡å®šæ ¼å­
         private void CollapseCell(int x, int y)
         {
             var cell = wave[x, y];
@@ -248,7 +248,7 @@ namespace Game.Map.Generation
             propagationQueue.Enqueue(new Vector2Int(x, y));
         }
 
-        // ¸ù¾İÈ¨ÖØËæ»úÑ¡ÔñÒ»¸öÀàĞÍ
+        // æ ¹æ®æƒé‡éšæœºé€‰æ‹©ä¸€ä¸ªç±»å‹
         private TileType ChooseRandomType(List<TileType> candidates)
         {
             int totalWeight = 0;
@@ -270,7 +270,7 @@ namespace Game.Map.Generation
             return candidates[0];
         }
 
-        // ´«²¥Ô¼Êø
+        // ä¼ æ’­çº¦æŸ
         private bool Propagate()
         {
             while (propagationQueue.Count > 0)
@@ -284,7 +284,7 @@ namespace Game.Map.Generation
             return true;
         }
 
-        // ¼ì²éµ¥¸öÁÚ¾Ó²¢¸üĞÂÆä¿ÉÄÜÀàĞÍ
+        // æ£€æŸ¥å•ä¸ªé‚»å±…å¹¶æ›´æ–°å…¶å¯èƒ½ç±»å‹
         private void CheckNeighbor(Vector2Int sourcePos, int nx, int ny)
         {
             if (nx < 0 || nx >= width || ny < 0 || ny >= height)
@@ -313,7 +313,7 @@ namespace Game.Map.Generation
 
             if (newPossibilities.Count == 0)
             {
-                Debug.LogError($"Ã¬¶Ü: ¸ñ×Ó({nx},{ny}) ÎŞºÏ·¨ÀàĞÍ");
+                Debug.LogError($"çŸ›ç›¾: æ ¼å­({nx},{ny}) æ— åˆæ³•ç±»å‹");
                 propagationQueue.Clear();
                 return;
             }
@@ -338,7 +338,7 @@ namespace Game.Map.Generation
 
         private void EnsureConnectivity(ref TileType[,] map)
         {
-            // ½«¹Ø¼üµã×ø±êÏŞÖÆÔÚµØÍ¼·¶Î§ÄÚ
+            // å°†å…³é”®ç‚¹åæ ‡é™åˆ¶åœ¨åœ°å›¾èŒƒå›´å†…
             List<Vector2Int> points = new List<Vector2Int>();
             foreach (var pt in criticalPoints)
             {
@@ -347,15 +347,15 @@ namespace Game.Map.Generation
             }
             if (points.Count < 2) return;
 
-            // ¿ÉĞĞ×ßÀàĞÍ¼¯ºÏ£¨°üÀ¨ Exit£©
+            // å¯è¡Œèµ°ç±»å‹é›†åˆï¼ˆåŒ…æ‹¬ Exitï¼‰
             HashSet<TileType> walkableSet = new HashSet<TileType>(walkableTypes);
             if (!walkableSet.Contains(TileType.Exit))
-                walkableSet.Add(TileType.Exit); // ³ö¿ÚÒ²ÊÓÎª¿ÉĞĞ×ß
+                walkableSet.Add(TileType.Exit); // å‡ºå£ä¹Ÿè§†ä¸ºå¯è¡Œèµ°
 
             int maxAttempts = 10;
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                // BFS ´ÓµÚÒ»¸ö¹Ø¼üµã¿ªÊ¼
+                // BFS ä»ç¬¬ä¸€ä¸ªå…³é”®ç‚¹å¼€å§‹
                 bool[,] visited = new bool[width, height];
                 Queue<Vector2Int> queue = new Queue<Vector2Int>();
                 Vector2Int start = points[0];
@@ -382,7 +382,7 @@ namespace Game.Map.Generation
                     }
                 }
 
-                // ¼ì²éËùÓĞ¹Ø¼üµãÊÇ·ñÁ¬Í¨
+                // æ£€æŸ¥æ‰€æœ‰å…³é”®ç‚¹æ˜¯å¦è¿é€š
                 bool allConnected = true;
                 List<Vector2Int> unconnected = new List<Vector2Int>();
                 foreach (var pt in points)
@@ -395,7 +395,7 @@ namespace Game.Map.Generation
                 }
                 if (allConnected) break;
 
-                // ´òÍ¨Î´Á¬Í¨µÄ¹Ø¼üµã
+                // æ‰“é€šæœªè¿é€šçš„å…³é”®ç‚¹
                 foreach (var pt in unconnected)
                 {
                     Vector2Int target = FindNearestVisited(pt, visited);
@@ -538,7 +538,7 @@ namespace Game.Map.Generation
         }
 
         /// <summary>
-        /// ÒÆ³ıËùÓĞ´óĞ¡Ğ¡ÓÚ3µÄÕÏ°­ÎïÁ¬Í¨¿é£¬½«Æä±äÎª Walkable¡£
+        /// ç§»é™¤æ‰€æœ‰å¤§å°å°äº3çš„éšœç¢ç‰©è¿é€šå—ï¼Œå°†å…¶å˜ä¸º Walkableã€‚
         /// </summary>
         private void RemoveSmallObstacleClusters(ref TileType[,] map)
         {
@@ -546,17 +546,17 @@ namespace Game.Map.Generation
             int h = map.GetLength(1);
             bool[,] visited = new bool[w, h];
 
-            // ËÄ¸ö·½Ïò£¨ÉÏÏÂ×óÓÒ£©ÓÃÓÚÁ¬Í¨ĞÔÅĞ¶Ï
+            // å››ä¸ªæ–¹å‘ï¼ˆä¸Šä¸‹å·¦å³ï¼‰ç”¨äºè¿é€šæ€§åˆ¤æ–­
             Vector2Int[] dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
 
             for (int x = 0; x < w; x++)
             {
                 for (int y = 0; y < h; y++)
                 {
-                    // Ö»´¦ÀíÎ´·ÃÎÊµÄÕÏ°­Îï
+                    // åªå¤„ç†æœªè®¿é—®çš„éšœç¢ç‰©
                     if (map[x, y] == TileType.Obstacle && !visited[x, y])
                     {
-                        // BFS ÊÕ¼¯µ±Ç°Á¬Í¨¿é
+                        // BFS æ”¶é›†å½“å‰è¿é€šå—
                         List<Vector2Int> cluster = new List<Vector2Int>();
                         Queue<Vector2Int> queue = new Queue<Vector2Int>();
                         queue.Enqueue(new Vector2Int(x, y));
@@ -591,7 +591,7 @@ namespace Game.Map.Generation
                 }
             }
 
-            // ÖØĞÂÇ¿ÖÆ±ß½çÎª Obstacle£¬±ÜÃâÒòÒÆ³ıĞ¡¼¯Èºµ¼ÖÂ±ß½ç³öÏÖÈ±¿Ú
+            // é‡æ–°å¼ºåˆ¶è¾¹ç•Œä¸º Obstacleï¼Œé¿å…å› ç§»é™¤å°é›†ç¾¤å¯¼è‡´è¾¹ç•Œå‡ºç°ç¼ºå£
             /*
              * for (int x = 0; x < width; x++)
             {
@@ -617,7 +617,7 @@ namespace Game.Map.Generation
     }
 
     /// <summary>
-    /// ÏàÁÚ¹æÔòĞòÁĞ»¯Àà£¨ÔÚInspectorÖĞÅäÖÃ£©
+    /// ç›¸é‚»è§„åˆ™åºåˆ—åŒ–ç±»ï¼ˆåœ¨Inspectorä¸­é…ç½®ï¼‰
     /// </summary>
     [System.Serializable]
     public class TileAdjacencyRule
@@ -628,8 +628,8 @@ namespace Game.Map.Generation
     [System.Serializable]
     public struct BillboardObstacleConfig
     {
-        public TileType type;           // Ô­Ê¼ÍßÆ¬ÀàĞÍ
-        public GameObject[] prefab;     // ¶ÔÓ¦µÄÔ¤ÖÆÌå
-        public float yOffset;           // ´¹Ö±Æ«ÒÆ
+        public TileType type;           // åŸå§‹ç“¦ç‰‡ç±»å‹
+        public GameObject[] prefab;     // å¯¹åº”çš„é¢„åˆ¶ä½“
+        public float yOffset;           // å‚ç›´åç§»
     }
 }

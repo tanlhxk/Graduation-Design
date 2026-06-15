@@ -10,6 +10,8 @@ using Unit = Game.Combat.Units.Unit;
 using FriendlyUnit = Game.Combat.Units.FriendlyUnit;
 using EnemyUnit = Game.Combat.Units.EnemyUnit;
 using Game.RogueLike;
+using Game.Combat.AI;
+using Game.Core;
 
 namespace Game.Combat
 {
@@ -18,19 +20,19 @@ namespace Game.Combat
         public static TurnManager Instance;
         public enum TurnPhase
         {
-            PlayerTurn,   // Íæ¼Ò»ØºÏ
-            EnemyTurn,    // µĞÈË»ØºÏ
-            TurnEnd,      // »ØºÏ½áÊø/ÇĞ»»ÖĞ
+            PlayerTurn,   // ç©å®¶å›åˆ
+            EnemyTurn,    // æ•Œäººå›åˆ
+            TurnEnd,      // å›åˆç»“æŸ/åˆ‡æ¢ä¸­
             None
         }
 
 
-        [Header("µ¥Î»ÁĞ±í")]
+        [Header("å•ä½åˆ—è¡¨")]
         public List<Unit> allUnits;
         public List<FriendlyUnit> playerUnits;
         public List<EnemyUnit> enemyUnits;
 
-        [Header("µ±Ç°ĞĞ¶¯µ¥Î»")]
+        [Header("å½“å‰è¡ŒåŠ¨å•ä½")]
         public Unit currentActiveUnit;
         private int currentUnitIndex = 0;
 
@@ -49,9 +51,9 @@ namespace Game.Combat
 
         public void OnGameInitialized()
         {
-            Debug.Log("TurnManager ½ÓÊÕµ½³õÊ¼»¯ĞÅºÅ£¬¿ªÊ¼ÊÕ¼¯µ¥Î»...");
+            Debug.Log("TurnManager æ¥æ”¶åˆ°åˆå§‹åŒ–ä¿¡å·ï¼Œå¼€å§‹æ”¶é›†å•ä½...");
 
-            // Ö±½ÓÊ¹ÓÃ Unit.AllUnits£¬ÎŞĞèÔÙ´Î²éÕÒ
+            // ç›´æ¥ä½¿ç”¨ Unit.AllUnitsï¼Œæ— éœ€å†æ¬¡æŸ¥æ‰¾
             allUnits = Unit.AllUnits;
             playerUnits = new List<FriendlyUnit>();
             enemyUnits = new List<EnemyUnit>();
@@ -63,24 +65,24 @@ namespace Game.Combat
                     enemyUnits.Add(enemy);
             }
 
-            // µ÷ÊÔÊä³ö£º¿´¿´ÕÒµ½ÁË¶àÉÙµ¥Î»
-            Debug.Log($"ÕÒµ½ {playerUnits.Count} ¸öÍæ¼Òµ¥Î», {enemyUnits.Count} ¸öµĞÈËµ¥Î»");
+            // è°ƒè¯•è¾“å‡ºï¼šçœ‹çœ‹æ‰¾åˆ°äº†å¤šå°‘å•ä½
+            Debug.Log($"æ‰¾åˆ° {playerUnits.Count} ä¸ªç©å®¶å•ä½, {enemyUnits.Count} ä¸ªæ•Œäººå•ä½");
 
             isGameReady = true;
 
-            // ³¢ÊÔ¿ªÊ¼ÓÎÏ·
+            // å°è¯•å¼€å§‹æ¸¸æˆ
             AttemptStartGame();
         }
         void AttemptStartGame()
         {
             if (isGameReady && currentPhase == TurnPhase.None)
             {
-                Debug.Log("×¼±¸¿ªÊ¼µÚÒ»»ØºÏ...");
+                Debug.Log("å‡†å¤‡å¼€å§‹ç¬¬ä¸€å›åˆ...");
                 currentTurnNumber = 1;
-                // ÔÙ´Î·ÀÓùĞÔ¼ì²é
+                // å†æ¬¡é˜²å¾¡æ€§æ£€æŸ¥
                 if (playerUnits == null || playerUnits.Count == 0)
                 {
-                    Debug.LogError("´íÎó£ºÃ»ÓĞÕÒµ½Íæ¼Òµ¥Î»£¡");
+                    Debug.LogError("é”™è¯¯ï¼šæ²¡æœ‰æ‰¾åˆ°ç©å®¶å•ä½ï¼");
                     return;
                 }
 
@@ -89,46 +91,57 @@ namespace Game.Combat
             }
             else
             {
-                Debug.Log($"ÎŞ·¨¿ªÊ¼ÓÎÏ·¡£×¼±¸×´Ì¬: {isGameReady}, µ±Ç°½×¶Î: {currentPhase}");
+                Debug.Log($"æ— æ³•å¼€å§‹æ¸¸æˆã€‚å‡†å¤‡çŠ¶æ€: {isGameReady}, å½“å‰é˜¶æ®µ: {currentPhase}");
             }
         }
-        // ¿ªÊ¼Íæ¼Ò»ØºÏ
+        // å¼€å§‹ç©å®¶å›åˆ
         void StartPlayerTurn()
         {
             CheckVictory();
             if (isBattleOver) return;
             currentPhase = TurnPhase.PlayerTurn;
-            Debug.Log($"===== µÚ {currentTurnNumber} »ØºÏ - Íæ¼Ò»ØºÏ =====");
+            Debug.Log($"===== ç¬¬ {currentTurnNumber} å›åˆ - ç©å®¶å›åˆ =====");
 
-            // ÖØÖÃËùÓĞÍæ¼Òµ¥Î»×´Ì¬
+            // é‡ç½®æ‰€æœ‰ç©å®¶å•ä½çŠ¶æ€
             foreach (var unit in playerUnits)
             {
                 unit.NewTurn();
             }
 
-            // ¼¤»îµÚÒ»¸öÍæ¼Òµ¥Î»
+            // æ¿€æ´»ç¬¬ä¸€ä¸ªç©å®¶å•ä½
             currentUnitIndex = 0;
             ActivateUnit(playerUnits[currentUnitIndex]);
         }
 
-        // ¼¤»îÒ»¸öµ¥Î»
+        // æ¿€æ´»ä¸€ä¸ªå•ä½
         void ActivateUnit(Unit unit)
         {
             currentActiveUnit = unit;
-            Debug.Log($"µ±Ç°ĞĞ¶¯µ¥Î»: {unit.unitName}");
+            Debug.Log($"å½“å‰è¡ŒåŠ¨å•ä½: {unit.unitName}");
 
-            // ¼ÆËã²¢¸ßÁÁ¿ÉÒÆ¶¯·¶Î§
-            List<Tile> moveableTiles = MovementSystem.Instance.GetMoveableTiles(unit, unit.moveRange);
-            //movementSystem.HighlightMoveRange(moveableTiles);
+            if (unit is FriendlyUnit)
+                PlayerInput.Instance?.ClearSelection();
 
-            // Í¨ÖªUI¸üĞÂ
-            // UIManager.Instance.ShowUnitActions(unit);
+            if (unit is EnemyUnit enemy)
+            {
+                EnemyAI ai = enemy.GetComponent<EnemyAI>();
+                if (ai != null)
+                {
+                    StartCoroutine(ai.PerformTurnAction());
+                }
+                else
+                {
+                    Debug.LogError($"{enemy.unitName} ç¼ºå°‘ EnemyAI ç»„ä»¶ï¼");
+                    // å¦‚æœæ²¡æœ‰ AIï¼Œç›´æ¥ç»“æŸè¯¥å•ä½å›åˆï¼Œé¿å…å¡æ­»
+                    UnitFinishedAction(unit);
+                }
+            }
         }
 
-        // µ¥Î»Íê³ÉĞĞ¶¯
+        // å•ä½å®Œæˆè¡ŒåŠ¨
         public void UnitFinishedAction(Unit unit)
         {
-            if (isBattleOver) return;  // Õ½¶·ÒÑ½áÊø£¬ºöÂÔºóĞø
+            if (isBattleOver) return;  // æˆ˜æ–—å·²ç»“æŸï¼Œå¿½ç•¥åç»­
             if (unit != currentActiveUnit) return;
 
             MovementSystem.Instance.ClearHighlights();
@@ -143,7 +156,7 @@ namespace Game.Combat
                 else
                 {
                     currentActiveUnit = null;
-                    // ËùÓĞÍæ¼ÒĞĞ¶¯Íê³É£¬¼ì²éÊ¤Àû
+                    // æ‰€æœ‰ç©å®¶è¡ŒåŠ¨å®Œæˆï¼Œæ£€æŸ¥èƒœåˆ©
                     CheckVictory();
                     if (!isBattleOver && enemyUnits.Count > 0)
                         Invoke(nameof(StartEnemyTurn), 0.5f);
@@ -155,7 +168,7 @@ namespace Game.Combat
                 if (currentUnitIndex < enemyUnits.Count)
                 {
                     ActivateUnit(enemyUnits[currentUnitIndex]);
-                    StartCoroutine(ExecuteEnemyTurn(enemyUnits[currentUnitIndex]));
+                    //StartCoroutine(ExecuteEnemyTurns());
                 }
                 else
                 {
@@ -170,7 +183,7 @@ namespace Game.Combat
             CheckVictory();
         }
 
-        // ¿ªÊ¼µĞÈË»ØºÏ
+        // å¼€å§‹æ•Œäººå›åˆ
         void StartEnemyTurn()
         {
             CheckVictory();
@@ -182,106 +195,77 @@ namespace Game.Combat
                 return;
             }
             currentPhase = TurnPhase.EnemyTurn;
-            Debug.Log($"===== µÚ {currentTurnNumber} »ØºÏ - µĞÈË»ØºÏ =====");
-            Debug.Log($"===== Ê£Óà {enemyUnits.Count} ¸öµĞÈË =====");
+            Debug.Log($"===== ç¬¬ {currentTurnNumber} å›åˆ - æ•Œäººå›åˆ =====");
+            Debug.Log($"===== å‰©ä½™ {enemyUnits.Count} ä¸ªæ•Œäºº =====");
 
             enemyUnits.RemoveAll(u => u == null || u.currentHP <= 0);
 
-            // ÖØÖÃËùÓĞµĞÈËµ¥Î»×´Ì¬
+            // é‡ç½®æ‰€æœ‰æ•Œäººå•ä½çŠ¶æ€
             foreach (var unit in enemyUnits)
             {
                 unit.NewTurn();
             }
-
-            // ¼¤»îµÚÒ»¸öµĞÈËµ¥Î»
+            // é‡ç½®ç´¢å¼•
             currentUnitIndex = 0;
+
+            // æ¿€æ´»ç¬¬ä¸€ä¸ªæ•Œäººå•ä½
             if (enemyUnits.Count > 0)
             {
                 ActivateUnit(enemyUnits[currentUnitIndex]);
-                StartCoroutine(ExecuteEnemyTurn(enemyUnits[currentUnitIndex]));
-            }
-            else
-            {
-                // Ã»ÓĞµĞÈË£¬Ö±½Ó½øÈëÏÂÒ»»ØºÏ
-                currentTurnNumber++;
-                StartPlayerTurn();
             }
         }
 
-        // Ö´ĞĞµĞÈËAIĞĞ¶¯
-        IEnumerator ExecuteEnemyTurn(EnemyUnit enemy)
+        // æ‰§è¡Œæ•ŒäººAIè¡ŒåŠ¨
+        IEnumerator ExecuteEnemyTurns()
         {
-            if (enemy == null || enemy.currentHP <= 0)
+            while (currentUnitIndex < enemyUnits.Count)
             {
-                UnitFinishedAction(enemy);
-                yield break;
-            }
-
-            yield return new WaitForSeconds(0.3f);
-
-            // 1. ÊÕ¼¯ËùÓĞ¿ÉÓÃµÄÍæ¼ÒÄ¿±ê
-            List<FriendlyUnit> validTargets = playerUnits.Where(p => p != null && p.currentHP > 0).ToList();
-            if (validTargets.Count == 0)
-            {
-                UnitFinishedAction(enemy);
-                yield break;
-            }
-
-            // 2. ÆÀ¹ÀËùÓĞ¼¼ÄÜ£¬Ñ¡Ôñ×î¼ÑĞĞ¶¯
-            SkillDataSO bestSkill = null;
-            FriendlyUnit bestTarget = null;
-            float bestScore = -1f;
-
-            foreach (var skill in enemy.GetUnitSkills())
-            {
-                foreach (var target in validTargets)
+                EnemyUnit enemy = enemyUnits[currentUnitIndex];
+                if (enemy == null || enemy.currentHP <= 0)
                 {
-                    if (!enemy.CanUseSkill(target, skill)) continue;
-
-                    // ¼ÆËã¼¼ÄÜµÃ·Ö£¨Ê¾Àı£ºÉËº¦ÆÚÍûÖµ£©
-                    float score = EvaluateSkill(enemy, target, skill);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestSkill = skill;
-                        bestTarget = target;
-                    }
+                    currentUnitIndex++;
+                    continue;
                 }
-            }
 
-            // 3. Ö´ĞĞ×î¼ÑĞĞ¶¯
-            if (bestSkill != null && bestTarget != null)
-            {
-                Debug.Log($"{enemy.unitName} Ê¹ÓÃ {bestSkill.skillName} ¹¥»÷ {bestTarget.unitName}");
-                enemy.Attack(bestTarget, bestSkill);
-                yield break; // µÈ´ı×´Ì¬»úÍê³É»Øµ÷
-            }
+                EnemyAI ai = enemy.GetComponent<EnemyAI>();
+                if (ai == null)
+                {
+                    currentUnitIndex++;
+                    continue;
+                }
 
-            // 4. Èç¹ûÃ»ÓĞ¿ÉÓÃ¼¼ÄÜ£¨È«²¿ÀäÈ´»ò·¶Î§²»¹»£©£¬³¢ÊÔÒÆ¶¯
-            List<Tile> moveableTiles = MovementSystem.Instance.GetMoveableTiles(enemy, enemy.moveRange);
-            Tile bestTile = FindTileClosestToPlayer(moveableTiles, validTargets.First());
-            if (bestTile != null && bestTile != enemy.currentTile)
-            {
-                enemy.MoveTo(bestTile);
-                yield break;
-            }
+                ActivateUnit(enemy);
 
-            // 5. Ê²Ã´¶¼×ö²»ÁË£¬½áÊø»ØºÏ
-            UnitFinishedAction(enemy);
+                //  ç­‰å¾… AI åç¨‹å®Œå…¨ç»“æŸ
+                yield return StartCoroutine(ai.PerformTurnAction());
+
+                // é˜²æ­¢æ­»å¾ªç¯çš„ä¿é™©æœºåˆ¶ï¼šå¦‚æœ AI æ²¡æœ‰æ­£ç¡®ç»“æŸè¡ŒåŠ¨ï¼Œå¼ºåˆ¶æ¨è¿›
+                if (!ai.hasFinishedAction)
+                {
+                    Debug.LogWarning($"å¼ºåˆ¶ç»“æŸ {enemy.unitName} çš„è¡ŒåŠ¨ï¼ŒAI å¯èƒ½é™·å…¥æ­»é”");
+                    TurnManager.Instance.UnitFinishedAction(enemy);
+                }
+
+                // ç¡®ä¿ç´¢å¼•å¢åŠ 
+                currentUnitIndex++;
+            }
+            // åˆ‡æ¢å›åˆ
+            currentTurnNumber++;
+            StartPlayerTurn();
         }
         float EvaluateSkill(EnemyUnit caster, FriendlyUnit target, SkillDataSO skill)
         {
             float score = 0f;
-            // »ù´¡ÉËº¦ÆÚÍû£¨¼ÙÉèÉËº¦±¶ÂÊÖ±½Ó³Ë¹¥»÷Á¦£©
+            // åŸºç¡€ä¼¤å®³æœŸæœ›ï¼ˆå‡è®¾ä¼¤å®³å€ç‡ç›´æ¥ä¹˜æ”»å‡»åŠ›ï¼‰
             float damage = caster.baseAttack * skill.damageMultiplier;
             score += damage;
-            // Èç¹ûÄ¿±êÑªÁ¿ºÜµÍ£¬¿ÉÒÔÔö¼ÓÈ¨ÖØ£¨Õ¶É±ÇãÏò£©
+            // å¦‚æœç›®æ ‡è¡€é‡å¾ˆä½ï¼Œå¯ä»¥å¢åŠ æƒé‡ï¼ˆæ–©æ€å€¾å‘ï¼‰
             if (target.currentHP <= damage) score += 50f;
-            // Èç¹û¼¼ÄÜÓĞÌØÊâĞ§¹û£¨ÈçÑ£ÔÎ£©£¬¿É¶îÍâ¼Ó·Ö
-            // Èç¹û¼¼ÄÜÔÚÀäÈ´ÖĞ£¬score = -1 Ìø¹ı
+            // å¦‚æœæŠ€èƒ½æœ‰ç‰¹æ®Šæ•ˆæœï¼ˆå¦‚çœ©æ™•ï¼‰ï¼Œå¯é¢å¤–åŠ åˆ†
+            // å¦‚æœæŠ€èƒ½åœ¨å†·å´ä¸­ï¼Œscore = -1 è·³è¿‡
             return score;
         }
-        // ÕÒµ½×î½üµÄÍæ¼Ò
+        // æ‰¾åˆ°æœ€è¿‘çš„ç©å®¶
         FriendlyUnit FindNearestPlayer(EnemyUnit enemy)
         {
             FriendlyUnit nearest = null;
@@ -304,7 +288,7 @@ namespace Game.Combat
             return nearest;
         }
 
-        // ÕÒµ½ÀëÍæ¼Ò×î½üµÄ¿ÉĞĞ×ß¸ñ×Ó
+        // æ‰¾åˆ°ç¦»ç©å®¶æœ€è¿‘çš„å¯è¡Œèµ°æ ¼å­
         Tile FindTileClosestToPlayer(List<Tile> tiles, Unit player)
         {
             Tile bestTile = null;
@@ -340,22 +324,51 @@ namespace Game.Combat
             if (allUnits.Contains(unit))
                 allUnits.Remove(unit);
 
-            // Èç¹ûµ±Ç°ĞĞ¶¯µÄµ¥Î»¾ÍÊÇ±»ÒÆ³ıµÄ£¬ĞèÒª´¦Àí£¨¼ûÏÂÎÄ£©
+            // å¦‚æœå½“å‰è¡ŒåŠ¨çš„å•ä½å°±æ˜¯è¢«ç§»é™¤çš„ï¼Œéœ€è¦å¤„ç†ï¼ˆè§ä¸‹æ–‡ï¼‰
             if (currentActiveUnit == unit)
             {
-                // ¿ÉÒÔÁ¢¼´½áÊø¸Ãµ¥Î»ĞĞ¶¯£¬²¢×ªµ½ÏÂÒ»¸ö
+                // å¯ä»¥ç«‹å³ç»“æŸè¯¥å•ä½è¡ŒåŠ¨ï¼Œå¹¶è½¬åˆ°ä¸‹ä¸€ä¸ª
                 currentActiveUnit = null;
-                // Èç¹ûµ±Ç°ÊÇµĞÈË»ØºÏ£¬¿ÉÄÜĞèÒª¼ÌĞøÏÂÒ»¸öµĞÈË
+                // å¦‚æœå½“å‰æ˜¯æ•Œäººå›åˆï¼Œå¯èƒ½éœ€è¦ç»§ç»­ä¸‹ä¸€ä¸ªæ•Œäºº
             }
+            CheckPlayerDefeat();
         }
         public void OnEnemyDied(EnemyUnit enemy)
         {
             enemyUnits.Remove(enemy);
-            //ËÀÍöÌØĞ§
+            //æ­»äº¡ç‰¹æ•ˆ
+            CheckVictory();
+        }
+        private void CheckPlayerDefeat()
+        {
+            if (isBattleOver) return;
+
+            // æ¸…ç†æ— æ•ˆå¼•ç”¨
+            playerUnits.RemoveAll(p => p == null || p.currentHP <= 0);
+
+            if (playerUnits.Count == 0)
+            {
+                isBattleOver = true;
+                currentPhase = TurnPhase.None;
+                if (currentActiveUnit != null)
+                {
+                    MovementSystem.Instance.ClearHighlights();
+                    currentActiveUnit = null;
+                }
+                StopAllCoroutines();
+                Debug.Log("ç©å®¶é˜Ÿä¼å…¨ç­ï¼Œæ¸¸æˆç»“æŸï¼");
+                RouteManager.Instance?.EndGame(false);   // å¤±è´¥ç»“æŸ
+            }
         }
         public void ResetBattle()
         {
             isBattleOver = false;
+            currentPhase = TurnPhase.None;
+            currentActiveUnit = null;
+            currentUnitIndex = 0;
+            currentTurnNumber = 1;
+            StopAllCoroutines();    // åœæ­¢æ®‹ç•™çš„æ•Œäºº AI åç¨‹
+            MovementSystem.Instance?.ClearHighlights(); // æ¸…é™¤é«˜äº®
         }
         private void CheckVictory()
         {
@@ -364,15 +377,18 @@ namespace Game.Combat
             if (enemyUnits.Count == 0)
             {
                 isBattleOver = true;
-                Debug.Log("Õ½¶·Ê¤Àû£¡");
+                Debug.Log("æˆ˜æ–—èƒœåˆ©ï¼");
                 currentPhase = TurnPhase.None;
                 if (currentActiveUnit != null)
                 {
                     MovementSystem.Instance.ClearHighlights();
                     currentActiveUnit = null;
                 }
-                StopAllCoroutines();  // Í£Ö¹ËùÓĞµĞÈË AI Ğ­³Ì
-                RouteManager.Instance.OnRoomCleared();
+                StopAllCoroutines();  // åœæ­¢æ‰€æœ‰æ•Œäºº AI åç¨‹
+                if (RouteManager.Instance != null)
+                    RouteManager.Instance.OnRoomCleared();
+                else
+                    Debug.LogWarning("æˆ˜æ–—èƒœåˆ©ï¼Œä½†åœºæ™¯ä¸­æœªæ‰¾åˆ° RouteManagerï¼Œè·³è¿‡æˆ¿é—´æ¸…ç†æµç¨‹ã€‚");
             }
         }
     }

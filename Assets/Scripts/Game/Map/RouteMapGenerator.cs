@@ -7,13 +7,13 @@ namespace Game.RogueLike
     [System.Serializable]
     public class RouteNode
     {
-        public int layer;              // ²ãÊı£¨´Ó0¿ªÊ¼£©
-        public int index;              // ÔÚµ±Ç°²ãµÄË÷Òı
+        public int layer;              // å±‚æ•°ï¼ˆä»0å¼€å§‹ï¼‰
+        public int index;              // åœ¨å½“å‰å±‚çš„ç´¢å¼•
         public NodeType nodeType;
-        public Vector2Int position;    // ÔÚUIÉÏµÄÎ»ÖÃ£¨ÓÃÓÚ»æÖÆÁ¬Ïß£©
-        public List<int> nextIndices;  // ÏÂÒ»²ãµÄ½ÚµãË÷ÒıÁĞ±í£¨Á¬½Ó¹ØÏµ£©
+        public Vector2Int position;    // åœ¨UIä¸Šçš„ä½ç½®ï¼ˆç”¨äºç»˜åˆ¶è¿çº¿ï¼‰
+        public List<int> nextIndices;  // ä¸‹ä¸€å±‚çš„èŠ‚ç‚¹ç´¢å¼•åˆ—è¡¨ï¼ˆè¿æ¥å…³ç³»ï¼‰
         public bool isVisited;
-        public bool isLocked;          // ÊÇ·ñÒÑÎŞ·¨·ÃÎÊ£¨ÀıÈç·ÖÖ§±»Ìø¹ı£©
+        public bool isLocked;          // æ˜¯å¦å·²æ— æ³•è®¿é—®ï¼ˆä¾‹å¦‚åˆ†æ”¯è¢«è·³è¿‡ï¼‰
 
         public RouteNode(int layer, int index, NodeType type)
         {
@@ -27,13 +27,13 @@ namespace Game.RogueLike
     }
     public class RouteMapGenerator : MonoBehaviour
     {
-        [Header("Â·ÏßÅäÖÃ")]
-        public int totalLayers = 5;          // ×Ü²ãÊı£¨²»º¬BOSS²ã£©
+        [Header("è·¯çº¿é…ç½®")]
+        public int totalLayers = 5;          // æ€»å±‚æ•°ï¼ˆä¸å«BOSSå±‚ï¼‰
         public int minNodesPerLayer = 2;
         public int maxNodesPerLayer = 4;
-        public float branchProbability = 0.6f; // ·ÖÖ§¸ÅÂÊ£¨Á¬½Ó¶à¸öÏÂÒ»²ã½ÚµãµÄ¸ÅÂÊ£©
+        public float branchProbability = 0.6f; // åˆ†æ”¯æ¦‚ç‡ï¼ˆè¿æ¥å¤šä¸ªä¸‹ä¸€å±‚èŠ‚ç‚¹çš„æ¦‚ç‡ï¼‰
 
-        [Header("½ÚµãÀàĞÍÈ¨ÖØ")]
+        [Header("èŠ‚ç‚¹ç±»å‹æƒé‡")]
         public int[] combatWeight = { 70 };
         public int[] eliteWeight = { 20 };
         public int[] eventWeight = { 30 };
@@ -42,22 +42,22 @@ namespace Game.RogueLike
         public int[] treasureWeight = { 5 };
 
         /// <summary>
-        /// Éú³ÉÒ»ÕÅËæ»úÂ·ÏßÍ¼
+        /// ç”Ÿæˆä¸€å¼ éšæœºè·¯çº¿å›¾
         /// </summary>
         public List<List<RouteNode>> GenerateMap(int seed)
         {
             List<List<RouteNode>> layers = new List<List<RouteNode>>();
 
-            // Éú³ÉÃ¿Ò»²ãµÄ½ÚµãÊıÁ¿
-            int[] nodesPerLayer = new int[totalLayers + 1]; // ×îºóÒ»²ãÎªBOSS²ã
+            // ç”Ÿæˆæ¯ä¸€å±‚çš„èŠ‚ç‚¹æ•°é‡
+            int[] nodesPerLayer = new int[totalLayers + 1]; // æœ€åä¸€å±‚ä¸ºBOSSå±‚
             for (int i = 0; i < totalLayers; i++)
             {
                 if (i == 0) nodesPerLayer[i] = 1;
                 else nodesPerLayer[i] = Random.Range(minNodesPerLayer, maxNodesPerLayer + 1);
             }
-            nodesPerLayer[totalLayers] = 1; // BOSS²ãÖ»ÓĞÒ»¸ö½Úµã
+            nodesPerLayer[totalLayers] = 1; // BOSSå±‚åªæœ‰ä¸€ä¸ªèŠ‚ç‚¹
 
-            // ´´½¨½Úµã
+            // åˆ›å»ºèŠ‚ç‚¹
             for (int layer = 0; layer <= totalLayers; layer++)
             {
                 List<RouteNode> currentLayer = new List<RouteNode>();
@@ -74,34 +74,33 @@ namespace Game.RogueLike
                 layers.Add(currentLayer);
             }
 
-            // ½¨Á¢Á¬½Ó£¨´ÓÉÏÒ»²ãµ½ÏÂÒ»²ã£©
+            // å»ºç«‹è¿æ¥ï¼ˆä»ä¸Šä¸€å±‚åˆ°ä¸‹ä¸€å±‚ï¼‰
             for (int layer = 0; layer < totalLayers; layer++)
             {
                 List<RouteNode> current = layers[layer];
                 List<RouteNode> next = layers[layer + 1];
 
-                // ÎªÃ¿¸öµ±Ç°½Úµã·ÖÅäÏÂÒ»²ãµÄÁ¬½Ó
+                // ä¸ºæ¯ä¸ªå½“å‰èŠ‚ç‚¹åˆ†é…ä¸‹ä¸€å±‚çš„è¿æ¥
                 for (int i = 0; i < current.Count; i++)
                 {
-                    // È·¶¨ÄÜÁ¬½Óµ½ÏÂÒ»²ãµÄÄÄĞ©Ë÷Òı
+                    // ç¡®å®šèƒ½è¿æ¥åˆ°ä¸‹ä¸€å±‚çš„å“ªäº›ç´¢å¼•
                     List<int> candidates = new List<int>();
-                    // Í¨³£Á¬½Óµ½Í¬Ò»ÁĞ»òÏàÁÚÁĞ
+                    // é€šå¸¸è¿æ¥åˆ°åŒä¸€åˆ—æˆ–ç›¸é‚»åˆ—
                     int startIdx = Mathf.Max(0, i - 1);
                     int endIdx = Mathf.Min(next.Count - 1, i + 1);
                     for (int j = startIdx; j <= endIdx; j++)
                         candidates.Add(j);
 
-                    // Ëæ»ú¾ö¶¨Á¬½ÓÊıÁ¿£¨1 »ò 2£©
+                    // éšæœºå†³å®šè¿æ¥æ•°é‡ï¼ˆ1 æˆ– 2ï¼‰
                     int connectCount = Random.value < branchProbability ? 2 : 1;
                     connectCount = Mathf.Min(connectCount, candidates.Count);
-                    // Ëæ»úÌôÑ¡
+                    // éšæœºæŒ‘é€‰
                     for (int c = 0; c < connectCount; c++)
                     {
                         int idx = Random.Range(0, candidates.Count);
                         current[i].nextIndices.Add(candidates[idx]);
                         candidates.RemoveAt(idx);
                     }
-                    // È¥ÖØ£¨Èç¹ûÓĞÖØ¸´£©
                     current[i].nextIndices = new List<int>(new HashSet<int>(current[i].nextIndices));
                 }
             }
@@ -112,9 +111,9 @@ namespace Game.RogueLike
         private NodeType GetRandomNodeType(int layer)
         {
             if (layer == 0) return NodeType.Combat;
-            // ¾«Ó¢ºÍBOSSÖ»ÔÚºóÆÚ³öÏÖ£¬¿É¼òµ¥¹æÔò
+            // ç²¾è‹±å’ŒBOSSåªåœ¨åæœŸå‡ºç°ï¼Œå¯ç®€å•è§„åˆ™
             float eliteChance = layer >= totalLayers - 2 ? 0.3f : 0.1f;
-            // ¼òµ¥°´È¨ÖØËæ»ú£¬Äã¿ÉÒÔÀ©Õ¹¸ü¸´ÔÓµÄÂß¼­
+            // ç®€å•æŒ‰æƒé‡éšæœºï¼Œä½ å¯ä»¥æ‰©å±•æ›´å¤æ‚çš„é€»è¾‘
             float rand = Random.value;
             if (rand < 0.5f) return NodeType.Combat;
             if (rand < 0.7f) return NodeType.Event;

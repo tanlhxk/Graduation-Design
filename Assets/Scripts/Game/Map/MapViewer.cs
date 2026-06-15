@@ -36,6 +36,11 @@ namespace Game.RogueLike
         public void OpenMap()
         {
             if (RouteManager.Instance == null || RouteManager.Instance.AllRooms == null) return;
+            if (!RouteManager.Instance.CanOpenRouteMap)
+            {
+                Debug.Log("æˆ˜æ–—å°šæœªç»“æŸï¼Œæ— æ³•æ‰“å¼€è·¯çº¿åœ°å›¾ã€‚");
+                return;
+            }
             RefreshMapUI();
             Background.gameObject.SetActive(true);
             isOpen = true;
@@ -55,14 +60,14 @@ namespace Game.RogueLike
 
         private void RefreshMapUI()
         {
-            // Çå³ı¾ÉÄÚÈİ
+            // æ¸…é™¤æ—§å†…å®¹
             foreach (Transform child in mapContent) Destroy(child.gameObject);
             nodeButtons.Clear();
 
             var allRooms = RouteManager.Instance.AllRooms;
             var currentNode = RouteManager.Instance.CurrentNode;
 
-            // ¼ÆËã²¼¾Ö·¶Î§
+            // è®¡ç®—å¸ƒå±€èŒƒå›´
             float nodeWidth = 100f;
             float nodeHeight = 100f;
             Vector2 minPos = new Vector2(float.MaxValue, float.MaxValue);
@@ -74,23 +79,23 @@ namespace Game.RogueLike
                 maxPos = Vector2.Max(maxPos, pos);
             }
 
-            // Æ«ÒÆÊ¹µØÍ¼¾ÓÖĞ
+            // åç§»ä½¿åœ°å›¾å±…ä¸­
             Vector2 offset = new Vector2(-(minPos.x + maxPos.x) / 2f, -(minPos.y + maxPos.y) / 2f);
 
-            // ÏÈ»­Á¬Ïß
+            // å…ˆç”»è¿çº¿
             foreach (var node in allRooms)
             {
                 Vector2 fromPos = new Vector2(node.gridPos.x * nodeWidth, node.gridPos.y * nodeHeight) + offset;
                 foreach (var neighborPos in node.neighbors)
                 {
-                    // Ö»»­Ò»´Î£¨±ÜÃâÖØ¸´£¬Ô¼¶¨Ö»»­ from µ½ to ÇÒ to µÄ×ø±ê´óÓÚ from µÄÌõ¼ş£¬µ«¼òµ¥Æğ¼û¿ÉÒÔ»­Á½´ÎÒ²Ã»ÊÂ£¬µ«»áÖØµş£©
-                    // ¸üºÃµÄ·½·¨£ºÓÃ HashSet ¼ÇÂ¼ÒÑ»­±ß
+                    // åªç”»ä¸€æ¬¡ï¼ˆé¿å…é‡å¤ï¼Œçº¦å®šåªç”» from åˆ° to ä¸” to çš„åæ ‡å¤§äº from çš„æ¡ä»¶ï¼Œä½†ç®€å•èµ·è§å¯ä»¥ç”»ä¸¤æ¬¡ä¹Ÿæ²¡äº‹ï¼Œä½†ä¼šé‡å ï¼‰
+                    // æ›´å¥½çš„æ–¹æ³•ï¼šç”¨ HashSet è®°å½•å·²ç”»è¾¹
                     Vector2 toPos = new Vector2(neighborPos.x * nodeWidth, neighborPos.y * nodeHeight) + offset;
                     CreateLine(fromPos, toPos);
                 }
             }
 
-            // ÔÙ»­°´Å¥
+            // å†ç”»æŒ‰é’®
             foreach (var node in allRooms)
             {
                 Vector2 anchoredPos = new Vector2(node.gridPos.x * nodeWidth, node.gridPos.y * nodeHeight) + offset;
@@ -102,14 +107,14 @@ namespace Game.RogueLike
                 img.sprite = mapSetImage.GetSprite(node.nodeType);
                 Button btn = btnObj.GetComponent<Button>();
 
-                // ¿É½»»¥Ìõ¼ş£ºÏàÁÚÇÒÎ´±»·ÃÎÊ£¿»òÕßÖ»ÒªÏàÁÚ¾Í¿ÉÒÆ¶¯
+                // å¯äº¤äº’æ¡ä»¶ï¼šç›¸é‚»ä¸”æœªè¢«è®¿é—®ï¼Ÿæˆ–è€…åªè¦ç›¸é‚»å°±å¯ç§»åŠ¨
                 bool isAdjacent = currentNode != null && currentNode.neighbors.Contains(node.gridPos);
                 btn.interactable = isAdjacent;
                 btn.onClick.AddListener(() => OnNodeClicked(node.gridPos));
 
                 nodeButtons[node.gridPos] = btn;
 
-                // µ±Ç°ËùÔÚ·¿¼ä¸ßÁÁ
+                // å½“å‰æ‰€åœ¨æˆ¿é—´é«˜äº®
                 if (currentNode != null && node.gridPos == currentNode.gridPos)
                 {
                     var outline = btnObj.GetComponent<Outline>();
@@ -132,9 +137,10 @@ namespace Game.RogueLike
 
         private void OnNodeClicked(Vector2Int pos)
         {
+            if (!RouteManager.Instance.CanOpenRouteMap) return;
             if (RouteManager.Instance.MoveToNode(pos))
             {
-                CloseMap(); // ÒÆ¶¯ºó¹Ø±ÕµØÍ¼£¬½øÈë·¿¼äÄÚÈİ
+                CloseMap(); // ç§»åŠ¨åå…³é—­åœ°å›¾ï¼Œè¿›å…¥æˆ¿é—´å†…å®¹
             }
         }
     }

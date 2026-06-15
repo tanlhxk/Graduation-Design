@@ -7,28 +7,28 @@ namespace Game.Core
 {
     public class LoadingManager : MonoBehaviour
     {
-        [Header("¼ÓÔØÉèÖÃ")]
+        [Header("åŠ è½½è®¾ç½®")]
         public string gameSceneName = "GameScene";
-        public float minLoadingTime = 1f; // ×î¶Ì¼ÓÔØÊ±¼ä£¨±ÜÃâÉÁÆÁ£©
+        public float minLoadingTime = 1f; // æœ€çŸ­åŠ è½½æ—¶é—´ï¼ˆé¿å…é—ªå±ï¼‰
 
         private int currentSeed;
         private void Start()
         {
-            // ¿ªÊ¼¼ÓÔØÁ÷³Ì
+            // å¼€å§‹åŠ è½½æµç¨‹
             StartCoroutine(LoadGame());
         }
 
         IEnumerator LoadGame()
         {
             float startTime = Time.time;
-            // È·±£ RouteManager ´æÔÚ²¢ÍêÕû
+            // ç¡®ä¿ RouteManager å­˜åœ¨å¹¶å®Œæ•´
             RouteManager routeManager = RouteManager.Instance;
             if (routeManager == null)
             {
                 GameObject routeObj = new GameObject("RouteManager");
                 routeManager = routeObj.AddComponent<RouteManager>();
                 GridMapGenerator generator = routeObj.AddComponent<GridMapGenerator>();
-                // ÉèÖÃÍø¸ñµØÍ¼²ÎÊı
+                // è®¾ç½®ç½‘æ ¼åœ°å›¾å‚æ•°
                 generator.width = 6;
                 generator.height = 5;
                 generator.combatWeight = 40;
@@ -44,21 +44,21 @@ namespace Game.Core
             }
             else if (routeManager.mapGenerator == null)
             {
-                Debug.LogError("RouteManager È±ÉÙ mapGenerator£¬ÎŞ·¨Éú³ÉµØÍ¼");
+                Debug.LogError("RouteManager ç¼ºå°‘ mapGeneratorï¼Œæ— æ³•ç”Ÿæˆåœ°å›¾");
                 yield break;
             }
 
-            // Éú³ÉµØÍ¼£¨²»½øÈë½Úµã£©
+            // ç”Ÿæˆåœ°å›¾ï¼ˆä¸è¿›å…¥èŠ‚ç‚¹ï¼‰
             routeManager.StartNewRun();
-            Debug.Log($"µØÍ¼ÒÑÉú³É£¬ÆğÊ¼½Úµã£º{routeManager.CurrentNode.nodeType}");
+            Debug.Log($"åœ°å›¾å·²ç”Ÿæˆï¼Œèµ·å§‹èŠ‚ç‚¹ï¼š{routeManager.CurrentNode.nodeType}");
 
-            // ¼ÓÔØÓÎÏ·³¡¾°£¨Ö±½Ó¼¤»î£¬²»µÈ´ıºóĞøÂß¼­£©
+            // åŠ è½½æ¸¸æˆåœºæ™¯ï¼ˆç›´æ¥æ¿€æ´»ï¼Œä¸ç­‰å¾…åç»­é€»è¾‘ï¼‰
             AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(gameSceneName);
             asyncLoad.allowSceneActivation = true;
 
-            // ¿ÉÑ¡£ºµÈ´ı³¡¾°¼ÓÔØÍê³É£¨µ«²»ÔÙ×ö¶îÍâ¹¤×÷£©
+            // å¯é€‰ï¼šç­‰å¾…åœºæ™¯åŠ è½½å®Œæˆï¼ˆä½†ä¸å†åšé¢å¤–å·¥ä½œï¼‰
             yield return asyncLoad;
-            // LoadingScene »á×Ô¶¯Ğ¶ÔØ£¬Ğ­³Ì½áÊø
+            // LoadingScene ä¼šè‡ªåŠ¨å¸è½½ï¼Œåç¨‹ç»“æŸ
         }
     }
 }

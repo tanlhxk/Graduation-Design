@@ -409,6 +409,7 @@ GameObject:
   - component: {fileID: -424011200806844276}
   - component: {fileID: 3577761981106102766}
   - component: {fileID: 9166121290788779217}
+  - component: {fileID: -8002654189041627116}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -493,6 +494,23 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-8002654189041627116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1628299741716654555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d69c76ccaa5d0c04980bdc2c7211cbfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patrolRadius: 5
+  chaseDistance: 5
+  attackDistance: 1
+  idleDuration: 1
+  patrolWaitTime: 0.5
 --- !u!1 &2015786982561050073
 GameObject:
   m_ObjectHideFlags: 0

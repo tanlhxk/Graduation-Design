@@ -15,15 +15,15 @@ namespace Game.Core
     {
         public static GameManager Instance;
 
-        [Header("¶ÔÏóÔ¤ÖÆÌå")]
+        [Header("å¯¹è±¡é¢„åˆ¶ä½“")]
         public GameObject playerPrefab;
         public GameObject enemyPrefab;
 
-        [Header("µØÍ¼ÖÖ×Ó")]
+        [Header("åœ°å›¾ç§å­")]
         public int seed;
 
-        [Header("Â·ÏßÏµÍ³")]
-        private NodeType currentCombatType;   // ¼ÇÂ¼µ±Ç°Õ½¶·ÀàĞÍ£¨ÆÕÍ¨/¾«Ó¢/BOSS£©
+        [Header("è·¯çº¿ç³»ç»Ÿ")]
+        private NodeType currentCombatType;   // è®°å½•å½“å‰æˆ˜æ–—ç±»å‹ï¼ˆæ™®é€š/ç²¾è‹±/BOSSï¼‰
 
         public SimpleWFCGenerator simpleWFCGenerator;
         public FacingCamera facingCamera;
@@ -46,20 +46,19 @@ namespace Game.Core
                 if (!combatStarted)
                 {
                     combatStarted = true;
-                    Debug.Log("GameManager ¼ì²âµ½Èâ¸ëÂ·Ïß£¬¿ªÊ¼µ±Ç°½ÚµãÕ½¶·...");
-                    if (RouteManager.Instance.CurrentNode != null)
-                        RouteManager.Instance.StartCurrentNode();
+                    Debug.Log("GameManager æ£€æµ‹åˆ°è‚‰é¸½è·¯çº¿ï¼Œè¿›å…¥å½“å‰èŠ‚ç‚¹...");
+                    RouteManager.Instance.BeginAtCurrentNode();
                 }
             }
             else
             {
                 Random.InitState(seed);
-                // Ã»ÓĞÂ·ÏßÊı¾İ£¨ÀıÈçÖ±½ÓÔÚ±à¼­Æ÷ÖĞÔËĞĞ GameScene£©£¬Ê¹ÓÃ²âÊÔÄ£Ê½
-                Debug.Log("Î´¼ì²âµ½Èâ¸ëÂ·Ïß£¬Ê¹ÓÃ²âÊÔÄ£Ê½Éú³ÉµØÍ¼");
+                // æ²¡æœ‰è·¯çº¿æ•°æ®ï¼ˆä¾‹å¦‚ç›´æ¥åœ¨ç¼–è¾‘å™¨ä¸­è¿è¡Œ GameSceneï¼‰ï¼Œä½¿ç”¨æµ‹è¯•æ¨¡å¼
+                Debug.Log("æœªæ£€æµ‹åˆ°è‚‰é¸½è·¯çº¿ï¼Œä½¿ç”¨æµ‹è¯•æ¨¡å¼ç”Ÿæˆåœ°å›¾");
                 simpleWFCGenerator.GenerateAndBuildMap(seed);
-                SpawnPlayerAt(GetRandomWalkablePosition());      // Ëæ»úÉú³ÉÍæ¼Ò
+                SpawnPlayerAt(GetRandomWalkablePosition());      // éšæœºç”Ÿæˆç©å®¶
                 Vector2Int playerPos = playerUnit.currentTile.gridPos;
-                SpawnEnemyAt(GetValidEnemyPosition(playerPos), 20, "²âÊÔµĞÈË");
+                SpawnEnemyAt(GetValidEnemyPosition(playerPos), 20, "æµ‹è¯•æ•Œäºº");
                 TurnManager.Instance.OnGameInitialized();
                 SetupCameraBounds();
             }
@@ -69,30 +68,30 @@ namespace Game.Core
             if (Input.GetKeyDown(KeyCode.E))
             {
                 Vector2Int playerPos = playerUnit != null ? playerUnit.currentTile.gridPos : new Vector2Int(1, 1);
-                SpawnEnemyAt(GetValidEnemyPosition(playerPos), 20, "²âÊÔµĞÈË");
+                SpawnEnemyAt(GetValidEnemyPosition(playerPos), 20, "æµ‹è¯•æ•Œäºº");
             }
         }
         void SpawnEnemyAt(Vector2Int gridPos)
         {
             if (enemyPrefab == null)
             {
-                Debug.LogError("Ô¤ÖÆÌåÎ´Ö¸¶¨£¡");
+                Debug.LogError("é¢„åˆ¶ä½“æœªæŒ‡å®šï¼");
                 return;
             }
 
-            // ¼ÆËãÊÀ½ç×ø±ê
+            // è®¡ç®—ä¸–ç•Œåæ ‡
             Vector3 worldPos = GridManager.Instance.GridToWorld(gridPos);
 
-            // ÊµÀı»¯
+            // å®ä¾‹åŒ–
             enemyObj = Instantiate(enemyPrefab, worldPos, Quaternion.identity);
-            enemyObj.tag = "Enemy";  // ÉèÖÃ±êÇ©£¨¿ÉÑ¡£©
-            enemyObj.name = "Enemy"; // ÖØÃüÃû
+            enemyObj.tag = "Enemy";  // è®¾ç½®æ ‡ç­¾ï¼ˆå¯é€‰ï¼‰
+            enemyObj.name = "Enemy"; // é‡å‘½å
 
-            // »ñÈ¡Unit×é¼ş²¢³õÊ¼»¯
+            // è·å–Unitç»„ä»¶å¹¶åˆå§‹åŒ–
             enemyUnit = enemyObj.GetComponent<EnemyUnit>();
             if (enemyUnit != null)
             {
-                enemyUnit.unitName = "µĞÈË";
+                enemyUnit.unitName = "æ•Œäºº";
                 enemyUnit.maxHP = 20;
                 enemyUnit.currentHP = 20;
                 enemyUnit.baseAttack = 5;
@@ -101,7 +100,7 @@ namespace Game.Core
                 enemyUnit.unitType = UnitType.Enemy;
                 SkillDataSO normalAttack = Resources.Load<SkillDataSO>("Skills/NormalAttack");
                 enemyUnit.AddSkill(normalAttack);
-                // Í¨ÖªGridManager¸Ãµ¥Î»Õ¼¾İÁË¸ñ×Ó
+                // é€šçŸ¥GridManagerè¯¥å•ä½å æ®äº†æ ¼å­
                 GridManager.Instance.SetUnitOnTile(enemyUnit, gridPos);
             }
 
@@ -111,29 +110,29 @@ namespace Game.Core
                 TurnManager.Instance.allUnits.Add(enemyUnit);
             }*/
             //facingCamera.RefreshFacing();
-            Debug.Log($"µĞ·½ÒÑÉú³ÉÔÚÍø¸ñÎ»ÖÃ {gridPos}");
+            Debug.Log($"æ•Œæ–¹å·²ç”Ÿæˆåœ¨ç½‘æ ¼ä½ç½® {gridPos}");
         }
         void SpawnPlayerAt(Vector2Int gridPos)
         {
             if (playerPrefab == null)
             {
-                Debug.LogError("Íæ¼ÒÔ¤ÖÆÌåÎ´Ö¸¶¨£¡");
+                Debug.LogError("ç©å®¶é¢„åˆ¶ä½“æœªæŒ‡å®šï¼");
                 return;
             }
 
-            // ¼ÆËãÊÀ½ç×ø±ê
+            // è®¡ç®—ä¸–ç•Œåæ ‡
             Vector3 worldPos = GridManager.Instance.GridToWorld(gridPos);
 
-            // ÊµÀı»¯Íæ¼Ò
+            // å®ä¾‹åŒ–ç©å®¶
             playerObj = Instantiate(playerPrefab, worldPos, Quaternion.identity);
-            playerObj.tag = "Player";  // ÉèÖÃ±êÇ©£¨¿ÉÑ¡£©
-            playerObj.name = "Player"; // ÖØÃüÃû
+            playerObj.tag = "Player";  // è®¾ç½®æ ‡ç­¾ï¼ˆå¯é€‰ï¼‰
+            playerObj.name = "Player"; // é‡å‘½å
 
-            // »ñÈ¡Unit×é¼ş²¢³õÊ¼»¯
+            // è·å–Unitç»„ä»¶å¹¶åˆå§‹åŒ–
             playerUnit = playerObj.GetComponent<FriendlyUnit>();
             if (playerUnit != null)
             {
-                playerUnit.unitName = "ÓÂÕß";
+                playerUnit.unitName = "å‹‡è€…";
                 playerUnit.maxHP = 20;
                 playerUnit.currentHP = 20;
                 playerUnit.baseAttack = 5;
@@ -144,11 +143,11 @@ namespace Game.Core
                 SkillDataSO battleAttack = Resources.Load<SkillDataSO>("Skills/BattleAttack");
                 playerUnit.AddSkill(normalAttack);
                 playerUnit.AddSkill(battleAttack);
-                // Í¨ÖªGridManager¸Ãµ¥Î»Õ¼¾İÁË¸ñ×Ó
+                // é€šçŸ¥GridManagerè¯¥å•ä½å æ®äº†æ ¼å­
                 GridManager.Instance.SetUnitOnTile(playerUnit, gridPos);
             }
 
-            // ½«Íæ¼ÒÌí¼Óµ½TurnManager
+            // å°†ç©å®¶æ·»åŠ åˆ°TurnManager
             /*if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.playerUnits.Add(playerUnit);
@@ -159,12 +158,28 @@ namespace Game.Core
                 CameraController.Instance.ForcePosition(playerObj.transform.position);
             }
             //facingCamera.RefreshFacing();
-            Debug.Log($"Íæ¼ÒÒÑÉú³ÉÔÚÍø¸ñÎ»ÖÃ {gridPos}");
+            Debug.Log($"ç©å®¶å·²ç”Ÿæˆåœ¨ç½‘æ ¼ä½ç½® {gridPos}");
         }
         /// <summary>
-        /// ¿ªÊ¼Ò»³¡Õ½¶·£¨ÓÉ RouteManager µ÷ÓÃ£©
+        /// ç»“æŸæˆ˜æ–—å¹¶æ¸…ç†æˆ˜æ–—åœºæ™¯ï¼ˆè¿›å…¥è·¯çº¿/å•†åº—ç­‰éæˆ˜æ–—æˆ¿é—´æ—¶è°ƒç”¨ï¼‰
         /// </summary>
-        /// <param name="nodeType">½ÚµãÀàĞÍ£¨ÆÕÍ¨/¾«Ó¢/BOSS£©</param>
+        public void EndCombat()
+        {
+            TurnManager.Instance?.ResetBattle();
+            ClearAllUnits();
+            if (GridManager.Instance != null)
+                GridManager.Instance.ClearBattleGrid();
+            MovementSystem.Instance?.ClearHighlights();
+            playerUnit = null;
+            enemyUnit = null;
+            playerObj = null;
+            enemyObj = null;
+        }
+
+        /// <summary>
+        /// å¼€å§‹ä¸€åœºæˆ˜æ–—ï¼ˆç”± RouteManager è°ƒç”¨ï¼‰
+        /// </summary>
+        /// <param name="nodeType">èŠ‚ç‚¹ç±»å‹ï¼ˆæ™®é€š/ç²¾è‹±/BOSSï¼‰</param>
         public void StartCombat(NodeType nodeType)
         {
             TurnManager.Instance.ResetBattle();
@@ -173,33 +188,33 @@ namespace Game.Core
         }
         private IEnumerator DelayedStartCombat(NodeType nodeType)
         {
-            yield return null; // µÈ´ıÒ»Ö¡
+            yield return null; // ç­‰å¾…ä¸€å¸§
 
             currentCombatType = nodeType;
 
-            // Éú³ÉµØÍ¼
+            // ç”Ÿæˆåœ°å›¾
             int layerHint = RouteManager.Instance.CurrentNode.gridPos.y;
             seed = Random.Range(RouteManager.Instance.Seed, layerHint + 1);
             simpleWFCGenerator.GenerateAndBuildMap(seed);
 
-            // Éú³ÉÍæ¼Ò
+            // ç”Ÿæˆç©å®¶
             SpawnPlayerAt(GetRandomWalkablePosition());
 
-            // ¸ù¾İ½ÚµãÀàĞÍÉú³ÉµĞÈË
+            // æ ¹æ®èŠ‚ç‚¹ç±»å‹ç”Ÿæˆæ•Œäºº
             GenerateEnemiesByNodeType(nodeType);
 
-            // ³õÊ¼»¯»ØºÏÏµÍ³
+            // åˆå§‹åŒ–å›åˆç³»ç»Ÿ
             TurnManager.Instance.OnGameInitialized();
 
-            // ÉèÖÃÉãÏñ»ú±ß½ç²¢Ìø×ªµ½Íæ¼ÒÎ»ÖÃ
+            // è®¾ç½®æ‘„åƒæœºè¾¹ç•Œå¹¶è·³è½¬åˆ°ç©å®¶ä½ç½®
             SetupCameraBounds();
 
-            // ¿ªÊ¼Íæ¼Ò»ØºÏ£¨TurnManager ÄÚ²¿»á¼¤»îµÚÒ»¸öµ¥Î»£©
-            // TurnManager µÄ OnGameInitialized ÒÑ¾­×Ô¶¯¿ªÊ¼»ØºÏ£¬ÎŞĞè¶îÍâµ÷ÓÃ
+            // å¼€å§‹ç©å®¶å›åˆï¼ˆTurnManager å†…éƒ¨ä¼šæ¿€æ´»ç¬¬ä¸€ä¸ªå•ä½ï¼‰
+            // TurnManager çš„ OnGameInitialized å·²ç»è‡ªåŠ¨å¼€å§‹å›åˆï¼Œæ— éœ€é¢å¤–è°ƒç”¨
         }
         private void ClearAllUnits()
         {
-            // Çå¿Õ¾²Ì¬ÁĞ±íºÍ TurnManager ÖĞµÄÁĞ±í
+            // æ¸…ç©ºé™æ€åˆ—è¡¨å’Œ TurnManager ä¸­çš„åˆ—è¡¨
             Unit.AllUnits.Clear();
             if (TurnManager.Instance != null)
             {
@@ -212,23 +227,23 @@ namespace Game.Core
             foreach (var unit in allUnits)
             {
                 if (unit != null)
-                    DestroyImmediate(unit.gameObject); // Á¢¼´Ïú»Ù
+                    DestroyImmediate(unit.gameObject); // ç«‹å³é”€æ¯
             }
         }
         /// <summary>
-        /// ¸ù¾İ½ÚµãÀàĞÍÉú³É²»Í¬µÄµĞÈËÕóÈİ
+        /// æ ¹æ®èŠ‚ç‚¹ç±»å‹ç”Ÿæˆä¸åŒçš„æ•Œäººé˜µå®¹
         /// </summary>
         private void GenerateEnemiesByNodeType(NodeType nodeType)
         {
-            Vector2Int playerPos = playerUnit.currentTile.gridPos;   // »ñÈ¡Íæ¼ÒÎ»ÖÃ
+            Vector2Int playerPos = playerUnit.currentTile.gridPos;   // è·å–ç©å®¶ä½ç½®
             switch (nodeType)
             {
                 case NodeType.Combat:
-                    SpawnEnemyAt(GetValidEnemyPosition(playerPos), 20, "ÆÕÍ¨µĞÈË");
+                    SpawnEnemyAt(GetValidEnemyPosition(playerPos), 20, "æ™®é€šæ•Œäºº");
                     break;
                 case NodeType.EliteCombat:
-                    SpawnEnemyAt(GetValidEnemyPosition(playerPos), 35, "¾«Ó¢µĞÈË");
-                    SpawnEnemyAt(GetValidEnemyPosition(playerPos), 30, "¾«Ó¢Ëæ´Ó");
+                    SpawnEnemyAt(GetValidEnemyPosition(playerPos), 35, "ç²¾è‹±æ•Œäºº");
+                    SpawnEnemyAt(GetValidEnemyPosition(playerPos), 30, "ç²¾è‹±éšä»");
                     break;
                 case NodeType.Boss:
                     SpawnEnemyAt(GetValidEnemyPosition(playerPos), 80, "BOSS");
@@ -237,7 +252,7 @@ namespace Game.Core
         }
 
         /// <summary>
-        /// ÕÒÒ»¸ö¿ÉĞĞµÄµĞÈË³öÉúµã£¨²»ÓëÍæ¼ÒÖØµş¡¢¿ÉĞĞ×ß£©
+        /// æ‰¾ä¸€ä¸ªå¯è¡Œçš„æ•Œäººå‡ºç”Ÿç‚¹ï¼ˆä¸ä¸ç©å®¶é‡å ã€å¯è¡Œèµ°ï¼‰
         /// </summary>
         private Vector2Int GetValidEnemyPosition(Vector2Int playerPos)
         {
@@ -253,7 +268,7 @@ namespace Game.Core
         }
 
         /// <summary>
-        /// ÔöÇ¿°æÉú³ÉµĞÈË£¬¿ÉÖ¸¶¨ÑªÁ¿ºÍÃû³Æ
+        /// å¢å¼ºç‰ˆç”Ÿæˆæ•Œäººï¼Œå¯æŒ‡å®šè¡€é‡å’Œåç§°
         /// </summary>
         private void SpawnEnemyAt(Vector2Int gridPos, int hp, string name)
         {
@@ -269,7 +284,7 @@ namespace Game.Core
                 enemyUnit.unitName = name;
                 enemyUnit.maxHP = hp;
                 enemyUnit.currentHP = hp;
-                enemyUnit.baseAttack = (int)(5 + hp / 20f); // ¸ù¾İÑªÁ¿µ÷Õû¹¥»÷
+                enemyUnit.baseAttack = (int)(5 + hp / 20f); // æ ¹æ®è¡€é‡è°ƒæ•´æ”»å‡»
                 enemyUnit.moveRange = 3;
                 enemyUnit.attackRange = 1;
                 enemyUnit.unitType = UnitType.Enemy;
@@ -286,7 +301,7 @@ namespace Game.Core
         }
 
         /// <summary>
-        /// ÉèÖÃÉãÏñ»úµÄ±ß½çºÍ³õÊ¼Î»ÖÃ
+        /// è®¾ç½®æ‘„åƒæœºçš„è¾¹ç•Œå’Œåˆå§‹ä½ç½®
         /// </summary>
         private void SetupCameraBounds()
         {
@@ -297,13 +312,13 @@ namespace Game.Core
                 Bounds bounds = new Bounds(new Vector3(worldWidth * 0.5f, 0, worldHeight * 0.5f),
                                            new Vector3(worldWidth, 0, worldHeight));
                 CameraController.Instance.SetWorldBounds(bounds);
-                // Ç¿ÖÆÉãÏñ»úÒÆ¶¯µ½Íæ¼ÒÎ»ÖÃ
+                // å¼ºåˆ¶æ‘„åƒæœºç§»åŠ¨åˆ°ç©å®¶ä½ç½®
                 if (playerObj != null)
                     CameraController.Instance.ForcePosition(playerObj.transform.position);
             }
         }
         /// <summary>
-        /// Ëæ»ú»ñÈ¡Ò»¸ö¿ÉĞĞ×ßÇÒÎ´Õ¼ÓÃµÄ¸ñ×Ó×ø±ê
+        /// éšæœºè·å–ä¸€ä¸ªå¯è¡Œèµ°ä¸”æœªå ç”¨çš„æ ¼å­åæ ‡
         /// </summary>
         private Vector2Int GetRandomWalkablePosition()
         {
@@ -315,7 +330,7 @@ namespace Game.Core
             }
             if (walkablePositions.Count == 0)
             {
-                Debug.LogError("Ã»ÓĞ¿ÉĞĞ×ßµÄÎ»ÖÃ£¡");
+                Debug.LogError("æ²¡æœ‰å¯è¡Œèµ°çš„ä½ç½®ï¼");
                 return new Vector2Int(1, 1); // fallback
             }
             int index = Random.Range(0, walkablePositions.Count);

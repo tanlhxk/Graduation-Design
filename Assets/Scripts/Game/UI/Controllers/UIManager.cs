@@ -12,27 +12,27 @@ namespace Game.UI
 
         public static UIManager Instance;
 
-        [Header("°´Å¥Ô¤ÖÆÌå")]
-        public SkillButtonUI skillButtonPrefab; // Ô¤ÖÆÌå
+        [Header("æŒ‰é’®é¢„åˆ¶ä½“")]
+        public SkillButtonUI skillButtonPrefab; // é¢„åˆ¶ä½“
 
         [Header("Container")]
-        public Transform buttonContainer; // °´Å¥µÄ¸¸ÎïÌå (Vertical Layout Group)
+        public Transform buttonContainer; // æŒ‰é’®çš„çˆ¶ç‰©ä½“ (Vertical Layout Group)
 
-        [Header("»ØºÏĞÅÏ¢")]
+        [Header("å›åˆä¿¡æ¯")]
         public TMP_Text turnText;
         public TMP_Text phaseText;
 
-        [Header("µ¥Î»ĞÅÏ¢")]
+        [Header("å•ä½ä¿¡æ¯")]
         public GameObject unitInfoPanel;
         public TMP_Text unitNameText;
         public TMP_Text unitHPText;
         public TMP_Text unitAttackText;
 
         [Header("UI Panels")]
-        public GameObject battleUIPanel;   // Õ½¶·Ê±ÏÔÊ¾µÄUI
-        public GameObject routeUIPanel;    // Â·ÏßÑ¡ÔñUIÃæ°å
+        public GameObject battleUIPanel;   // æˆ˜æ–—æ—¶æ˜¾ç¤ºçš„UI
+        public GameObject routeUIPanel;    // è·¯çº¿é€‰æ‹©UIé¢æ¿
 
-        [Header("°´Å¥")]
+        [Header("æŒ‰é’®")]
         [SerializeField] private Button endTurnButton;
         private List<SkillButtonUI> activeButtons = new List<SkillButtonUI>();
         void Start()
@@ -48,11 +48,11 @@ namespace Game.UI
 
         void Update()
         {
-            // ¸üĞÂUIÏÔÊ¾
+            // æ›´æ–°UIæ˜¾ç¤º
             if (TurnManager.Instance != null)
             {
-                turnText.text = $"»ØºÏ: {TurnManager.Instance.currentTurnNumber}";
-                phaseText.text = TurnManager.Instance.currentPhase == TurnManager.TurnPhase.PlayerTurn ? "Íæ¼Ò»ØºÏ" : "µĞÈË»ØºÏ";
+                turnText.text = $"å›åˆ: {TurnManager.Instance.currentTurnNumber}";
+                phaseText.text = TurnManager.Instance.currentPhase == TurnManager.TurnPhase.PlayerTurn ? "ç©å®¶å›åˆ" : "æ•Œäººå›åˆ";
             }
         }
         public void InstantiateSkillPrefab(Image image, Vector3 pos)
@@ -65,13 +65,13 @@ namespace Game.UI
         }
         public void RefreshSkillBar(FriendlyUnit unit)
         {
-            ClearSkillButtons();   // Çå³ı¾É°´Å¥
+            ClearSkillButtons();   // æ¸…é™¤æ—§æŒ‰é’®
             List<SkillDataSO> skills = unit.GetUnitSkills();
             for (int i = 0; i < skills.Count; i++)
             {
                 SkillButtonUI btn = CreateSkillButton(skills[i], unit);
-                // ¿ÉÑ¡£º¸ù¾İÀäÈ´×´Ì¬ÉèÖÃ°´Å¥
-                bool isOnCooldown = false; // ĞèÒªÄã×Ô¼ºÊµÏÖÀäÈ´¹ÜÀí
+                // å¯é€‰ï¼šæ ¹æ®å†·å´çŠ¶æ€è®¾ç½®æŒ‰é’®
+                bool isOnCooldown = false; // éœ€è¦ä½ è‡ªå·±å®ç°å†·å´ç®¡ç†
                 btn.SetCooldown(isOnCooldown);
                 activeButtons.Add(btn);
             }
@@ -89,20 +89,20 @@ namespace Game.UI
         {
             SkillButtonUI newButton = Instantiate(skillButtonPrefab, buttonContainer);
 
-            // SetupButton ÏÖÔÚĞèÒª´«Èë¼¼ÄÜÊı¾İºÍÓµÓĞÕß
+            // SetupButton ç°åœ¨éœ€è¦ä¼ å…¥æŠ€èƒ½æ•°æ®å’Œæ‹¥æœ‰è€…
             newButton.SetupButton(skillData, ownerUnit);
 
-            // Èç¹û°´Å¥µã»÷£¬»áµ÷ÓÃ PlayerInput.OnSkillSelected
+            // å¦‚æœæŒ‰é’®ç‚¹å‡»ï¼Œä¼šè°ƒç”¨ PlayerInput.OnSkillSelected
             activeButtons.Add(newButton);
             return newButton;
         }
 
         public void UpdateSkillSelectionVisual(SkillDataSO selectedSkill)
         {
-            // ±éÀúËùÓĞ°´Å¥£¬Í¬²½¸ßÁÁ×´Ì¬
+            // éå†æ‰€æœ‰æŒ‰é’®ï¼ŒåŒæ­¥é«˜äº®çŠ¶æ€
             foreach (var btn in activeButtons)
             {
-                // Èç¹ûÕâ¸ö°´Å¥µÄ¼¼ÄÜ == PlayerInput ´«À´µÄµ±Ç°Ñ¡ÖĞ¼¼ÄÜ£¬¾Í¸ßÁÁ
+                // å¦‚æœè¿™ä¸ªæŒ‰é’®çš„æŠ€èƒ½ == PlayerInput ä¼ æ¥çš„å½“å‰é€‰ä¸­æŠ€èƒ½ï¼Œå°±é«˜äº®
                 btn.SetSelected(btn.GetSkillData() == selectedSkill);
             }
         }
@@ -112,7 +112,7 @@ namespace Game.UI
             {
                 btn.SetSelected(false);
             }
-            // ÕâÀï²»ĞèÒª Clear£¬ÒòÎª PlayerInput »á½ô½Ó×Åµ÷ÓÃ RefreshSkillBar »òÕßÖ»ÊÇÈ¡Ïû¸ßÁÁ
+            // è¿™é‡Œä¸éœ€è¦ Clearï¼Œå› ä¸º PlayerInput ä¼šç´§æ¥ç€è°ƒç”¨ RefreshSkillBar æˆ–è€…åªæ˜¯å–æ¶ˆé«˜äº®
         }
 
         public void ShowUnitInfo(FriendlyUnit unit)
@@ -120,15 +120,15 @@ namespace Game.UI
             unitInfoPanel.SetActive(true);
             unitNameText.text = unit.unitName;
             unitHPText.text = $"HP: {unit.currentHP}/{unit.maxHP}";
-            unitAttackText.text = $"¹¥»÷Á¦: {unit.baseAttack}";
+            unitAttackText.text = $"æ”»å‡»åŠ›: {unit.baseAttack}";
         }
 
         void OnEndTurnClicked()
         {
             if (TurnManager.Instance.currentPhase == TurnManager.TurnPhase.PlayerTurn)
             {
-                // Ç¿ÖÆ½áÊøÍæ¼Ò»ØºÏ
-                // ĞèÒªÍ¨ÖªTurnManagerÌø¹ıÊ£ÓàÍæ¼Òµ¥Î»
+                // å¼ºåˆ¶ç»“æŸç©å®¶å›åˆ
+                // éœ€è¦é€šçŸ¥TurnManagerè·³è¿‡å‰©ä½™ç©å®¶å•ä½
             }
         }
         public void ShowBattleUI()

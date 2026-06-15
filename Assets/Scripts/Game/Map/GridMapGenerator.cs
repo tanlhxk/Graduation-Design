@@ -6,7 +6,7 @@ namespace Game.RogueLike
 {
     public enum NodeType
     {
-        Start,       // Æğµã
+        Start,       // èµ·ç‚¹
         Combat,
         EliteCombat,
         Event,
@@ -14,7 +14,7 @@ namespace Game.RogueLike
         Rest,
         Treasure,
         Boss,
-        Empty        // ¿Õ·¿¼ä
+        Empty        // ç©ºæˆ¿é—´
     }
     [System.Serializable]
     public class GridNode
@@ -36,15 +36,15 @@ namespace Game.RogueLike
     }
     public class GridMapGenerator : MonoBehaviour
     {
-        [Header("µØÍ¼³ß´ç")]
+        [Header("åœ°å›¾å°ºå¯¸")]
         public int width = 8;
         public int height = 6;
 
-        [Header("·¿¼äÊıÁ¿·¶Î§")]
+        [Header("æˆ¿é—´æ•°é‡èŒƒå›´")]
         public int minRooms = 8;
         public int maxRooms = 15;
 
-        [Header("·¿¼äÀàĞÍÈ¨ÖØ£¨×ÜºÍ100£©")]
+        [Header("æˆ¿é—´ç±»å‹æƒé‡ï¼ˆæ€»å’Œ100ï¼‰")]
         public int combatWeight = 40;
         public int eliteWeight = 10;
         public int eventWeight = 15;
@@ -52,19 +52,19 @@ namespace Game.RogueLike
         public int restWeight = 10;
         public int treasureWeight = 5;
 
-        [Header("¶îÍâÁ¬½Ó¸ÅÂÊ£¨Ôö¼Ó»·Â·£©")]
+        [Header("é¢å¤–è¿æ¥æ¦‚ç‡ï¼ˆå¢åŠ ç¯è·¯ï¼‰")]
         public float extraEdgeProbability = 0.2f;
 
-        [Header("Ç¿ÖÆ·¿¼ä")]
+        [Header("å¼ºåˆ¶æˆ¿é—´")]
         public bool forceStartAtCorner = true;
         public bool forceBossAtOppositeCorner = true;
 
-        // Êä³ö
+        // è¾“å‡º
         public List<GridNode> AllRooms { get; private set; }
         public Dictionary<Vector2Int, GridNode> RoomDict { get; private set; }
 
         /// <summary>
-        /// Éú³ÉµØÍ¼£¬·µ»Ø·¿¼äÁĞ±í£¬Ã¿¸ö·¿¼äµÄÁÚ¾ÓÖ»°üº¬ÏàÁÚ£¨ÉÏÏÂ×óÓÒ£©µÄ·¿¼ä
+        /// ç”Ÿæˆåœ°å›¾ï¼Œè¿”å›æˆ¿é—´åˆ—è¡¨ï¼Œæ¯ä¸ªæˆ¿é—´çš„é‚»å±…åªåŒ…å«ç›¸é‚»ï¼ˆä¸Šä¸‹å·¦å³ï¼‰çš„æˆ¿é—´
         /// </summary>
         public List<GridNode> GenerateMap(int seed)
         {
@@ -72,22 +72,19 @@ namespace Game.RogueLike
             AllRooms = new List<GridNode>();
             RoomDict = new Dictionary<Vector2Int, GridNode>();
 
-            // 1. Éú³É·¿¼äÎ»ÖÃ£¨Á¬Í¨£¬°üº¬Æğµã£©
             HashSet<Vector2Int> roomPositions = GenerateConnectedRoomPositions();
 
-            // 2. È·¶¨ÆğµãºÍBossÎ»ÖÃ
-            Vector2Int startPos = forceStartAtCorner ? new Vector2Int(0, 0) : /* Êµ¼ÊÉÏÆğµãÒÑ¾­ÔÚpositionsÖĞ£¬ÎÒÃÇÖ÷¶¯ÕÒ³ö */ roomPositions.First();
-            // ´Ó·ÇÆğµãµÄ·¿¼äÖĞËæ»úÑ¡Ò»¸ö×÷ÎªBoss
+            Vector2Int startPos = forceStartAtCorner ? new Vector2Int(0, 0) : roomPositions.First();
+            // ä»éèµ·ç‚¹çš„æˆ¿é—´ä¸­éšæœºé€‰ä¸€ä¸ªä½œä¸ºBoss
             var nonStartPositions = roomPositions.Where(p => p != startPos).ToList();
             if (nonStartPositions.Count == 0)
             {
-                Debug.LogError("Ã»ÓĞ×ã¹»·¿¼ä·ÅÖÃBoss£¡");
+                Debug.LogError("æ²¡æœ‰è¶³å¤Ÿæˆ¿é—´æ”¾ç½®Bossï¼");
                 return null;
             }
-            //Vector2Int bossPos = nonStartPositions[Random.Range(0, nonStartPositions.Count)];//Ëæ»úboss·¿
-            Vector2Int bossPos = nonStartPositions.OrderByDescending(p => Mathf.Abs(p.x - startPos.x) + Mathf.Abs(p.y - startPos.y)).First();//×îÔ¶boss·¿
+            Vector2Int bossPos = nonStartPositions.OrderByDescending
+                (p => Mathf.Abs(p.x - startPos.x) + Mathf.Abs(p.y - startPos.y)).First();
 
-            // 3. ´´½¨½Úµã£¬¸ù¾İÊÇ·ñÎªÆğµã/Boss·ÖÅäÀàĞÍ
             foreach (var pos in roomPositions)
             {
                 NodeType type;
@@ -96,21 +93,18 @@ namespace Game.RogueLike
                 else if (pos == bossPos)
                     type = NodeType.Boss;
                 else
-                    type = GetRandomNodeType();  // Ê¹ÓÃËæ»úÈ¨ÖØ·½·¨
+                    type = GetRandomNodeType();  // ä½¿ç”¨éšæœºæƒé‡æ–¹æ³•
 
                 GridNode node = new GridNode(pos.x, pos.y, type);
                 AllRooms.Add(node);
                 RoomDict[pos] = node;
             }
 
-            // 4. ¹¹½¨ÏàÁÚ·¿¼äÖ®¼äµÄ±ß£¨ÉÏÏÂ×óÓÒ£©
             List<Edge> adjacentEdges = BuildAdjacentEdges();
 
-            // 5. Éú³É×îĞ¡Éú³ÉÊ÷ + ¶îÍâ±ß£¨±£Ö¤Á¬Í¨ÇÒÃÀ¹Û£©
             List<Edge> finalEdges = KruskalMST(adjacentEdges);
             AddExtraEdges(adjacentEdges, finalEdges);
 
-            // 6. ¸ù¾İ×îÖÕ±ß¼¯ÉèÖÃÁÚ¾ÓÁĞ±í
             foreach (var node in AllRooms)
                 node.neighbors.Clear();
 
@@ -120,7 +114,6 @@ namespace Game.RogueLike
                 edge.to.neighbors.Add(edge.from.gridPos);
             }
 
-            // È¥ÖØ
             foreach (var node in AllRooms)
                 node.neighbors = node.neighbors.Distinct().ToList();
 
@@ -128,13 +121,13 @@ namespace Game.RogueLike
         }
 
         /// <summary>
-        /// Ê¹ÓÃ Prim Ëã·¨Éú³ÉÁ¬Í¨µÄ·¿¼äÎ»ÖÃ¼¯ºÏ£¨±£Ö¤ËùÓĞ·¿¼ä¿É´ï£©
+        /// ä½¿ç”¨ Prim ç®—æ³•ç”Ÿæˆè¿é€šçš„æˆ¿é—´ä½ç½®é›†åˆï¼ˆä¿è¯æ‰€æœ‰æˆ¿é—´å¯è¾¾ï¼‰
         /// </summary>
         private HashSet<Vector2Int> GenerateConnectedRoomPositions()
         {
             HashSet<Vector2Int> positions = new HashSet<Vector2Int>();
 
-            // È·¶¨ÆğµãÎ»ÖÃ£¨ÈÔÈ»¿ÉÒÔ¹Ì¶¨ÔÚ½ÇÂä»òËæ»ú£©
+            // ç¡®å®šèµ·ç‚¹ä½ç½®ï¼ˆä»ç„¶å¯ä»¥å›ºå®šåœ¨è§’è½æˆ–éšæœºï¼‰
             Vector2Int startPos = forceStartAtCorner ? new Vector2Int(0, 0) : new Vector2Int(Random.Range(0, width), Random.Range(0, height));
             positions.Add(startPos);
 
@@ -146,11 +139,11 @@ namespace Game.RogueLike
 
             while (positions.Count < targetCount && attempts < maxAttempts)
             {
-                // Ëæ»úÑ¡ÔñÒ»¸öÏÖÓĞ·¿¼ä×÷ÎªÀ©Õ¹Æğµã
+                // éšæœºé€‰æ‹©ä¸€ä¸ªç°æœ‰æˆ¿é—´ä½œä¸ºæ‰©å±•èµ·ç‚¹
                 var roomList = positions.ToList();
                 var baseRoom = roomList[Random.Range(0, roomList.Count)];
 
-                // Ëæ»ú³¢ÊÔÒ»¸ö·½Ïò
+                // éšæœºå°è¯•ä¸€ä¸ªæ–¹å‘
                 Vector2Int dir = dirs[Random.Range(0, dirs.Length)];
                 Vector2Int newPos = baseRoom + dir;
 
@@ -162,7 +155,7 @@ namespace Game.RogueLike
                 attempts++;
             }
 
-            // Èç¹û·¿¼äÊıÈÔ²»×ã£¬³¢ÊÔÖ±½ÓÌí¼ÓÁÚ¾ÓÌî³ä£¨¶µµ×£©
+            // å¦‚æœæˆ¿é—´æ•°ä»ä¸è¶³ï¼Œå°è¯•ç›´æ¥æ·»åŠ é‚»å±…å¡«å……ï¼ˆå…œåº•ï¼‰
             if (positions.Count < targetCount)
             {
                 foreach (var room in positions.ToList())
@@ -199,7 +192,7 @@ namespace Game.RogueLike
         }
 
         /// <summary>
-        /// ¹¹½¨ËùÓĞÏàÁÚ·¿¼äÖ®¼äµÄ±ß£¨Âü¹ş¶Ù¾àÀë == 1£©
+        /// æ„å»ºæ‰€æœ‰ç›¸é‚»æˆ¿é—´ä¹‹é—´çš„è¾¹ï¼ˆæ›¼å“ˆé¡¿è·ç¦» == 1ï¼‰
         /// </summary>
         private List<Edge> BuildAdjacentEdges()
         {
@@ -212,7 +205,7 @@ namespace Game.RogueLike
                     Vector2Int neighborPos = node.gridPos + dir;
                     if (RoomDict.TryGetValue(neighborPos, out GridNode neighbor))
                     {
-                        // ±ÜÃâÖØ¸´Ìí¼ÓÍ¬Ò»Ìõ±ß£¨ÀıÈçÎŞÏòÍ¼Ö»¼ÓÒ»´Î£©
+                        // é¿å…é‡å¤æ·»åŠ åŒä¸€æ¡è¾¹ï¼ˆä¾‹å¦‚æ— å‘å›¾åªåŠ ä¸€æ¬¡ï¼‰
                         if (node.gridPos.GetHashCode() < neighborPos.GetHashCode())
                         {
                             edges.Add(new Edge { from = node, to = neighbor, weight = 1 });
@@ -243,10 +236,9 @@ namespace Game.RogueLike
                 }
             }
 
-            // ÓÉÓÚ·¿¼äÉú³ÉÊ±ÒÑ±£Ö¤Á¬Í¨£¬ÕâÀïÀíÂÛÉÏ mst.Count == AllRooms.Count - 1
             if (mst.Count != AllRooms.Count - 1)
             {
-                Debug.LogError("MST Ê§°Ü£º·¿¼äÍ¼²»Á¬Í¨£¬Çëµ÷Õû·¿¼äÊıÁ¿»òµØÍ¼³ß´ç£¡");
+                Debug.LogError("MST å¤±è´¥ï¼šæˆ¿é—´å›¾ä¸è¿é€šï¼Œè¯·è°ƒæ•´æˆ¿é—´æ•°é‡æˆ–åœ°å›¾å°ºå¯¸ï¼");
             }
             return mst;
         }

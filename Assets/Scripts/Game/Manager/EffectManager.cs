@@ -24,11 +24,11 @@ namespace Game.Effects
         {
             if (args.skillData.hitEffectPrefab == null) return;
 
-            // »ñÈ¡ÌØĞ§³ÖĞøÊ±¼ä£¬ÓÅÏÈÊ¹ÓÃ¼¼ÄÜÅäÖÃ£¬·ñÔòÊ¹ÓÃÔ¤ÖÆÌåÉÏµÄ ParticleSystem Ê±³¤£¬×îºóÄ¬ÈÏ 1.5f
+            // è·å–ç‰¹æ•ˆæŒç»­æ—¶é—´ï¼Œä¼˜å…ˆä½¿ç”¨æŠ€èƒ½é…ç½®ï¼Œå¦åˆ™ä½¿ç”¨é¢„åˆ¶ä½“ä¸Šçš„ ParticleSystem æ—¶é•¿ï¼Œæœ€åé»˜è®¤ 1.5f
             float duration = args.skillData.effectDuration;
             if (duration <= 0)
             {
-                // ³¢ÊÔ´ÓÔ¤ÖÆÌåÉÏµÄ ParticleSystem »ñÈ¡Ö÷Ñ­»·Ê±³¤
+                // å°è¯•ä»é¢„åˆ¶ä½“ä¸Šçš„ ParticleSystem è·å–ä¸»å¾ªç¯æ—¶é•¿
                 var ps = args.skillData.hitEffectPrefab.GetComponent<ParticleSystem>();
                 if (ps != null)
                     duration = ps.main.duration;
@@ -36,13 +36,13 @@ namespace Game.Effects
                     duration = 1.5f;
             }
 
-            // ´Ó¶ÔÏó³Ø»ñÈ¡»òÊµÀı»¯ÌØĞ§
+            // ä»å¯¹è±¡æ± è·å–æˆ–å®ä¾‹åŒ–ç‰¹æ•ˆ
             GameObject effect = EffectPool.Instance.Get(args.skillData.hitEffectPrefab);
             effect.transform.position = args.hitPoint;
             effect.transform.rotation = Quaternion.Euler(-90, 0, 0);
             effect.SetActive(true);
 
-            // ×Ô¶¯»ØÊÕ
+            // è‡ªåŠ¨å›æ”¶
             StartCoroutine(RecycleAfter(effect, duration));
         }
 

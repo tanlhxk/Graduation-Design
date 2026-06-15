@@ -18,20 +18,20 @@ namespace Game.Combat.Units
         {
             if (attackTarget == null) return;
 
-            // ¼ÙÉè»ùÀàÀïÓĞ attackSkillIndex ×Ö¶Î¼ÇÂ¼µ±Ç°Ê¹ÓÃµÄ¼¼ÄÜID
+            // å‡è®¾åŸºç±»é‡Œæœ‰ attackSkillIndex å­—æ®µè®°å½•å½“å‰ä½¿ç”¨çš„æŠ€èƒ½ID
             SkillDataSO skillData = GetSkillData(attackSkillIndex);
             if (skillData == null) return;
 
-            // Ö´ĞĞ¼¼ÄÜ (ºËĞÄ£ºÍ¨¹ı½Ó¿Úµ÷ÓÃ)
+            // æ‰§è¡ŒæŠ€èƒ½ (æ ¸å¿ƒï¼šé€šè¿‡æ¥å£è°ƒç”¨)
             ISkillEffect effect = SkillFactory.GetSkillEffect(skillData.skillType);
             effect.Execute(this, attackTarget, skillData);
 
-            // Í¨ÓÃµÄÕ½¶··´À¡ (Õâ²¿·Ö¿ÉÒÔ±£ÁôÔÚ Unit ÖĞ)
+            // é€šç”¨çš„æˆ˜æ–—åé¦ˆ (è¿™éƒ¨åˆ†å¯ä»¥ä¿ç•™åœ¨ Unit ä¸­)
             CameraShake camShake = UnityEngine.Camera.main.GetComponent<CameraShake>();
             if (camShake != null)
                 StartCoroutine(camShake.Shake(0.1f, 0.1f));
 
-            // »ùÀàÂß¼­£ºÍ¨Öª»ØºÏ½áÊøµÈ
+            // åŸºç±»é€»è¾‘ï¼šé€šçŸ¥å›åˆç»“æŸç­‰
             base.PerformAttack();
         }
 
@@ -43,7 +43,7 @@ namespace Game.Combat.Units
         {
             if (skillData == null) return false;
 
-            // ÕâÀï¿ÉÒÔĞ´Í¨ÓÃµÄ¾àÀëÅĞ¶ÏÂß¼­
+            // è¿™é‡Œå¯ä»¥å†™é€šç”¨çš„è·ç¦»åˆ¤æ–­é€»è¾‘
             int distance = GridManager.GetDistance(currentTile, target.currentTile);
             return distance <= skillData.skillRange;
         }
@@ -51,12 +51,12 @@ namespace Game.Combat.Units
         {
             if (target == null || target.currentHP <= 0) return false;
 
-            // ¼ÆËãÂü¹ş¶Ù¾àÀë
+            // è®¡ç®—æ›¼å“ˆé¡¿è·ç¦»
             int distance = Mathf.Abs(currentTile.gridPos.x - target.currentTile.gridPos.x) +
                           Mathf.Abs(currentTile.gridPos.y - target.currentTile.gridPos.y);
 
-            // Èç¹ûÃ»ÓĞ¼¼ÄÜÊı¾İ£¬»òÕßË÷ÒıÎª0£¨ÆÕ¹¥£©£¬Ê¹ÓÃµ¥Î»µÄ attackRange
-            // ·ñÔòÊ¹ÓÃ¼¼ÄÜµÄ attackRange
+            // å¦‚æœæ²¡æœ‰æŠ€èƒ½æ•°æ®ï¼Œæˆ–è€…ç´¢å¼•ä¸º0ï¼ˆæ™®æ”»ï¼‰ï¼Œä½¿ç”¨å•ä½çš„ attackRange
+            // å¦åˆ™ä½¿ç”¨æŠ€èƒ½çš„ attackRange
             int effectiveRange = attackRange;
             List<SkillDataSO> skillDataSO = GetUnitSkills();
             if (skillDataSO.Count > skillIndex && skillIndex > 0)
@@ -76,13 +76,13 @@ namespace Game.Combat.Units
 
         public void ExecuteSkill(EnemyUnit target, SkillDataSO skillData)
         {
-            // 1. »ñÈ¡¼¼ÄÜĞ§¹û¹¤³§
+            // 1. è·å–æŠ€èƒ½æ•ˆæœå·¥å‚
             ISkillEffect effect = SkillFactory.GetSkillEffect(skillData.skillType);
 
-            // 2. Ö´ĞĞĞ§¹û
+            // 2. æ‰§è¡Œæ•ˆæœ
             effect.Execute(this, target, skillData);
 
-            // 3. ²¥·ÅÌØĞ§/¶¯»­
+            // 3. æ’­æ”¾ç‰¹æ•ˆ/åŠ¨ç”»
             // ...
         }
     }

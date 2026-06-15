@@ -7,24 +7,24 @@ using Game.Camera;
 
 namespace Game.Map
 {
-    // ¸ñ×ÓÀàĞÍÃ¶¾Ù
+    // æ ¼å­ç±»å‹æšä¸¾
     public enum TileType
     {
-        Walkable,    // ¿ÉĞĞ×ß
-        Obstacle,    // ÕÏ°­Îï£¨Ç½¡¢ÏİÚå£©
+        Walkable,    // å¯è¡Œèµ°
+        Obstacle,    // éšœç¢ç‰©ï¼ˆå¢™ã€é™·é˜±ï¼‰
         Wallside,
-        Unit,        // ±»µ¥Î»Õ¼¾İ
-        Exit         // ³ö¿Ú/Â¥Ìİ
+        Unit,        // è¢«å•ä½å æ®
+        Exit         // å‡ºå£/æ¥¼æ¢¯
     }
 
-    // µ¥¸ö¸ñ×ÓÊı¾İ
+    // å•ä¸ªæ ¼å­æ•°æ®
     [System.Serializable]
     public class Tile
     {
-        public Vector2Int gridPos;      // Íø¸ñ×ø±ê
-        public TileType type;            // ¸ñ×ÓÀàĞÍ
-        public Unit occupyingUnit;       // Õ¼¾İµÄµ¥Î»£¨Èç¹ûÓĞ£©
-        public Vector3 worldPos;         // ÊÀ½ç×ø±êÎ»ÖÃ
+        public Vector2Int gridPos;      // ç½‘æ ¼åæ ‡
+        public TileType type;            // æ ¼å­ç±»å‹
+        public Unit occupyingUnit;       // å æ®çš„å•ä½ï¼ˆå¦‚æœæœ‰ï¼‰
+        public Vector3 worldPos;         // ä¸–ç•Œåæ ‡ä½ç½®
 
         public Tile(int x, int y, TileType tileType)
         {
@@ -38,21 +38,21 @@ namespace Game.Map
             return type == TileType.Walkable && occupyingUnit == null;
         }
     }
-    // Íø¸ñ¹ÜÀíÆ÷
+    // ç½‘æ ¼ç®¡ç†å™¨
     public class GridManager : MonoBehaviour
     {
         public static GridManager Instance;
-        [Header("Íø¸ñÉèÖÃ")]
-        [SerializeField] private float cellSize = 1f;          // ¸ñ×Ó´óĞ¡£¨±£³Ö²»±ä£©
-        [SerializeField] private GameObject tilePrefab;        // Ä¬ÈÏ¸ñ×ÓÔ¤ÖÆÌå
-        [Header("TilemapÉèÖÃ")]
-        [SerializeField] private Tilemap tilemap;          // ÒıÓÃ³¡¾°ÖĞµÄ Tilemap
+        [Header("ç½‘æ ¼è®¾ç½®")]
+        [SerializeField] private float cellSize = 1f;          // æ ¼å­å¤§å°ï¼ˆä¿æŒä¸å˜ï¼‰
+        [SerializeField] private GameObject tilePrefab;        // é»˜è®¤æ ¼å­é¢„åˆ¶ä½“
+        [Header("Tilemapè®¾ç½®")]
+        [SerializeField] private Tilemap tilemap;          // å¼•ç”¨åœºæ™¯ä¸­çš„ Tilemap
         [SerializeField] private TileSet tileSet;
-        [Header("BillboardÕÏ°­ÎïÅäÖÃ")]
+        [Header("Billboardéšœç¢ç‰©é…ç½®")]
         public List<BillboardObstacleConfig> billboardObstacles;
-        [Header("¸ßÁÁÉèÖÃ")]
-        [SerializeField] private GameObject highlightPrefab;      // ¸ßÁÁÔ¤ÖÆÌå
-        [SerializeField] private float highlightYOffset = 0.05f;  // ¸ß³öµØÃæµÄÆ«ÒÆÁ¿
+        [Header("é«˜äº®è®¾ç½®")]
+        [SerializeField] private GameObject highlightPrefab;      // é«˜äº®é¢„åˆ¶ä½“
+        [SerializeField] private float highlightYOffset = 0.05f;  // é«˜å‡ºåœ°é¢çš„åç§»é‡
 
         private int width;
         private int height;
@@ -60,7 +60,7 @@ namespace Game.Map
         public int Height => height;
         public float CellSize => cellSize;
         private Tile[,] grid;
-        public static Dictionary<Vector2Int, Tile> tileDict;   // ¿ìËÙ²éÕÒ×Öµä
+        public static Dictionary<Vector2Int, Tile> tileDict;   // å¿«é€ŸæŸ¥æ‰¾å­—å…¸
         private List<GameObject> instancedObstacles = new List<GameObject>();
         private List<GameObject> activeHighlights = new List<GameObject>();
         private Queue<GameObject> highlightPool = new Queue<GameObject>();
@@ -72,7 +72,7 @@ namespace Game.Map
             //GenerateGrid();
         }
 
-        void ClearInstancedObstacles()
+        public void ClearInstancedObstacles()
         {
             foreach (var obj in instancedObstacles)
                 if (obj != null) DestroyImmediate(obj);
@@ -80,7 +80,22 @@ namespace Game.Map
         }
 
         /// <summary>
-        /// ´ÓÍâ²¿Êı¾İ¹¹½¨Íø¸ñ£¨ÓÉWFCÉú³ÉÆ÷µ÷ÓÃ£©
+        /// æ¸…é™¤æˆ˜æ–—ç½‘æ ¼ï¼ˆç¦»å¼€æˆ˜æ–—æˆ¿é—´æ—¶è°ƒç”¨ï¼‰
+        /// </summary>
+        public void ClearBattleGrid()
+        {
+            if (tilemap != null)
+                tilemap.ClearAllTiles();
+            ClearInstancedObstacles();
+            ClearAllHighlights();
+            grid = null;
+            tileDict = null;
+            width = 0;
+            height = 0;
+        }
+
+        /// <summary>
+        /// ä»å¤–éƒ¨æ•°æ®æ„å»ºç½‘æ ¼ï¼ˆç”±WFCç”Ÿæˆå™¨è°ƒç”¨ï¼‰
         /// </summary>
         public void BuildGridFromData(TileType[,] mapData)
         {
@@ -90,7 +105,7 @@ namespace Game.Map
             grid = new Tile[width, height];
             tileDict = new Dictionary<Vector2Int, Tile>();
 
-            // Çå³ıÒÑ´æÔÚµÄÊµÀı»¯ÕÏ°­Îï£¨Èç¹ûÖØĞÂÉú³ÉµØÍ¼£©
+            // æ¸…é™¤å·²å­˜åœ¨çš„å®ä¾‹åŒ–éšœç¢ç‰©ï¼ˆå¦‚æœé‡æ–°ç”Ÿæˆåœ°å›¾ï¼‰
             ClearInstancedObstacles();
 
             for (int x = 0; x < width; x++)
@@ -105,24 +120,24 @@ namespace Game.Map
                     Vector3 worldPos = tilemap.GetCellCenterWorld(new Vector3Int(x, y, 0));
                     tile.worldPos = worldPos;
 
-                    // ¼ì²éÊÇ·ñĞèÒªÊµÀı»¯ Billboard ÕÏ°­Îï
+                    // æ£€æŸ¥æ˜¯å¦éœ€è¦å®ä¾‹åŒ– Billboard éšœç¢ç‰©
                     BillboardObstacleConfig? config = GetBillboardConfig(type);
                     if (config.HasValue)
                     {
-                        // ÊµÀı»¯Ô¤ÖÆÌå
+                        // å®ä¾‹åŒ–é¢„åˆ¶ä½“
                         GameObject obj = Instantiate(config.Value.prefab[Random.Range(0, config.Value.prefab.Length)], worldPos + Vector3.up * config.Value.yOffset, Quaternion.identity, transform);
-                        // Ìí¼Ó Billboard ½Å±¾£¨Èç¹ûÔ¤ÖÆÌå±¾ÉíÃ»ÓĞ£©
+                        // æ·»åŠ  Billboard è„šæœ¬ï¼ˆå¦‚æœé¢„åˆ¶ä½“æœ¬èº«æ²¡æœ‰ï¼‰
                         if (obj.GetComponent<FacingCamera>() == null)
                             obj.AddComponent<FacingCamera>();
-                        // ¼ÇÂ¼ÊµÀı£¬ÒÔ±ãÖØĞÂÉú³ÉÊ±Çå³ı
+                        // è®°å½•å®ä¾‹ï¼Œä»¥ä¾¿é‡æ–°ç”Ÿæˆæ—¶æ¸…é™¤
                         instancedObstacles.Add(obj);
-                        TileBase groundTile = tileSet.GetTile(TileType.Walkable); // Ê¹ÓÃµØÃæÍßÆ¬
+                        TileBase groundTile = tileSet.GetTile(TileType.Walkable); // ä½¿ç”¨åœ°é¢ç“¦ç‰‡
                         if (groundTile != null)
                             tilemap.SetTile(new Vector3Int(x, y, 0), groundTile);
                     }
                     else
                     {
-                        // Õı³£ÉèÖÃ Tilemap ÍßÆ¬
+                        // æ­£å¸¸è®¾ç½® Tilemap ç“¦ç‰‡
                         TileBase tileBase = tileSet.GetTile(type);
                         if (tileBase != null)
                             tilemap.SetTile(new Vector3Int(x, y, 0), tileBase);
@@ -146,10 +161,10 @@ namespace Game.Map
         {
             int dx = Mathf.Abs(tileA.gridPos.x - tileB.gridPos.x);
             int dy = Mathf.Abs(tileA.gridPos.y - tileB.gridPos.y);
-            return dx + dy; // Âü¹ş¶Ù¾àÀë
+            return dx + dy; // æ›¼å“ˆé¡¿è·ç¦»
         }
 
-        // »ñÈ¡Ö¸¶¨Î»ÖÃµÄ¸ñ×Ó
+        // è·å–æŒ‡å®šä½ç½®çš„æ ¼å­
         public Tile GetTile(Vector2Int gridPos)
         {
             if (gridPos.x < 0 || gridPos.x >= width || gridPos.y < 0 || gridPos.y >= height)
@@ -157,16 +172,16 @@ namespace Game.Map
             return grid[gridPos.x, gridPos.y];
         }
 
-        // ÉèÖÃ¸ñ×ÓÕ¼¾İµ¥Î»
+        // è®¾ç½®æ ¼å­å æ®å•ä½
         public void SetUnitOnTile(Unit unit, Vector2Int gridPos)
         {
-            // ÏÈÇå³ıÔ­Î»ÖÃµÄµ¥Î»
+            // å…ˆæ¸…é™¤åŸä½ç½®çš„å•ä½
             if (unit.currentTile != null)
             {
                 unit.currentTile.occupyingUnit = null;
             }
 
-            // ÉèÖÃĞÂÎ»ÖÃ
+            // è®¾ç½®æ–°ä½ç½®
             Tile newTile = GetTile(gridPos);
             if (newTile != null)
             {
@@ -198,7 +213,7 @@ namespace Game.Map
             return null;
         }
         /// <summary>
-        /// Çå³ıËùÓĞ¸ßÁÁÎïÌå
+        /// æ¸…é™¤æ‰€æœ‰é«˜äº®ç‰©ä½“
         /// </summary>
         public void ClearAllHighlights()
         {
@@ -210,7 +225,7 @@ namespace Game.Map
         }
 
         /// <summary>
-        /// ÎªÖ¸¶¨¸ñ×ÓÁĞ±í´´½¨¸ßÁÁÎïÌå
+        /// ä¸ºæŒ‡å®šæ ¼å­åˆ—è¡¨åˆ›å»ºé«˜äº®ç‰©ä½“
         /// </summary>
         public void CreateHighlights(List<Tile> tiles, Color highlightColor)
         {
@@ -220,7 +235,11 @@ namespace Game.Map
                 GameObject highlight = GetHighlightObject();
                 highlight.transform.position = tile.worldPos + Vector3.up * highlightYOffset;
                 var sr = highlight.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.color = highlightColor;
+                if (sr != null)
+                {
+                    sr.enabled = true;
+                    sr.color = highlightColor;
+                }
                 activeHighlights.Add(highlight);
             }
         }

@@ -9,38 +9,38 @@ namespace Game.Camera
     {
         public static CameraController Instance;
 
-        [Header("Æ½»¬ÒÆ¶¯")]
-        public float smoothTime = 0.2f;               // ×Ô¶¯ÒÆ¶¯µÄÆ½»¬Ê±¼ä
+        [Header("å¹³æ»‘ç§»åŠ¨")]
+        public float smoothTime = 0.2f;               // è‡ªåŠ¨ç§»åŠ¨çš„å¹³æ»‘æ—¶é—´
         private Vector3 autoMoveVelocity = Vector3.zero;
 
-        [Header("ÉãÏñ»úÉèÖÃ")]
+        [Header("æ‘„åƒæœºè®¾ç½®")]
         public Vector3 cameraOffset = new Vector3(-10f, 12f, -10f);
 
-        [Header("ÍÏ×§ÉèÖÃ")]
+        [Header("æ‹–æ‹½è®¾ç½®")]
         public bool enableDrag = true;
-        public float dragSensitivity = 5f;            // Êó±êÒÆ¶¯¶ÔÉãÏñ»úËÙ¶ÈµÄÓ°Ïì
-        public bool invertDrag = true;                 // true: µØÍ¼¸úËæÊó±ê£¨ÍÆ¼ö£©
+        public float dragSensitivity = 5f;            // é¼ æ ‡ç§»åŠ¨å¯¹æ‘„åƒæœºé€Ÿåº¦çš„å½±å“
+        public bool invertDrag = true;                 // true: åœ°å›¾è·Ÿéšé¼ æ ‡
 
-        [Header("ÎïÀí²ÎÊı")]
-        public float dragLinearDamping = 8f;           // ÍÏ×§Ê±µÄÏßĞÔ×èÄá£¨ËÙ¶ÈË¥¼õ£©
-        public float inertiaDamping = 5f;              // ËÉ¿ªºóµÄ¹ßĞÔ×èÄá
-        public float edgeSpringStiffness = 20f;        // ±ß½çµ¯»É¸Õ¶È
-        public float edgeSpringDamping = 8f;           // ±ß½çµ¯»É×èÄá
-        public float maxSpeed = 30f;                   // ×î´óËÙ¶ÈÏŞÖÆ
+        [Header("ç‰©ç†å‚æ•°")]
+        public float dragLinearDamping = 8f;           // æ‹–æ‹½æ—¶çš„çº¿æ€§é˜»å°¼ï¼ˆé€Ÿåº¦è¡°å‡ï¼‰
+        public float inertiaDamping = 5f;              // æ¾å¼€åçš„æƒ¯æ€§é˜»å°¼
+        public float edgeSpringStiffness = 20f;        // è¾¹ç•Œå¼¹ç°§åˆšåº¦
+        public float edgeSpringDamping = 8f;           // è¾¹ç•Œå¼¹ç°§é˜»å°¼
+        public float maxSpeed = 30f;                   // æœ€å¤§é€Ÿåº¦é™åˆ¶
 
-        [Header("±ß½ç")]
+        [Header("è¾¹ç•Œ")]
         public bool clampToBounds = true;
         private Bounds worldBounds;
 
         private UnityEngine.Camera mainCamera;
-        private Vector3 currentVelocity;                // µ±Ç°ÉãÏñ»úËÙ¶È
+        private Vector3 currentVelocity;                // å½“å‰æ‘„åƒæœºé€Ÿåº¦
 
-        // ÍÏ×§×´Ì¬
+        // æ‹–æ‹½çŠ¶æ€
         private bool isDragging = false;
-        private Vector2 lastMousePos;                   // ÉÏÒ»Ö¡Êó±êÎ»ÖÃ£¨ÆÁÄ»×ø±ê£©
-        private Vector3 lastWorldDragPoint;             // ÉÏÒ»Ö¡Êó±êÔÚµØÃæÉÏµÄÊÀ½ç×ø±ê
+        private Vector2 lastMousePos;                   // ä¸Šä¸€å¸§é¼ æ ‡ä½ç½®ï¼ˆå±å¹•åæ ‡ï¼‰
+        private Vector3 lastWorldDragPoint;             // ä¸Šä¸€å¸§é¼ æ ‡åœ¨åœ°é¢ä¸Šçš„ä¸–ç•Œåæ ‡
 
-        // ×Ô¶¯ÒÆ¶¯Ä¿±ê
+        // è‡ªåŠ¨ç§»åŠ¨ç›®æ ‡
         private Vector3? targetPosition;
 
         private void Awake()
@@ -64,17 +64,17 @@ namespace Game.Camera
 
         private void Update()
         {
-            // ´¦ÀíÊäÈëºÍÎïÀí
+            // å¤„ç†è¾“å…¥å’Œç‰©ç†
             HandleInput();
             ApplyPhysics();
 
-            // ×Ô¶¯ÒÆ¶¯£¨Èç¹ûÃ»ÓĞÍÏ×§ÇÒÃ»ÓĞÎïÀíËÙ¶ÈÊ±£©
+            // è‡ªåŠ¨ç§»åŠ¨ï¼ˆå¦‚æœæ²¡æœ‰æ‹–æ‹½ä¸”æ²¡æœ‰ç‰©ç†é€Ÿåº¦æ—¶ï¼‰
             if (!isDragging && currentVelocity.magnitude < 0.01f && targetPosition.HasValue)
             {
                 Vector3 desiredPosition = targetPosition.Value + cameraOffset;
                 desiredPosition.y = cameraOffset.y;
 
-                // ±ß½ç Clamp£¨Ö±½ÓÏŞÖÆÄ¿±êÎ»ÖÃ£©
+                // è¾¹ç•Œ Clampï¼ˆç›´æ¥é™åˆ¶ç›®æ ‡ä½ç½®ï¼‰
                 if (clampToBounds && worldBounds.size != Vector3.zero)
                 {
                     GetCameraMoveBounds(out float minX, out float maxX, out float minZ, out float maxZ);
@@ -84,7 +84,7 @@ namespace Game.Camera
 
                 transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref autoMoveVelocity, smoothTime);
 
-                // µ½´ïÅĞ¶Ï
+                // åˆ°è¾¾åˆ¤æ–­
                 if (Vector3.Distance(transform.position, desiredPosition) < 0.01f)
                 {
                     transform.position = desiredPosition;
@@ -98,40 +98,40 @@ namespace Game.Camera
         {
             if (!enableDrag) return;
 
-            // Êó±êÔÚUIÉÏÊ±²»´¦Àí
+            // é¼ æ ‡åœ¨UIä¸Šæ—¶ä¸å¤„ç†
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
                 if (isDragging) isDragging = false;
                 return;
             }
 
-            // ÓÒ¼ü°´ÏÂ£º¿ªÊ¼ÍÏ×§£¬¼ÇÂ¼³õÊ¼ÊÀ½çµã
+            // å³é”®æŒ‰ä¸‹ï¼šå¼€å§‹æ‹–æ‹½ï¼Œè®°å½•åˆå§‹ä¸–ç•Œç‚¹
             if (Input.GetMouseButtonDown(1))
             {
                 isDragging = true;
                 lastWorldDragPoint = GetWorldPointOnGroundPlane(Input.mousePosition);
-                targetPosition = null;          // È¡Ïû×Ô¶¯ÒÆ¶¯
+                targetPosition = null;          // å–æ¶ˆè‡ªåŠ¨ç§»åŠ¨
                 autoMoveVelocity = Vector3.zero;
             }
-            // ÓÒ¼ü°´×¡£º¸ù¾İÊó±êÔÚµØÃæÉÏµÄÒÆ¶¯¾àÀëÊ©¼ÓËÙ¶È
+            // å³é”®æŒ‰ä½ï¼šæ ¹æ®é¼ æ ‡åœ¨åœ°é¢ä¸Šçš„ç§»åŠ¨è·ç¦»æ–½åŠ é€Ÿåº¦
             else if (isDragging && Input.GetMouseButton(1))
             {
                 Vector3 currentWorldPoint = GetWorldPointOnGroundPlane(Input.mousePosition);
                 if (lastWorldDragPoint != Vector3.zero && currentWorldPoint != Vector3.zero)
                 {
                     Vector3 worldDelta = currentWorldPoint - lastWorldDragPoint;
-                    // µØÍ¼¸úËæÊó±ê => ÉãÏñ»úÒÆ¶¯·½ÏòÓëÊó±êÒÆ¶¯·½ÏòÏà·´
+                    // åœ°å›¾è·Ÿéšé¼ æ ‡ => æ‘„åƒæœºç§»åŠ¨æ–¹å‘ä¸é¼ æ ‡ç§»åŠ¨æ–¹å‘ç›¸å
                     Vector3 targetSpeed = (invertDrag ? -worldDelta : worldDelta) / Time.deltaTime;
-                    // ¿É³ËÒÔÁéÃô¶ÈÏµÊı£¨ÀıÈç dragSensitivity£©
+                    // å¯ä¹˜ä»¥çµæ•åº¦ç³»æ•°ï¼ˆä¾‹å¦‚ dragSensitivityï¼‰
                     targetSpeed *= dragSensitivity;
 
-                    // µş¼Óµ½µ±Ç°ËÙ¶È£¨±£³ÖÔ­ÓĞ¿ìËÙÏìÓ¦·ç¸ñ£©
+                    // å åŠ åˆ°å½“å‰é€Ÿåº¦ï¼ˆä¿æŒåŸæœ‰å¿«é€Ÿå“åº”é£æ ¼ï¼‰
                     currentVelocity += targetSpeed * Time.deltaTime * 10f;
                     currentVelocity = Vector3.ClampMagnitude(currentVelocity, maxSpeed);
                 }
                 lastWorldDragPoint = currentWorldPoint;
             }
-            // ÓÒ¼üËÉ¿ª£ºÍ£Ö¹ÍÏ×§£¨¹ßĞÔÓÉÎïÀí×Ô¶¯´¦Àí£©
+            // å³é”®æ¾å¼€ï¼šåœæ­¢æ‹–æ‹½ï¼ˆæƒ¯æ€§ç”±ç‰©ç†è‡ªåŠ¨å¤„ç†ï¼‰
             else if (isDragging && Input.GetMouseButtonUp(1))
             {
                 isDragging = false;
@@ -143,16 +143,16 @@ namespace Game.Camera
         {
             if (!isDragging)
             {
-                // Î´ÍÏ×§Ê±Ó¦ÓÃ¹ßĞÔ×èÄá
+                // æœªæ‹–æ‹½æ—¶åº”ç”¨æƒ¯æ€§é˜»å°¼
                 float damping = inertiaDamping;
                 currentVelocity *= 1f - Mathf.Clamp01(damping * Time.deltaTime);
             }
             else
             {
-                // ÍÏ×§Ê±Ò²Ó¦ÓÃÒ»µã×èÄá£¬·ÀÖ¹ÎŞÏŞ¼ÓËÙ
+                // æ‹–æ‹½æ—¶ä¹Ÿåº”ç”¨ä¸€ç‚¹é˜»å°¼ï¼Œé˜²æ­¢æ— é™åŠ é€Ÿ
                 currentVelocity *= 1f - Mathf.Clamp01(dragLinearDamping * Time.deltaTime);
             }
-            // ±ß½çµ¯»ÉÁ¦
+            // è¾¹ç•Œå¼¹ç°§åŠ›
             if (clampToBounds && worldBounds.size != Vector3.zero)
             {
                 Vector3 position = transform.position;
@@ -164,16 +164,16 @@ namespace Game.Camera
                 }
                 else
                 {
-                    // Í¸ÊÓÄ£Ê½£ºµØÃæ Z=0£¬ÉãÏñ»úµ½µØÃæµÄ¾àÀë = |transform.position.z|
+                    // é€è§†æ¨¡å¼ï¼šåœ°é¢ Z=0ï¼Œæ‘„åƒæœºåˆ°åœ°é¢çš„è·ç¦» = |transform.position.z|
                     float distanceToGround = Mathf.Abs(transform.position.z);
                     float pitchRad = transform.eulerAngles.x * Mathf.Deg2Rad;
                     float halfFovRad = mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
 
-                    // ÉãÏñ»úÔÚ Z=0 Æ½ÃæÉÏµÄ¿ÉÊÓ°ë¸ß£¨Î´¿¼ÂÇ¸©Ñö½Ç£©
+                    // æ‘„åƒæœºåœ¨ Z=0 å¹³é¢ä¸Šçš„å¯è§†åŠé«˜ï¼ˆæœªè€ƒè™‘ä¿¯ä»°è§’ï¼‰
                     float rawHalfHeight = Mathf.Tan(halfFovRad) * distanceToGround;
-                    // ÒòÎª¸©Ñö½Çµ¼ÖÂµØÃæ±»À­³¤£¬Êµ¼Ê°ë¸ßĞèÒª³ıÒÔ cos(pitch)
+                    // å› ä¸ºä¿¯ä»°è§’å¯¼è‡´åœ°é¢è¢«æ‹‰é•¿ï¼Œå®é™…åŠé«˜éœ€è¦é™¤ä»¥ cos(pitch)
                     float actualHalfHeight = rawHalfHeight / Mathf.Cos(pitchRad);
-                    // °ë¿íÖ»Ğè¸ù¾İÆÁÄ»¿í¸ß±È¼ÆËã£¬X Öá²»ÊÜ¸©Ñö½ÇÓ°Ïì£¨ÈôÉãÏñ»úÎŞ roll£©
+                    // åŠå®½åªéœ€æ ¹æ®å±å¹•å®½é«˜æ¯”è®¡ç®—ï¼ŒX è½´ä¸å—ä¿¯ä»°è§’å½±å“ï¼ˆè‹¥æ‘„åƒæœºæ—  rollï¼‰
                     float actualHalfWidth = actualHalfHeight * Screen.width / Screen.height;
 
                     vertExtent = actualHalfHeight;
@@ -192,21 +192,21 @@ namespace Game.Camera
                 if (position.z < minZ) force.z = (minZ - position.z) * edgeSpringStiffness;
                 else if (position.z > maxZ) force.z = (maxZ - position.z) * edgeSpringStiffness;
 
-                // µ¯»ÉÁ¦¼Ó×èÄá
+                // å¼¹ç°§åŠ›åŠ é˜»å°¼
                 currentVelocity += force * Time.deltaTime;
                 currentVelocity -= currentVelocity * edgeSpringDamping * Time.deltaTime;
             }
 
-            // Ó¦ÓÃËÙ¶ÈÒÆ¶¯ÉãÏñ»ú
+            // åº”ç”¨é€Ÿåº¦ç§»åŠ¨æ‘„åƒæœº
             transform.position += new Vector3(currentVelocity.x, 0, currentVelocity.z) * Time.deltaTime;
             transform.position = new Vector3(transform.position.x, cameraOffset.y, transform.position.z);
 
-            // Èç¹ûËÙ¶È¼«Ğ¡£¬Ö±½ÓÖÃÁã·ÀÖ¹Î¢¶¯
+            // å¦‚æœé€Ÿåº¦æå°ï¼Œç›´æ¥ç½®é›¶é˜²æ­¢å¾®åŠ¨
             if (currentVelocity.magnitude < 0.01f)
                 currentVelocity = Vector3.zero;
         }
 
-        // ¸¨Öú·½·¨£º¶ÔÄ¿±êÎ»ÖÃÓ¦ÓÃµ¯»ÉÁ¦£¨ÓÃÓÚ×Ô¶¯ÒÆ¶¯£©
+        // è¾…åŠ©æ–¹æ³•ï¼šå¯¹ç›®æ ‡ä½ç½®åº”ç”¨å¼¹ç°§åŠ›ï¼ˆç”¨äºè‡ªåŠ¨ç§»åŠ¨ï¼‰
         private Vector3 ApplyBoundaryForce(Vector3 desiredPosition, ref Vector3 velocity, float smoothTime)
         {
             if (!clampToBounds || worldBounds.size == Vector3.zero)
@@ -220,23 +220,23 @@ namespace Game.Camera
             }
             else
             {
-                // Í¸ÊÓÄ£Ê½£ºµØÃæ Z=0£¬ÉãÏñ»úµ½µØÃæµÄ¾àÀë = |transform.position.z|
+                // é€è§†æ¨¡å¼ï¼šåœ°é¢ Z=0ï¼Œæ‘„åƒæœºåˆ°åœ°é¢çš„è·ç¦» = |transform.position.z|
                 float distanceToGround = Mathf.Abs(transform.position.z);
                 float pitchRad = transform.eulerAngles.x * Mathf.Deg2Rad;
                 float halfFovRad = mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
 
-                // ÉãÏñ»úÔÚ Z=0 Æ½ÃæÉÏµÄ¿ÉÊÓ°ë¸ß£¨Î´¿¼ÂÇ¸©Ñö½Ç£©
+                // æ‘„åƒæœºåœ¨ Z=0 å¹³é¢ä¸Šçš„å¯è§†åŠé«˜ï¼ˆæœªè€ƒè™‘ä¿¯ä»°è§’ï¼‰
                 float rawHalfHeight = Mathf.Tan(halfFovRad) * distanceToGround;
-                // ÒòÎª¸©Ñö½Çµ¼ÖÂµØÃæ±»À­³¤£¬Êµ¼Ê°ë¸ßĞèÒª³ıÒÔ cos(pitch)
+                // å› ä¸ºä¿¯ä»°è§’å¯¼è‡´åœ°é¢è¢«æ‹‰é•¿ï¼Œå®é™…åŠé«˜éœ€è¦é™¤ä»¥ cos(pitch)
                 float actualHalfHeight = rawHalfHeight / Mathf.Cos(pitchRad);
-                // °ë¿íÖ»Ğè¸ù¾İÆÁÄ»¿í¸ß±È¼ÆËã£¬X Öá²»ÊÜ¸©Ñö½ÇÓ°Ïì£¨ÈôÉãÏñ»úÎŞ roll£©
+                // åŠå®½åªéœ€æ ¹æ®å±å¹•å®½é«˜æ¯”è®¡ç®—ï¼ŒX è½´ä¸å—ä¿¯ä»°è§’å½±å“ï¼ˆè‹¥æ‘„åƒæœºæ—  rollï¼‰
                 float actualHalfWidth = actualHalfHeight * Screen.width / Screen.height;
 
                 vertExtent = actualHalfHeight;
                 horzExtent = actualHalfWidth;
             }
             Vector3 cameraForwardOnGround = transform.forward;
-            cameraForwardOnGround.y = 0; // ºöÂÔY·ÖÁ¿£¬Ö»¿´Ë®Æ½Í¶Ó°
+            cameraForwardOnGround.y = 0; // å¿½ç•¥Yåˆ†é‡ï¼Œåªçœ‹æ°´å¹³æŠ•å½±
             Vector3 groundCenter = desiredPosition;
             float minX = worldBounds.min.x + horzExtent;
             float maxX = worldBounds.max.x - horzExtent;
@@ -253,7 +253,7 @@ namespace Game.Camera
         }
 
         /// <summary>
-        /// ÉèÖÃÊÀ½ç±ß½ç
+        /// è®¾ç½®ä¸–ç•Œè¾¹ç•Œ
         /// </summary>
         public void SetWorldBounds(Bounds bounds)
         {
@@ -261,17 +261,17 @@ namespace Game.Camera
         }
 
         /// <summary>
-        /// Æ½»¬ÒÆ¶¯µ½Ä¿±êÎ»ÖÃ£¨Ñ¡ÖĞµ¥Î»Ê±µ÷ÓÃ£©
+        /// å¹³æ»‘ç§»åŠ¨åˆ°ç›®æ ‡ä½ç½®ï¼ˆé€‰ä¸­å•ä½æ—¶è°ƒç”¨ï¼‰
         /// </summary>
         public void SmoothMoveTo(Vector3 targetWorldPosition)
         {
             if (isDragging) return;
             currentVelocity = Vector3.zero;
-            targetPosition = targetWorldPosition;   // ´æ´¢Ä¿±êµãµÄµØÃæ×ø±ê (x, y, 0)
+            targetPosition = targetWorldPosition;   // å­˜å‚¨ç›®æ ‡ç‚¹çš„åœ°é¢åæ ‡ (x, y, 0)
         }
 
         /// <summary>
-        /// Ç¿ÖÆË²¼ä¶¨Î»
+        /// å¼ºåˆ¶ç¬é—´å®šä½
         /// </summary>
         public void ForcePosition(Vector3 targetWorldPosition)
         {
@@ -282,46 +282,46 @@ namespace Game.Camera
             transform.position = targetWorldPosition + cameraOffset;
             transform.position = new Vector3(transform.position.x, cameraOffset.y, transform.position.z);
         }
-        // »ñÈ¡µØÃæ¿ÉÊÓ°ë¿í°ë¸ß
+        // è·å–åœ°é¢å¯è§†åŠå®½åŠé«˜
         private void GetGroundViewExtents(out float halfWidth, out float halfHeight)
         {
             UnityEngine.Camera cam = mainCamera;
             Transform camTrans = transform;
-            Plane groundPlane = new Plane(Vector3.up, 0f); // µØÃæ Y=0
+            Plane groundPlane = new Plane(Vector3.up, 0f); // åœ°é¢ Y=0
 
-            // Õı½»Ïà»úµÄÊÓ×¶Ìå³ß´ç
+            // æ­£äº¤ç›¸æœºçš„è§†é”¥ä½“å°ºå¯¸
             float orthoSize = cam.orthographicSize;
             float aspect = cam.aspect;
             float halfHeightWorld = orthoSize;
             float halfWidthWorld = orthoSize * aspect;
 
-            // Ïà»úµÄ¾Ö²¿×ø±êÏµ£ºÇ°¡¢ÓÒ¡¢ÉÏ
+            // ç›¸æœºçš„å±€éƒ¨åæ ‡ç³»ï¼šå‰ã€å³ã€ä¸Š
             Vector3 forward = camTrans.forward;
             Vector3 right = camTrans.right;
             Vector3 up = camTrans.up;
 
-            // Ïà»úÔÚÊÀ½ç¿Õ¼äÖĞµÄÎ»ÖÃ
+            // ç›¸æœºåœ¨ä¸–ç•Œç©ºé—´ä¸­çš„ä½ç½®
             Vector3 camPos = camTrans.position;
 
-            // ¼ÆËãÊÓ×¶Ìå½üÆ½ÃæÖĞĞÄµãÑØ forward ·½ÏòÆ«ÒÆ½üÆ½Ãæ¾àÀë
-            // ¶ÔÓÚÕı½»Ïà»ú£¬ÊÓ×¶ÌåµÄËÄ¸ö½Çµã·½ÏòÓëÏà»ú¾Ö²¿×ø±êÖáÆ½ĞĞ
+            // è®¡ç®—è§†é”¥ä½“è¿‘å¹³é¢ä¸­å¿ƒç‚¹æ²¿ forward æ–¹å‘åç§»è¿‘å¹³é¢è·ç¦»
+            // å¯¹äºæ­£äº¤ç›¸æœºï¼Œè§†é”¥ä½“çš„å››ä¸ªè§’ç‚¹æ–¹å‘ä¸ç›¸æœºå±€éƒ¨åæ ‡è½´å¹³è¡Œ
             Vector3 nearCenter = camPos + forward * cam.nearClipPlane;
             Vector3[] cornersLocal = new Vector3[]
             {
-        new Vector3(-halfWidthWorld, -halfHeightWorld, 0), // ×óÏÂ
-        new Vector3( halfWidthWorld, -halfHeightWorld, 0), // ÓÒÏÂ
-        new Vector3(-halfWidthWorld,  halfHeightWorld, 0), // ×óÉÏ
-        new Vector3( halfWidthWorld,  halfHeightWorld, 0)  // ÓÒÉÏ
+        new Vector3(-halfWidthWorld, -halfHeightWorld, 0), // å·¦ä¸‹
+        new Vector3( halfWidthWorld, -halfHeightWorld, 0), // å³ä¸‹
+        new Vector3(-halfWidthWorld,  halfHeightWorld, 0), // å·¦ä¸Š
+        new Vector3( halfWidthWorld,  halfHeightWorld, 0)  // å³ä¸Š
             };
 
             List<Vector3> groundPoints = new List<Vector3>(4);
             foreach (var localOffset in cornersLocal)
             {
-                // ½«¾Ö²¿Æ«ÒÆ×ª»»µ½ÊÀ½ç×ø±ê£ºÏà»ú¾Ö²¿×ø±êÏµÏÂµÄÆ«ÒÆ (right, up) ·½Ïò
+                // å°†å±€éƒ¨åç§»è½¬æ¢åˆ°ä¸–ç•Œåæ ‡ï¼šç›¸æœºå±€éƒ¨åæ ‡ç³»ä¸‹çš„åç§» (right, up) æ–¹å‘
                 Vector3 worldOffset = right * localOffset.x + up * localOffset.y;
                 Vector3 pointOnNearPlane = nearCenter + worldOffset;
 
-                // ´ÓÏà»úÎ»ÖÃ·¢Éä¾­¹ı¸ÃµãµÄÉäÏß£¨Õı½»Ïà»úÖĞ£¬ËùÓĞÍ¶Ó°ÏßÆ½ĞĞÓÚ forward£©
+                // ä»ç›¸æœºä½ç½®å‘å°„ç»è¿‡è¯¥ç‚¹çš„å°„çº¿ï¼ˆæ­£äº¤ç›¸æœºä¸­ï¼Œæ‰€æœ‰æŠ•å½±çº¿å¹³è¡Œäº forwardï¼‰
                 Ray ray = new Ray(camPos, (pointOnNearPlane - camPos).normalized);
                 if (groundPlane.Raycast(ray, out float enter))
                 {
@@ -330,12 +330,12 @@ namespace Game.Camera
                 }
                 else
                 {
-                    // ÀíÂÛÉÏ²»»á·¢Éú£¨Ïà»úÔÚµØÃæÖ®ÉÏÇÒÏòÏÂ¿´£©
+                    // ç†è®ºä¸Šä¸ä¼šå‘ç”Ÿï¼ˆç›¸æœºåœ¨åœ°é¢ä¹‹ä¸Šä¸”å‘ä¸‹çœ‹ï¼‰
                     groundPoints.Add(camPos + forward * 1000f);
                 }
             }
 
-            // ¼ÆËãÕâĞ©µãµÄ X ·¶Î§Óë Z ·¶Î§
+            // è®¡ç®—è¿™äº›ç‚¹çš„ X èŒƒå›´ä¸ Z èŒƒå›´
             float minX = float.MaxValue, maxX = float.MinValue;
             float minZ = float.MaxValue, maxZ = float.MinValue;
             foreach (var p in groundPoints)
@@ -350,7 +350,7 @@ namespace Game.Camera
             halfHeight = (maxZ - minZ) * 0.5f;
         }
 
-        // »ñÈ¡ÉãÏñ»ú¿ÉÒÆ¶¯µÄ±ß½ç·¶Î§
+        // è·å–æ‘„åƒæœºå¯ç§»åŠ¨çš„è¾¹ç•ŒèŒƒå›´
         private void GetCameraMoveBounds(out float minX, out float maxX, out float minZ, out float maxZ)
         {
             if (!clampToBounds || worldBounds.size == Vector3.zero)
@@ -369,17 +369,17 @@ namespace Game.Camera
         }
 
         /// <summary>
-        /// »ñÈ¡ÆÁÄ»×ø±êµãÔÚµØÃæÆ½Ãæ£¨Y=0£©ÉÏµÄÊÀ½ç×ø±ê
+        /// è·å–å±å¹•åæ ‡ç‚¹åœ¨åœ°é¢å¹³é¢ï¼ˆY=0ï¼‰ä¸Šçš„ä¸–ç•Œåæ ‡
         /// </summary>
         private Vector3 GetWorldPointOnGroundPlane(Vector2 screenPos)
         {
             Ray ray = mainCamera.ScreenPointToRay(screenPos);
-            Plane groundPlane = new Plane(Vector3.up, 0f); // µØÃæÆ½Ãæ Y=0
+            Plane groundPlane = new Plane(Vector3.up, 0f); // åœ°é¢å¹³é¢ Y=0
             if (groundPlane.Raycast(ray, out float distance))
             {
                 return ray.GetPoint(distance);
             }
-            return Vector3.zero; // ÉäÏßÎ´»÷ÖĞ£¨ÀıÈçÊó±êÖ¸ÏòÌì¿Õ£©Ê±·µ»ØÁãÏòÁ¿
+            return Vector3.zero; // å°„çº¿æœªå‡»ä¸­ï¼ˆä¾‹å¦‚é¼ æ ‡æŒ‡å‘å¤©ç©ºï¼‰æ—¶è¿”å›é›¶å‘é‡
         }
     }
 }

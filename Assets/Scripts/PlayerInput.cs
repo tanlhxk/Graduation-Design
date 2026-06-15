@@ -20,16 +20,16 @@ namespace Game.Core
         private TurnManager turnManager;
         private MovementSystem movementSystem;
 
-        [Header("¹¥»÷Á¬Ïß")]
+        [Header("æ”»å‡»è¿çº¿")]
         private LineRenderer attackLine;
-        public Color canAttackColor = Color.yellow; // ÄÜ¹¥»÷Ê±µÄÑÕÉ«
-        public Color cannotAttackColor = Color.red;  // ²»ÄÜ¹¥»÷Ê±µÄÑÕÉ«
+        public Color canAttackColor = Color.yellow; // èƒ½æ”»å‡»æ—¶çš„é¢œè‰²
+        public Color cannotAttackColor = Color.red;  // ä¸èƒ½æ”»å‡»æ—¶çš„é¢œè‰²
         public Material lineMat;
 
         private FriendlyUnit selectedUnit;
         private Tile selectedTile;
-        private SkillDataSO currentSelectedSkillData = null; // null ´ú±íÒÆ¶¯/¿ÕÊÖ×´Ì¬
-        private FriendlyUnit currentSelectedUnit; // µ±Ç°±»Ñ¡ÖĞµÄÎÒ·½µ¥Î»
+        private SkillDataSO currentSelectedSkillData = null; // null ä»£è¡¨ç§»åŠ¨/ç©ºæ‰‹çŠ¶æ€
+        private FriendlyUnit currentSelectedUnit; // å½“å‰è¢«é€‰ä¸­çš„æˆ‘æ–¹å•ä½
         private List<Tile> currentMoveRange;
 
         private void Awake()
@@ -58,7 +58,7 @@ namespace Game.Core
 
             if (selectedUnit != null && currentSelectedSkillData != null)
             {
-                // Ê¹ÓÃÉäÏß¼ì²â»ñÈ¡×¼È·µÄÊó±êÎ»ÖÃ
+                // ä½¿ç”¨å°„çº¿æ£€æµ‹è·å–å‡†ç¡®çš„é¼ æ ‡ä½ç½®
                 Vector3? worldMousePos = GetMouseWorldPosition();
 
                 if (worldMousePos.HasValue)
@@ -66,7 +66,7 @@ namespace Game.Core
                     Vector2Int gridPos = gridManager.WorldToGrid(worldMousePos.Value);
                     Tile hoverTile = gridManager.GetTile(gridPos);
 
-                    HideAttackLine(); // Çå³ı
+                    HideAttackLine(); // æ¸…é™¤
 
                     if (hoverTile != null && hoverTile.occupyingUnit != null)
                     {
@@ -95,7 +95,7 @@ namespace Game.Core
         Vector3? GetMouseWorldPosition()
         {
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            // µØÃæÆ½ÃæÎª Y=0
+            // åœ°é¢å¹³é¢ä¸º Y=0
             Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
             if (groundPlane.Raycast(ray, out float enter))
             {
@@ -106,7 +106,7 @@ namespace Game.Core
 
         public void OnSkillSelected(SkillDataSO skillData)
         {
-            // Èç¹ûÃ»ÓĞÑ¡ÖĞµ¥Î»£¬³¢ÊÔ×Ô¶¯Ñ¡ÖĞ
+            // å¦‚æœæ²¡æœ‰é€‰ä¸­å•ä½ï¼Œå°è¯•è‡ªåŠ¨é€‰ä¸­
             if (selectedUnit == null)
             {
                 FriendlyUnit currentActive = turnManager.currentActiveUnit as FriendlyUnit;
@@ -114,47 +114,47 @@ namespace Game.Core
                 {
                     SelectUnit(currentActive);
                 }
-                else return; // ÎŞ·¨Ñ¡ÖĞ£¬²»´¦Àí¼¼ÄÜ
+                else return; // æ— æ³•é€‰ä¸­ï¼Œä¸å¤„ç†æŠ€èƒ½
             }
 
-            // ÇĞ»»¼¼ÄÜ×´Ì¬£ºÈç¹ûÔÙ´Îµã»÷Í¬Ò»¸ö¼¼ÄÜ£¬È¡ÏûÑ¡ÖĞ
+            // åˆ‡æ¢æŠ€èƒ½çŠ¶æ€ï¼šå¦‚æœå†æ¬¡ç‚¹å‡»åŒä¸€ä¸ªæŠ€èƒ½ï¼Œå–æ¶ˆé€‰ä¸­
             if (currentSelectedSkillData == skillData)
             {
-                currentSelectedSkillData = null; // »Øµ½ÒÆ¶¯×´Ì¬
+                currentSelectedSkillData = null; // å›åˆ°ç§»åŠ¨çŠ¶æ€
             }
             else
             {
                 currentSelectedSkillData = skillData;
             }
 
-            // Í¨Öª UIManager ¸üĞÂÊÓ¾õ£¨¸ßÁÁ£©
+            // é€šçŸ¥ UIManager æ›´æ–°è§†è§‰ï¼ˆé«˜äº®ï¼‰
             UIManager.Instance?.UpdateSkillSelectionVisual(currentSelectedSkillData);
         }
 
-        // ¹¥»÷Ö´ĞĞÂß¼­
+        // æ”»å‡»æ‰§è¡Œé€»è¾‘
         public void ExecuteAttack(EnemyUnit targetUnit)
         {
             if (selectedUnit == null || targetUnit == null || currentSelectedSkillData == null) return;
             selectedUnit.ExecuteSkill(targetUnit, currentSelectedSkillData);
 
-            // ¹¥»÷½áÊøºó£¬Í¨³£»ØºÏ½áÊø»ò×´Ì¬ÖØÖÃ
+            // æ”»å‡»ç»“æŸåï¼Œé€šå¸¸å›åˆç»“æŸæˆ–çŠ¶æ€é‡ç½®
             // turnManager.UnitFinishedAction(selectedUnit);
 
-            // ÇåÀí×´Ì¬
+            // æ¸…ç†çŠ¶æ€
             ClearSelection();
         }
 
         /// <summary>
-        /// ÏÔÊ¾¹¥»÷Á¬Ïß
+        /// æ˜¾ç¤ºæ”»å‡»è¿çº¿
         /// </summary>
-        /// <param name="startPos">ÆğÊ¼Î»ÖÃ£¨Í¨³£ÊÇÍæ¼Òµ¥Î»£©</param>
-        /// <param name="endPos">½áÊøÎ»ÖÃ£¨Í¨³£ÊÇÊó±êĞüÍ£µÄµĞÈË»ò¸ñ×Ó£©</param>
-        /// <param name="lineColor">ÏßµÄÑÕÉ«</param>
+        /// <param name="startPos">èµ·å§‹ä½ç½®ï¼ˆé€šå¸¸æ˜¯ç©å®¶å•ä½ï¼‰</param>
+        /// <param name="endPos">ç»“æŸä½ç½®ï¼ˆé€šå¸¸æ˜¯é¼ æ ‡æ‚¬åœçš„æ•Œäººæˆ–æ ¼å­ï¼‰</param>
+        /// <param name="lineColor">çº¿çš„é¢œè‰²</param>
         void ShowAttackLine(Vector3 startPos, Vector3 endPos, Color lineColor)
         {
             if (attackLine == null)
             {
-                Debug.LogError("AttackLine Î´³õÊ¼»¯£¡Çë¼ì²é CreateAttackLine ÊÇ·ñ±»µ÷ÓÃ¡£");
+                Debug.LogError("AttackLine æœªåˆå§‹åŒ–ï¼è¯·æ£€æŸ¥ CreateAttackLine æ˜¯å¦è¢«è°ƒç”¨ã€‚");
                 return;
             }
             Vector3 fixedStart = new Vector3(startPos.x, startPos.y + 0.5f, startPos.z);
@@ -163,7 +163,7 @@ namespace Game.Core
             attackLine.SetPosition(0, fixedStart);
             attackLine.SetPosition(1, fixedEnd);
 
-            // Ê¹ÓÃ Gradient ÉèÖÃÑÕÉ« (ÊÊÅäĞÂ¾É°æ±¾)
+            // ä½¿ç”¨ Gradient è®¾ç½®é¢œè‰² (é€‚é…æ–°æ—§ç‰ˆæœ¬)
             Gradient gradient = new Gradient();
             gradient.SetKeys(
                 new GradientColorKey[] { new GradientColorKey(lineColor, 0.0f), new GradientColorKey(lineColor, 1.0f) },
@@ -174,7 +174,7 @@ namespace Game.Core
             attackLine.enabled = true;
         }
         /// <summary>
-        /// Òş²Ø¹¥»÷Á¬Ïß
+        /// éšè—æ”»å‡»è¿çº¿
         /// </summary>
         void HideAttackLine()
         {
@@ -185,7 +185,7 @@ namespace Game.Core
         }
 
         /// <summary>
-        /// °²È«µØ´´½¨¹¥»÷Á¬Ïß¶ÔÏó
+        /// å®‰å…¨åœ°åˆ›å»ºæ”»å‡»è¿çº¿å¯¹è±¡
         /// </summary>
         void CreateAttackLine()
         {
@@ -208,13 +208,13 @@ namespace Game.Core
             );
             attackLine.colorGradient = gradient;
 
-            attackLine.startWidth = 0.1f; // 2.5D ³¡¾°ÉÔÎ¢´ÖÒ»µãºÃ¿´
+            attackLine.startWidth = 0.1f; // 2.5D åœºæ™¯ç¨å¾®ç²—ä¸€ç‚¹å¥½çœ‹
             attackLine.endWidth = 0.1f;
             attackLine.sortingLayerName = "Effects";
             attackLine.sortingOrder = 100;
 
             attackLine.positionCount = 2;
-            attackLine.useWorldSpace = true; // ±ØĞëÊÇÊÀ½ç×ø±ê£¬·ñÔòÒÆ¶¯µ¥Î»Ê±Ïß²»¶¯
+            attackLine.useWorldSpace = true; // å¿…é¡»æ˜¯ä¸–ç•Œåæ ‡ï¼Œå¦åˆ™ç§»åŠ¨å•ä½æ—¶çº¿ä¸åŠ¨
             attackLine.enabled = false;
         }
 
@@ -224,7 +224,7 @@ namespace Game.Core
 
             if (Input.GetMouseButtonDown(0))
             {
-                // »ñÈ¡Ö÷ÉãÏñ»ú
+                // è·å–ä¸»æ‘„åƒæœº
                 UnityEngine.Camera cam = mainCamera ?? UnityEngine.Camera.main;
 
                 Ray ray = cam.ScreenPointToRay(Input.mousePosition);
@@ -232,20 +232,20 @@ namespace Game.Core
 
                 float enter = 0;
 
-                // ¼ÆËãÉäÏßÓëµØÃæµÄ½»µã
+                // è®¡ç®—å°„çº¿ä¸åœ°é¢çš„äº¤ç‚¹
                 if (groundPlane.Raycast(ray, out enter))
                 {
-                    // ¼ÆËã³öÊÀ½ç×ø±ê
+                    // è®¡ç®—å‡ºä¸–ç•Œåæ ‡
                     Vector3 hitPoint = ray.GetPoint(enter);
 
-                    // ¶ÔÆë×ø±ê£¨·ÀÖ¹¸¡µãÎó²îµ¼ÖÂ¸ñ×Ó´íÎ»£©
-                    // ¸ù¾İÄãµÄ GridManager ÖĞµÄ cellSize ½øĞĞÈ¡Õû¶ÔÆë
+                    // å¯¹é½åæ ‡ï¼ˆé˜²æ­¢æµ®ç‚¹è¯¯å·®å¯¼è‡´æ ¼å­é”™ä½ï¼‰
+                    // æ ¹æ®ä½ çš„ GridManager ä¸­çš„ cellSize è¿›è¡Œå–æ•´å¯¹é½
                     float cellSize = gridManager.CellSize;
                     hitPoint.x = Mathf.Floor(hitPoint.x / cellSize) * cellSize + cellSize / 2;
                     hitPoint.z = Mathf.Floor(hitPoint.z / cellSize) * cellSize + cellSize / 2;
                     hitPoint.y = 0;
 
-                    // ×ª»»ÎªÍø¸ñ×ø±ê
+                    // è½¬æ¢ä¸ºç½‘æ ¼åæ ‡
                     Vector2Int gridPos = gridManager.WorldToGrid(hitPoint);
                     Tile clickedTile = gridManager.GetTile(gridPos);
 
@@ -259,35 +259,31 @@ namespace Game.Core
 
                     if (targetUnit != null)
                     {
-                        // µã»÷ÁËµ¥Î»
+                        // ç‚¹å‡»äº†å•ä½
                         if (targetUnit == turnManager.currentActiveUnit)
                         {
-                            // µã»÷×Ô¼º£ºÑ¡ÖĞ×Ô¼º
-                            // Âß¼­×ªÒÆµ½ SelectUnit ·½·¨Àï
-                            if (selectedUnit != (FriendlyUnit)targetUnit)
-                            {
-                                SelectUnit((FriendlyUnit)targetUnit);
-                            }
+                            // æ¯æ¬¡ç‚¹å‡»å½“å‰è¡ŒåŠ¨å•ä½éƒ½åˆ·æ–°ç§»åŠ¨èŒƒå›´é«˜äº®ï¼ˆæ”»å‡»/å›åˆåˆ‡æ¢åé«˜äº®ä¼šè¢«æ¸…é™¤ï¼‰
+                            SelectUnit((FriendlyUnit)targetUnit);
                         }
                         else if (selectedUnit != null && targetUnit.unitType != UnitType.Player)
                         {
                             EnemyUnit enemy = (EnemyUnit)targetUnit;
                             if (selectedUnit.CanUseSkill(enemy, currentSelectedSkillData))
                             {
-                                // Í¨¹ı×´Ì¬»ú¹¥»÷£¬¶ø²»ÊÇÖ±½ÓÖ´ĞĞ¼¼ÄÜ
                                 selectedUnit.Attack(enemy, currentSelectedSkillData);
+                                ClearSelection();
                             }
                             else
                             {
-                                Debug.Log("Ä¿±ê³¬³ö·¶Î§»òÎŞ·¨¹¥»÷");
+                                Debug.Log("ç›®æ ‡è¶…å‡ºèŒƒå›´æˆ–æ— æ³•æ”»å‡»");
+                                currentSelectedSkillData = null;
+                                UIManager.Instance?.UpdateSkillSelectionVisual(null);
                             }
-                            currentSelectedSkillData = null;
-                            UIManager.Instance?.UpdateSkillSelectionVisual(null);
                         }
                     }
                     else
                     {
-                        // µã»÷¿ÕµØ
+                        // ç‚¹å‡»ç©ºåœ°
                         if (selectedUnit != null)
                         {
                             if (currentMoveRange != null && currentMoveRange.Contains(clickedTile))
@@ -303,7 +299,7 @@ namespace Game.Core
                         }
                         else
                         {
-                            // µã»÷¿ÕµØÈ¡Ïû¼¼ÄÜÑ¡Ôñ
+                            // ç‚¹å‡»ç©ºåœ°å–æ¶ˆæŠ€èƒ½é€‰æ‹©
                             currentSelectedSkillData = null;
                             UIManager.Instance?.UpdateSkillSelectionVisual(null);
                         }
@@ -312,18 +308,14 @@ namespace Game.Core
             }
         }
 
-        // ¸¨Öú·½·¨£ºÍ³Ò»ÇåÀíÑ¡ÖĞ×´Ì¬
-        void ClearSelection()
+        // è¾…åŠ©æ–¹æ³•ï¼šç»Ÿä¸€æ¸…ç†é€‰ä¸­çŠ¶æ€
+        public void ClearSelection()
         {
-            if (selectedUnit != null)
-            {
-                movementSystem.ClearHighlights();
-                selectedUnit = null;
-                currentMoveRange = null;
-                currentSelectedSkillData = null;
-                // Í¨Öª UI Çå³ı¼¼ÄÜ¸ßÁÁ
-                UIManager.Instance?.ClearSkillSelection();
-            }
+            movementSystem?.ClearHighlights();
+            selectedUnit = null;
+            currentMoveRange = null;
+            currentSelectedSkillData = null;
+            UIManager.Instance?.ClearSkillSelection();
         }
 
         void SelectUnit(FriendlyUnit unit)
@@ -332,7 +324,7 @@ namespace Game.Core
 
             selectedUnit = unit;
 
-            // Í¨Öª UI ¹ÜÀíÆ÷Ë¢ĞÂ¼¼ÄÜÀ¸
+            // é€šçŸ¥ UI ç®¡ç†å™¨åˆ·æ–°æŠ€èƒ½æ 
             UIManager.Instance?.RefreshSkillBar(unit);
 
             currentMoveRange = movementSystem.GetMoveableTiles(unit, unit.moveRange);
@@ -346,11 +338,11 @@ namespace Game.Core
         {
             if (selectedUnit == null || currentMoveRange == null) return;
 
-            // µ÷ÓÃ Unit ×Ô´øµÄ MoveTo ·½·¨£¬Õâ»á´¥·¢ ChangeState(UnitState.Moving)
-            // ½ø¶øÓÉ UnitMovingState ´¦ÀíÒÆ¶¯Ğ­³Ì²¢ÔÚ½áÊøºóÍ¨Öª TurnManager
+            // è°ƒç”¨ Unit è‡ªå¸¦çš„ MoveTo æ–¹æ³•ï¼Œè¿™ä¼šè§¦å‘ ChangeState(UnitState.Moving)
+            // è¿›è€Œç”± UnitMovingState å¤„ç†ç§»åŠ¨åç¨‹å¹¶åœ¨ç»“æŸåé€šçŸ¥ TurnManager
             selectedUnit.MoveTo(targetTile);
 
-            // ÒÆ¶¯¿ªÊ¼ºó£¬¿ÉÒÔÔİÊ±Çå³ıÑ¡ÖĞºÍ¸ßÁÁ£¬»òÕßµÈÒÆ¶¯½áÊøÔÙÇå³ı£¨È¡¾öÓÚÄãµÄUIĞèÇó£©
+            // ç§»åŠ¨å¼€å§‹åï¼Œå¯ä»¥æš‚æ—¶æ¸…é™¤é€‰ä¸­å’Œé«˜äº®ï¼Œæˆ–è€…ç­‰ç§»åŠ¨ç»“æŸå†æ¸…é™¤ï¼ˆå–å†³äºä½ çš„UIéœ€æ±‚ï¼‰
             movementSystem.ClearHighlights();
             selectedUnit = null;
             currentMoveRange = null;

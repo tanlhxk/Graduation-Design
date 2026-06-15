@@ -7,21 +7,21 @@ namespace Game.Rendering
     {
         public static SortingOrderManager Instance { get; private set; }
 
-        // ´æ´¢ËùÓĞ´ıÅÅĞòµÄÊµÌå
+        // å­˜å‚¨æ‰€æœ‰å¾…æ’åºçš„å®ä½“
         private List<SortableEntity> entities = new List<SortableEntity>();
 
-        // ¿ÉÑ¡µÄĞÔÄÜÓÅ»¯£ºÃ¿¸ô¼¸Ö¡¸üĞÂÒ»´Î
-        [Header("ĞÔÄÜÓÅ»¯")]
-        public int updateFrameSkip = 1;      // Ã¿1Ö¡¸üĞÂ£¨ÉèÎª2ÔòÃ¿2Ö¡¸üĞÂÒ»´Î£©
+        // å¯é€‰çš„æ€§èƒ½ä¼˜åŒ–ï¼šæ¯éš”å‡ å¸§æ›´æ–°ä¸€æ¬¡
+        [Header("æ€§èƒ½ä¼˜åŒ–")]
+        public int updateFrameSkip = 1;      // æ¯1å¸§æ›´æ–°ï¼ˆè®¾ä¸º2åˆ™æ¯2å¸§æ›´æ–°ä¸€æ¬¡ï¼‰
         private int frameCounter = 0;
 
-        // ÊµÌåÊı¾İ½á¹¹
+        // å®ä½“æ•°æ®ç»“æ„
         public class SortableEntity
         {
-            public SpriteRenderer renderer;   // äÖÈ¾Æ÷
-            public Transform transform;       // ÎïÌåµÄ±ä»»×é¼ş£¨ÓÃÓÚ»ñÈ¡ÊÀ½ç×ø±ê£©
-            public int baseOrder;             // »ù´¡ÅÅĞòÖµ£¨Æ«ÒÆÁ¿£©
-            public int orderFactor;           // ÅÅĞòÏµÊı£¨ÁéÃô¶È£©
+            public SpriteRenderer renderer;   // æ¸²æŸ“å™¨
+            public Transform transform;       // ç‰©ä½“çš„å˜æ¢ç»„ä»¶ï¼ˆç”¨äºè·å–ä¸–ç•Œåæ ‡ï¼‰
+            public int baseOrder;             // åŸºç¡€æ’åºå€¼ï¼ˆåç§»é‡ï¼‰
+            public int orderFactor;           // æ’åºç³»æ•°ï¼ˆçµæ•åº¦ï¼‰
         }
 
         private void Awake()
@@ -33,7 +33,7 @@ namespace Game.Rendering
         }
 
         /// <summary>
-        /// ×¢²áÒ»¸öĞèÒª¶¯Ì¬ÅÅĞòµÄÎïÌå
+        /// æ³¨å†Œä¸€ä¸ªéœ€è¦åŠ¨æ€æ’åºçš„ç‰©ä½“
         /// </summary>
         public void Register(SpriteRenderer renderer, Transform trans, int baseOrder = 0, int orderFactor = 100)
         {
@@ -48,7 +48,7 @@ namespace Game.Rendering
         }
 
         /// <summary>
-        /// ×¢ÏúÎïÌå£¨ÎïÌåÏú»ÙÊ±±ØĞëµ÷ÓÃ£©
+        /// æ³¨é”€ç‰©ä½“ï¼ˆç‰©ä½“é”€æ¯æ—¶å¿…é¡»è°ƒç”¨ï¼‰
         /// </summary>
         public void Unregister(SpriteRenderer renderer)
         {
@@ -57,17 +57,17 @@ namespace Game.Rendering
 
         private void LateUpdate()
         {
-            // Ö¡¼ä¸ô¿ØÖÆ
+            // å¸§é—´éš”æ§åˆ¶
             frameCounter++;
             if (frameCounter % updateFrameSkip != 0) return;
 
-            // ±éÀúËùÓĞÊµÌå£¬¸ù¾İÊÀ½çZ×ø±ê¼ÆËã sortingOrder
+            // éå†æ‰€æœ‰å®ä½“ï¼Œæ ¹æ®ä¸–ç•ŒZåæ ‡è®¡ç®— sortingOrder
             foreach (var entity in entities)
             {
                 if (entity.renderer == null) continue;
 
-                // ºËĞÄ¹«Ê½£ºÅÅĞòÖµ = »ù´¡Æ«ÒÆ - (Z×ø±ê ¡Á ÏµÊı)
-                // Z Ô½Ğ¡£¨Ô½¿¿½üÆÁÄ»µ×²¿£©¡ú ¼õÈ¥¸ºÊı ¡ú ÅÅĞòÖµÔ½´ó ¡ú äÖÈ¾Ô½¿¿Ç°
+                // æ ¸å¿ƒå…¬å¼ï¼šæ’åºå€¼ = åŸºç¡€åç§» - (Zåæ ‡ Ã— ç³»æ•°)
+                // Z è¶Šå°ï¼ˆè¶Šé è¿‘å±å¹•åº•éƒ¨ï¼‰â†’ å‡å»è´Ÿæ•° â†’ æ’åºå€¼è¶Šå¤§ â†’ æ¸²æŸ“è¶Šé å‰
                 int order = entity.baseOrder - Mathf.RoundToInt((entity.transform.position.x + entity.transform.position.z) * entity.orderFactor);
                 entity.renderer.sortingOrder = order;
             }

@@ -8,19 +8,19 @@ using Game.Core;
 public class SkillButtonUI : MonoBehaviour
 {
     [Header("UI References")]
-    public Image iconImage;           // ¼¼ÄÜÍ¼±ê
-    private string skillNameText;    // ¼¼ÄÜÃû³Æ
-    public Button buttonComponent;    // °´Å¥×é¼ş
-    public Image borderImage;         // ±ß¿òÍ¼Æ¬£¨ÓÃÓÚ¸ßÁÁÏÔÊ¾£©
+    public Image iconImage;           // æŠ€èƒ½å›¾æ ‡
+    private string skillNameText;    // æŠ€èƒ½åç§°
+    public Button buttonComponent;    // æŒ‰é’®ç»„ä»¶
+    public Image borderImage;         // è¾¹æ¡†å›¾ç‰‡ï¼ˆç”¨äºé«˜äº®æ˜¾ç¤ºï¼‰
 
     [Header("Border Sprites")]
-    public Sprite normalBorder;       // Î´Ñ¡ÖĞÊ±µÄ±ß¿òÍ¼Æ¬
-    public Sprite selectedBorder;     // Ñ¡ÖĞÊ±µÄ±ß¿òÍ¼Æ¬
+    public Sprite normalBorder;       // æœªé€‰ä¸­æ—¶çš„è¾¹æ¡†å›¾ç‰‡
+    public Sprite selectedBorder;     // é€‰ä¸­æ—¶çš„è¾¹æ¡†å›¾ç‰‡
 
     private SkillDataSO currentData;
     private FriendlyUnit ownerUnit;
 
-    // ³õÊ¼»¯°´Å¥
+    // åˆå§‹åŒ–æŒ‰é’®
     public void SetupButton(SkillDataSO skillData, FriendlyUnit owner)
     {
         currentData = skillData;
@@ -32,11 +32,11 @@ public class SkillButtonUI : MonoBehaviour
             PlayerInput.Instance?.OnSkillSelected(currentData);
         });
 
-        // È·±£³õÊ¼×´Ì¬ÎªÎ´Ñ¡ÖĞ±ß¿ò
+        // ç¡®ä¿åˆå§‹çŠ¶æ€ä¸ºæœªé€‰ä¸­è¾¹æ¡†
         SetSelected(false);
     }
 
-    // ÉèÖÃÑ¡ÖĞ×´Ì¬£¨ÇĞ»»±ß¿òÍ¼Æ¬£©
+    // è®¾ç½®é€‰ä¸­çŠ¶æ€ï¼ˆåˆ‡æ¢è¾¹æ¡†å›¾ç‰‡ï¼‰
     public void SetSelected(bool isSelected)
     {
         if (borderImage != null && normalBorder != null && selectedBorder != null)
@@ -45,20 +45,20 @@ public class SkillButtonUI : MonoBehaviour
         }
     }
 
-    // »ñÈ¡¹ØÁªµÄ¼¼ÄÜÊı¾İ
+    // è·å–å…³è”çš„æŠ€èƒ½æ•°æ®
     public SkillDataSO GetSkillData()
     {
         return currentData;
     }
 
-    // ÉèÖÃÀäÈ´×´Ì¬£¨°´Å¥±ä»Ò£¬Í¼±ê±ä»Ò£¬²»¿É½»»¥£©
+    // è®¾ç½®å†·å´çŠ¶æ€ï¼ˆæŒ‰é’®å˜ç°ï¼Œå›¾æ ‡å˜ç°ï¼Œä¸å¯äº¤äº’ï¼‰
     public void SetCooldown(bool isCooling)
     {
         if (iconImage != null)
             iconImage.color = isCooling ? Color.gray : Color.white;
         buttonComponent.interactable = !isCooling;
 
-        // ÀäÈ´Ê±²»Çå³ı±ß¿òÑ¡ÖĞ×´Ì¬£¬µ«Í¨³£ÀäÈ´Ê±²»Ó¦¸Ã±»Ñ¡ÖĞ£¬ËùÒÔ¿É¶îÍâ´¦Àí£º
+        // å†·å´æ—¶ä¸æ¸…é™¤è¾¹æ¡†é€‰ä¸­çŠ¶æ€ï¼Œä½†é€šå¸¸å†·å´æ—¶ä¸åº”è¯¥è¢«é€‰ä¸­ï¼Œæ‰€ä»¥å¯é¢å¤–å¤„ç†ï¼š
         if (isCooling)
         {
             SetSelected(false);

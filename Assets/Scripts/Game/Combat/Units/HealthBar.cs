@@ -45,10 +45,10 @@ public class HealthBar : MonoBehaviour
             }
         }
 
-        // ¸úËæÄ¿±ê
+        // è·Ÿéšç›®æ ‡
         transform.position = targetUnit.transform.position + offset;
 
-        // ÈÃÑªÌõÊ¼ÖÕÃæÏòÏà»ú£¨ÊÊºÏ2.5D£©
+        // è®©è¡€æ¡å§‹ç»ˆé¢å‘ç›¸æœºï¼ˆé€‚åˆ2.5Dï¼‰
         if (mainCamera != null)
         {
             transform.LookAt(transform.position + mainCamera.transform.rotation * Vector3.forward,

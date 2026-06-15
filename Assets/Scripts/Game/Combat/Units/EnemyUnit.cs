@@ -4,35 +4,44 @@ using UnityEngine;
 using Game.Combat;
 using Game.Map;
 using Game.Camera;
+using Game.Combat.AI;
 
 namespace Game.Combat.Units
 {
     public class EnemyUnit : Unit
     {
+        private EnemyAI ai;
+        public override void Awake()
+        {
+            base.Awake(); // ç¡®ä¿åŸºç±» Awake æ‰§è¡Œ
+            ai = GetComponent<EnemyAI>();
+            if (ai == null)
+                ai = gameObject.AddComponent<EnemyAI>();
+        }
         void Start()
         {
-            // È·±£»ù´¡ÑªÁ¿³õÊ¼»¯
+            // ç¡®ä¿åŸºç¡€è¡€é‡åˆå§‹åŒ–
             if (currentHP == 0) currentHP = maxHP;
         }
         public bool CanUseSkill(FriendlyUnit target, SkillDataSO skillData)
         {
             if (skillData == null) return false;
 
-            // ÕâÀï¿ÉÒÔĞ´Í¨ÓÃµÄ¾àÀëÅĞ¶ÏÂß¼­
+            // è¿™é‡Œå¯ä»¥å†™é€šç”¨çš„è·ç¦»åˆ¤æ–­é€»è¾‘
             int distance = GridManager.GetDistance(currentTile, target.currentTile);
             return distance <= skillData.skillRange;
         }
-        // ¹¥»÷·¶Î§ÅĞ¶Ï
+        // æ”»å‡»èŒƒå›´åˆ¤æ–­
         public bool CanAttack(FriendlyUnit target, int skillIndex)
         {
             if (target == null || target.currentHP <= 0) return false;
 
-            // ¼ÆËãÂü¹ş¶Ù¾àÀë
+            // è®¡ç®—æ›¼å“ˆé¡¿è·ç¦»
             int distance = Mathf.Abs(currentTile.gridPos.x - target.currentTile.gridPos.x) +
                           Mathf.Abs(currentTile.gridPos.y - target.currentTile.gridPos.y);
 
-            // Èç¹ûÃ»ÓĞ¼¼ÄÜÊı¾İ£¬»òÕßË÷ÒıÎª0£¨ÆÕ¹¥£©£¬Ê¹ÓÃµ¥Î»µÄ attackRange
-            // ·ñÔòÊ¹ÓÃ¼¼ÄÜµÄ attackRange
+            // å¦‚æœæ²¡æœ‰æŠ€èƒ½æ•°æ®ï¼Œæˆ–è€…ç´¢å¼•ä¸º0ï¼ˆæ™®æ”»ï¼‰ï¼Œä½¿ç”¨å•ä½çš„ attackRange
+            // å¦åˆ™ä½¿ç”¨æŠ€èƒ½çš„ attackRange
             int effectiveRange = attackRange;
             List<SkillDataSO> skillDataSO = GetUnitSkills();
             if (skillDataSO.Count > skillIndex && skillIndex > 0)
@@ -45,48 +54,56 @@ namespace Game.Combat.Units
 
         public override void PerformAttack()
         {
-            // ¼ÙÉèÒÑÔÚ»ùÀàÖĞÕâÑù×öÁË£¬ÕâÀï¿ÉÒÔÖ±½ÓÊ¹ÓÃ attackTarget
+            // å‡è®¾å·²åœ¨åŸºç±»ä¸­è¿™æ ·åšäº†ï¼Œè¿™é‡Œå¯ä»¥ç›´æ¥ä½¿ç”¨ attackTarget
             if (attackTarget == null) return;
 
-            // ÓÉÓÚ EnemyUnit µÄ¹¥»÷Ä¿±êÊÇ FriendlyUnit£¬ĞèÒª×ª»»
+            // ç”±äº EnemyUnit çš„æ”»å‡»ç›®æ ‡æ˜¯ FriendlyUnitï¼Œéœ€è¦è½¬æ¢
             FriendlyUnit target = attackTarget as FriendlyUnit;
             if (target == null) return;
 
-            // ¼ÆËãÉËº¦£¨¿ÉÒÔ¸ù¾İ¼¼ÄÜË÷ÒıÀ©Õ¹£©
+            // è®¡ç®—ä¼¤å®³ï¼ˆå¯ä»¥æ ¹æ®æŠ€èƒ½ç´¢å¼•æ‰©å±•ï¼‰
             int damage = baseAttack;
 
-            // ¿ÉÒÔ·¢ËÍÊÂ¼ş£¬ÈÃ CameraController ¼àÌı
-            // »òÕßÈç¹û±£³ÖÔ­Ñù£¬ÅĞ¿Õ¼´¿É
+            // å¯ä»¥å‘é€äº‹ä»¶ï¼Œè®© CameraController ç›‘å¬
+            // æˆ–è€…å¦‚æœä¿æŒåŸæ ·ï¼Œåˆ¤ç©ºå³å¯
             if (CameraController.Instance != null)
                 CameraController.Instance.ForcePosition(transform.position);
 
-            // Ö´ĞĞÉËº¦
+            // æ‰§è¡Œä¼¤å®³
             target.TakeDamage(damage);
 
-            // ÉãÏñ»úÕğ¶¯
+            // æ‘„åƒæœºéœ‡åŠ¨
             CameraShake camShake = UnityEngine.Camera.main.GetComponent<CameraShake>();
             if (camShake != null)
                 StartCoroutine(camShake.Shake(0.1f, 0.1f));
 
-            // ×¢Òâ£º×´Ì¬»úÖĞÒÑ¾­»áÔÚ¹¥»÷¶¯»­ºóµ÷ÓÃ UnitFinishedAction£¬ÕâÀïÎŞĞèÔÙÊÖ¶¯µ÷ÓÃ
+            // æ³¨æ„ï¼šçŠ¶æ€æœºä¸­å·²ç»ä¼šåœ¨æ”»å‡»åŠ¨ç”»åè°ƒç”¨ UnitFinishedActionï¼Œè¿™é‡Œæ— éœ€å†æ‰‹åŠ¨è°ƒç”¨
         }
         public void Attack(FriendlyUnit target, int skillIndex = 0)
         {
-            // »ùÀà Attack »á¼ì²é×´Ì¬¡¢ÉèÖÃ¹¥»÷Ä¿±ê£¬²¢½øÈë Attacking ×´Ì¬
+            // åŸºç±» Attack ä¼šæ£€æŸ¥çŠ¶æ€ã€è®¾ç½®æ”»å‡»ç›®æ ‡ï¼Œå¹¶è¿›å…¥ Attacking çŠ¶æ€
             base.Attack(target, skillIndex);
         }
         public void Attack(FriendlyUnit target)
         {
-            Attack(target, 0); // Ä¬ÈÏÊ¹ÓÃÆÕ¹¥
+            Attack(target, 0); // é»˜è®¤ä½¿ç”¨æ™®æ”»
         }
-        /*void FinishAction()
+        public override void Die()
         {
-            currentState = UnitState.Idle;
-            // Í¨Öª»ØºÏÏµÍ³½áÊø
-            if (TurnManager.Instance != null)
-            {
-                TurnManager.Instance.UnitFinishedAction(this);
-            }
-        }*/
+            if (ai != null)
+                ai.ChangeState(EnemyAI.AIState.Dead);
+            base.Die();
+        }
+        public override void NewTurn()
+        {
+            base.NewTurn();
+            EnemyAI ai = GetComponent<EnemyAI>();
+            if (ai != null) ai.OnTurnStart();
+        }
+        public override void MoveTo(Tile targetTile)
+        {
+            // å…ˆè°ƒç”¨åŸºç±»ç§»åŠ¨
+            base.MoveTo(targetTile);
+        }
     }
 }

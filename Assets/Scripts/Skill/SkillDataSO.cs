@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Game.Combat.Units;
 
-// ¼¼ÄÜÀàĞÍÃ¶¾Ù
+// æŠ€èƒ½ç±»å‹æšä¸¾
 public enum SkillType
 {
     NormalAttack,
@@ -12,13 +12,13 @@ public enum SkillType
     HealingSkill
 }
 
-// ¼¼ÄÜĞ§¹û½Ó¿Ú (ºËĞÄ½âñîµã)
+// æŠ€èƒ½æ•ˆæœæ¥å£ (æ ¸å¿ƒè§£è€¦ç‚¹)
 public interface ISkillEffect
 {
     void Execute(Unit caster, Unit target, SkillDataSO skillData);
 }
 
-// ¼¼ÄÜÊı¾İ×Ê²ú (ScriptableObject)
+// æŠ€èƒ½æ•°æ®èµ„äº§ (ScriptableObject)
 [CreateAssetMenu(fileName = "Skill", menuName = "Data/Skill")]
 public class SkillDataSO : ScriptableObject
 {
@@ -26,17 +26,17 @@ public class SkillDataSO : ScriptableObject
     public SkillType skillType;
     public Sprite icon;
     [TextArea] public string description;
-    [Header("ÊÓ¾õÌØĞ§")]
-    public GameObject castEffectPrefab;   // Ê©·¨ÕßÉíÉÏµÄÌØĞ§
-    public GameObject hitEffectPrefab;    // ÃüÖĞÄ¿±êÊ±µÄÌØĞ§
-    public AudioClip hitSound;            // ÃüÖĞÒôĞ§
-    public float effectDuration = 0.5f;  // ÌØĞ§/¶¯»­²¥·ÅÊ±³¤£¨Ãë£©
+    [Header("è§†è§‰ç‰¹æ•ˆ")]
+    public GameObject castEffectPrefab;   // æ–½æ³•è€…èº«ä¸Šçš„ç‰¹æ•ˆ
+    public GameObject hitEffectPrefab;    // å‘½ä¸­ç›®æ ‡æ—¶çš„ç‰¹æ•ˆ
+    public AudioClip hitSound;            // å‘½ä¸­éŸ³æ•ˆ
+    public float effectDuration = 0.5f;  // ç‰¹æ•ˆ/åŠ¨ç”»æ’­æ”¾æ—¶é•¿ï¼ˆç§’ï¼‰
     public AnimationClip skillAnimation;
 
-    [Header("ÊıÖµÅäÖÃ")]
-    public float damageMultiplier = 1f; // ÉËº¦±¶ÂÊ
-    public int skillRange = 1;          // ¼¼ÄÜÉä³Ì
-    public int cooldown = 0;            // ÀäÈ´
+    [Header("æ•°å€¼é…ç½®")]
+    public float damageMultiplier = 1f; // ä¼¤å®³å€ç‡
+    public int skillRange = 1;          // æŠ€èƒ½å°„ç¨‹
+    public int cooldown = 0;            // å†·å´
 
     public SkillDataSO(SkillType type, string name, float damageMultiplier, int range, int cd)
     {
@@ -65,15 +65,15 @@ public class DamageEffect : ISkillEffect
 {
     public void Execute(Unit caster, Unit target, SkillDataSO skillData)
     {
-        // 1. ¼ÆËãÉËº¦
+        // 1. è®¡ç®—ä¼¤å®³
         int baseDamage = caster.baseAttack;
         int finalDamage = Mathf.RoundToInt(baseDamage * skillData.damageMultiplier);
 
-        // 2. Ó¦ÓÃÉËº¦
+        // 2. åº”ç”¨ä¼¤å®³
         target.TakeDamage(finalDamage);
 
-        // 3. ÊÓ¾õ/ÒôĞ§·´À¡ (ÕâÀï¿ÉÒÔÀ©Õ¹)
-        Debug.Log($"{caster.unitName} Ê¹ÓÃ {skillData.skillName} Ôì³É {finalDamage} ÉËº¦!");
+        // 3. è§†è§‰/éŸ³æ•ˆåé¦ˆ (è¿™é‡Œå¯ä»¥æ‰©å±•)
+        Debug.Log($"{caster.unitName} ä½¿ç”¨ {skillData.skillName} é€ æˆ {finalDamage} ä¼¤å®³!");
         SkillEventBus.OnSkillHit?.Invoke(new SkillEventArgs
         {
             caster = caster,
@@ -88,10 +88,10 @@ public class HealingEffect : ISkillEffect
 {
     public void Execute(Unit caster, Unit target, SkillDataSO skillData)
     {
-        // ÖÎÁÆÂß¼­£ºÖÎÁÆÁ¿»ùÓÚÊ©·¨ÕßµÄ¹¥»÷Á¦
+        // æ²»ç–—é€»è¾‘ï¼šæ²»ç–—é‡åŸºäºæ–½æ³•è€…çš„æ”»å‡»åŠ›
         int healAmount = Mathf.RoundToInt(caster.baseAttack * skillData.damageMultiplier);
-        //caster.Heal(healAmount); // ĞèÒªÔÚ Unit ÀàÖĞÌí¼Ó Heal ·½·¨
-        Debug.Log($"{caster.unitName} »Ö¸´ÁË {healAmount} ÉúÃüÖµ!");
+        //caster.Heal(healAmount); // éœ€è¦åœ¨ Unit ç±»ä¸­æ·»åŠ  Heal æ–¹æ³•
+        Debug.Log($"{caster.unitName} æ¢å¤äº† {healAmount} ç”Ÿå‘½å€¼!");
     }
 }
 
@@ -99,15 +99,15 @@ public class UltimateEffect : ISkillEffect
 {
     public void Execute(Unit caster, Unit target, SkillDataSO skillData)
     {
-        // ÕâÀï¿ÉÒÔÊµÏÖ´ó·¶Î§ÉËº¦¡¢»÷ÍË¡¢ÌØĞ§²¥·ÅµÈ
+        // è¿™é‡Œå¯ä»¥å®ç°å¤§èŒƒå›´ä¼¤å®³ã€å‡»é€€ã€ç‰¹æ•ˆæ’­æ”¾ç­‰
         int baseDamage = caster.baseAttack;
-        int finalDamage = Mathf.RoundToInt(baseDamage * skillData.damageMultiplier * 2f); // ÖÕ½á¼¼Í¨³£¸üÇ¿
+        int finalDamage = Mathf.RoundToInt(baseDamage * skillData.damageMultiplier * 2f); // ç»ˆç»“æŠ€é€šå¸¸æ›´å¼º
         target.TakeDamage(finalDamage);
 
-        // ²¥·ÅÖÕ½á¼¼ÌØĞ§ (Î±´úÂë)
+        // æ’­æ”¾ç»ˆç»“æŠ€ç‰¹æ•ˆ (ä¼ªä»£ç )
         // ParticleSystemManager.Play("UltimateExplosion", target.transform.position);
 
-        Debug.Log($"{caster.unitName} ÊÍ·ÅÁËÖÕ½á¼¼! ¶Ô {target.unitName} Ôì³ÉÁË¾Ş´óÉËº¦!");
+        Debug.Log($"{caster.unitName} é‡Šæ”¾äº†ç»ˆç»“æŠ€! å¯¹ {target.unitName} é€ æˆäº†å·¨å¤§ä¼¤å®³!");
     }
 }
 
@@ -124,9 +124,9 @@ public static class SkillFactory
                 return new UltimateEffect();
             case SkillType.HealingSkill:
                 return new HealingEffect();
-            // Ìí¼Ó¸ü¶àÀàĞÍ...
+            // æ·»åŠ æ›´å¤šç±»å‹...
             default:
-                return new DamageEffect(); // Ä¬ÈÏ·µ»ØÉËº¦
+                return new DamageEffect(); // é»˜è®¤è¿”å›ä¼¤å®³
         }
     }
 }
